@@ -470,8 +470,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
                     return 0
                 if typ is float:
                     return 0.0
-                if typ is datatime.datetime:
-                    return datatime.datetime(1, 1, 1)
+                if typ is datetime.datetime:
+                    return datetime.datetime(1, 1, 1)
                 if typ is str:
                     return ''
                 if typ is dict:

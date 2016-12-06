@@ -76,14 +76,17 @@ class XPlot(object):
             try:
                 counts = [col[1] for col in items]
                 vals = [col[0] for col in items]
-                y_pos = range(len(counts))
-                plt.bar(y_pos, counts, align='center', alpha=self.alpha)
+                x_pos = range(len(counts))
+                plt.bar(x_pos, counts, align='center', alpha=self.alpha)
                 plt.xlabel(xlabel)
                 plt.ylabel(ylabel)
                 delta = vals[1] - vals[0]
                 min = vals[0]
                 max = min + bins * delta
-                n_ticks = 8
+                if bins < 8:
+                    n_ticks = bins
+                else:
+                    n_ticks = 8
                 tick_delta = (max - min) / float(n_ticks)
                 step = int(bins / float(n_ticks))
                 if step <= 0: step = 1
@@ -173,6 +176,9 @@ class XPlot(object):
             return
         frequent = [x for x in sorted_fi[:k] if x[1] > 1]
         if len(frequent) > 0:
+            xlabel = xlabel or 'Count'
+            ylabel = ylabel or 'Value'
+            title = title or "Frequent Values"
             self.make_barh(frequent, xlabel=xlabel, ylabel=ylabel, title=title)
 
     @staticmethod
@@ -180,6 +186,7 @@ class XPlot(object):
         if max_val == min_val:
             return None, None
         interval = max_val - min_val
+        print 'interval', interval
         n_buckets = bins or 50
         bucket_vals = [0] * n_buckets
         usetd = isinstance(interval, datetime.timedelta)
@@ -189,8 +196,10 @@ class XPlot(object):
                 bucket_vals[i] = min_val + datetime.timedelta(seconds=(i * delta))
         else:
             delta = float(interval) / n_buckets
+            print 'delta', delta
             for i in range(0, n_buckets):
                 bucket_vals[i] = min_val + (i * delta)
+            print 'bucket vals', bucket_vals
 
         def iterate_values(value_iterator):
             bucket_counts = [0] * n_buckets
@@ -208,6 +217,7 @@ class XPlot(object):
                 elif b < 0:
                     b = 0
                 bucket_counts[b] += 1
+            print 'bucket counts', bucket_counts
             yield bucket_counts
 
         def merge_accumulators(acc1, acc2):
@@ -223,7 +233,7 @@ class XPlot(object):
                   bins=None,
                   sketch=None, 
                   xlabel=None, ylabel=None,
-                  lower_cutoff=0.0, upper_cutoff=0.99):
+                  lower_cutoff=0.0, upper_cutoff=1.0):
         """ 
         Plot a histogram.
 
@@ -257,7 +267,7 @@ class XPlot(object):
         upper_cutoff : float, optional
             This is a quantile value, between 0 and 1.  
             Values above this cutoff are placed in the last bin.
-            Defaults to 0.99.
+            Defaults to 1.0.
 
         bins : int, optional
             The number of bins to use.  Defaults to 50.
@@ -276,8 +286,9 @@ class XPlot(object):
         bins = bins or 50
         sk = sketch or column.sketch_summary()
         q_epsilon = 0.01
-        q_lower = float(sk.quantile(lower_cutoff)) - q_epsilon
-        q_upper = float(sk.quantile(upper_cutoff)) + q_epsilon
+        if lower_cutoff > 0.0 or upper_cutoff < 1.0:
+            q_lower = float(sk.quantile(lower_cutoff)) - q_epsilon
+            q_upper = float(sk.quantile(upper_cutoff)) + q_epsilon
         xlabel = xlabel or 'Value'
         ylabel = ylabel or 'Count'
         vals = column.dropna()
@@ -288,9 +299,11 @@ class XPlot(object):
             if x > q_upper:
                 return q_upper
             return x
-        vals = vals.apply(enforce_cutoff)
+        if lower_cutoff > 0.0 or upper_cutoff < 1.0:
+            vals = vals.apply(enforce_cutoff)
         bucket_counts, bucket_vals = self.create_histogram_buckets(vals, bins, sk.min(), sk.max())
         column = [(x, y) for x, y in zip(bucket_counts, bucket_vals)]
+        print 'column', column
         self.make_bar(column, xlabel=xlabel, ylabel=ylabel, title=title)
 
     def col_info(self, col_name, table_name=None, title=None, topk=None, bins=None, cutoff=False):
