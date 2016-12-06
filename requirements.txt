@@ -3,16 +3,17 @@ Babel==1.3
 backports.ssl-match-hostname==3.4.0.2
 certifi==2015.4.28
 docutils==0.12
-hdfs (2.0.2)
+hdfs==2.0.2
 ipython==3.1.0
 Jinja2==2.7.3
 jsonschema==2.4.0
+jupyter
 MarkupSafe==0.23
 matplotlib==1.4.3
 mistune==0.5.1
 mock==1.0.1
 nose==1.3.6
-numpy==1.9.2
+numpy==1.11.2
 pandas==0.16.0
 pandoc==1.0.0a8
 pdfrw==0.1
@@ -25,7 +26,7 @@ pytz==2015.2
 pyzmq==14.6.0
 reportlab==3.1.44
 requests==2.7.0
-rst2pdf===0.93.dev-r0
+rst2pdf===0.93
 sh==1.11
 six==1.9.0
 snowballstemmer==1.2.0

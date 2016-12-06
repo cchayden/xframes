@@ -59,7 +59,7 @@ Download Library
 
 Clone xFrames this way::
 
-    git clone https://github.com/Atigeo/xpatterns-xframe.git xframes-lib
+    git clone https://github.com/chayden/xframes.git
 
 Build Docker Container
 ----------------------
