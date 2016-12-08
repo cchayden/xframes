@@ -138,7 +138,8 @@ class XPlot(object):
 
         self.make_barh(items, xlabel, ylabel, title=title)
 
-    def frequent_values(self, y_col, k=15, title=None, xlabel=None, ylabel=None):
+    def frequent_values(self, y_col, k=15, title=None, xlabel=None, ylabel=None,
+                        epsilon=None, delta=None, num_items=None):
         """
         Plots the number of occurances of specific values in a column.  
 
@@ -162,6 +163,15 @@ class XPlot(object):
         ylabel : str, optional
             A label for the Y axis.
 
+        epsilon : float, optional
+            Governs accuracy of frequency counter.
+
+        delta : float, optional
+            Governs accuracy of frequency counter.
+
+        num_items : float, optional
+            Governs accuracy of frequency counter.
+
         Examples
         --------
         (Need examples)
@@ -169,6 +179,13 @@ class XPlot(object):
         """
         column = self.xframe[y_col]
         sk = column.sketch_summary()
+        if epsilon:
+            sk.set_frequency_sketch_parms(epsilon=epsilon)
+        if delta:
+            sk.set_frequency_sketch_parms(delta=delta)
+        if num_items:
+            sk.set_frequency_sketch_parms(num_items=num_items)
+
         fi = sk.frequent_items()
         if len(fi) > 0:
             sorted_fi = sorted(fi.iteritems(), key=operator.itemgetter(1), reverse=True)
