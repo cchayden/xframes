@@ -49,7 +49,7 @@ FOOTER_STRS = ['Note: Only the head of the XFrame is printed.  You can use ',
 LAZY_FOOTER_STRS = ['Note: Only the head of the XFrame is printed. This XFrame is lazily ',
                     'evaluated.  You can use len(xf) to force materialization.']
 
-MAX_ROW_WIDTH = 80
+MAX_ROW_WIDTH = 70
 HTML_MAX_ROW_WIDTH = 120
 
 
@@ -2381,11 +2381,12 @@ class XFrame(XObject):
             remote URL. If the format is 'binary', a directory will be created
             at the location which will contain the xframe.
 
-        format : {'binary', 'csv', 'parquet'}, optional
+        format : {'binary', 'csv', 'parquet', json}, optional
             Format in which to save the XFrame. Binary saved XFrames can be
             loaded much faster and without any format conversion losses. If not
             given, will try to infer the format from filename given. If file
             name ends with 'csv' or '.csv.gz', then save as 'csv' format.
+            If the file ends with 'json', then save as json file.
             If the file ends with 'parquet', then save as parquet file.
             Otherwise save as 'binary' format.
 
@@ -2406,19 +2407,29 @@ class XFrame(XObject):
         if format is None:
             if filename.endswith(('.csv', '.csv.gz')):
                 format = 'csv'
+            if filename.endswith(('.tsv', '.tsv.gz')):
+                    format = 'tsv'
             elif filename.endswith('.parquet'):
                 format = 'parquet'
+            elif filename.endswith('.json'):
+                format = 'json'
             else:
                 format = 'binary'
         else:
             if format is 'csv':
                 if not filename.endswith(('.csv', '.csv.gz')):
                     filename += '.csv'
+            if format is 'tsv':
+                if not filename.endswith(('.tsv', '.tsv.gz')):
+                    filename += '.tsv'
+            elif format is 'json':
+                if not filename.endswith('.json'):
+                    filename += '.json'
             elif format is 'parquet':
                 if not filename.endswith('.parquet'):
                     filename += '.parquet'
             elif format is not 'binary':
-                raise ValueError("Invalid format: {}. Supported formats are 'csv', 'parquet', and 'binary'."
+                raise ValueError("Invalid format: {}. Supported formats are 'csv', 'tsv', 'parquet', 'json', and 'binary'."
                                  .format(format))
 
         # Save the XFrame
@@ -2432,6 +2443,14 @@ class XFrame(XObject):
             if not filename.endswith(('.csv', '.csv.gz')):
                 raise ValueError('File name must end with .csv or .csv.gz.')
             self._impl.save_as_csv(url)
+        elif format is 'tsv':
+            if not filename.endswith(('.tsv', '.tsv.gz')):
+                raise ValueError('File name must end with .tsv or .tsv.gz.')
+            self._impl.save_as_csv(url, delimiter='\t')
+        elif format is 'json':
+            if not filename.endswith('.json'):
+                raise ValueError('File name must end with .json.')
+            self._impl.save_as_json(url, number_of_partitions=8)
         elif format is 'parquet':
             if not filename.endswith('.parquet'):
                 raise ValueError('File name must end with .parquet.')
@@ -4801,7 +4820,7 @@ class XFrame(XObject):
         [1 rows x 2 columns]
         """
 
-        # If the user gives me an empty list (the indicator to use all columns)
+        # If the user gives an empty list (the indicator to use all columns)
         # NA values being dropped would not be the expected behavior. This
         # is a NOOP, so let's not bother the server
         if isinstance(columns, list) and len(columns) == 0:
