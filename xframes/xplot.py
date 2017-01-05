@@ -29,9 +29,9 @@ class XPlot(object):
     alpha : float, optional
         The opacity of the plot.
     """
-    def __init__(self, xframe, axes=None, alpha=None):
+    def __init__(self, axes=None, alpha=None):
         """
-        Create a plotting object for the given XFrame.  
+        Create a plotting object.
 
         Parameters
         ----------
@@ -43,7 +43,6 @@ class XPlot(object):
         alpha : float, optional
             The opacity of the plot.
         """
-        self.xframe = xframe
         self.axes = axes if axes else [0.0, 0.0, 1.5, 1.0]
         self.alpha = alpha or 0.5
 
@@ -55,6 +54,13 @@ class XPlot(object):
                 y_pos = range(len(items))
                 vals = [int(key[1]) for key in items]
                 labels = [str(key[0])[:30] for key in items]
+
+                def safe_decode(str):
+                    try:
+                        return str.decode('utf8')
+                    except:
+                        return 'string decde error'
+                labels = [safe_decode(label) for label in labels]
                 plt.barh(y_pos, vals, align='center', alpha=self.alpha)
                 plt.yticks(y_pos, labels)
                 plt.xlabel(xlabel)
@@ -102,12 +108,15 @@ class XPlot(object):
                 logging.warn(traceback.format_exc())
                 logging.warn(e)
 
-    def top_values(self, x_col, y_col, k=15, title=None, xlabel=None, ylabel=None):
+    def top_values(self, xf, x_col, y_col, k=15, title=None, xlabel=None, ylabel=None):
         """
         Plot the top values of a column of data.
 
         Parameters
         ----------
+        xf : XFrame
+            An XFrame containing the columns to be plotted.
+
         x_col : str
             A column name: the top values in this column are plotted.  These values must be numerical.
 
@@ -131,14 +140,14 @@ class XPlot(object):
         --------
         (Come up with an example)
         """
-        top_rows = self.xframe.topk(x_col, k=k)
+        top_rows = xf.topk(x_col, k=k)
         items = [(row[y_col], row[x_col]) for row in top_rows]
         xlabel = xlabel or x_col
         ylabel = ylabel or y_col
 
         self.make_barh(items, xlabel, ylabel, title=title)
 
-    def frequent_values(self, y_col, k=15, title=None, xlabel=None, ylabel=None,
+    def frequent_values(self, column, k=15, title=None, xlabel=None, ylabel=None,
                         epsilon=None, delta=None, num_items=None):
         """
         Plots the number of occurances of specific values in a column.  
@@ -147,8 +156,8 @@ class XPlot(object):
 
         Parameters
         ----------
-        y_col : str
-            A column name: the column to plot.  The number of distinct occurrances of each value is
+        column : XArray
+            The column to plot.  The number of distinct occurrances of each value is
             calculated and plotted.  
 
         k : int, optional
@@ -172,12 +181,16 @@ class XPlot(object):
         num_items : float, optional
             Governs accuracy of frequency counter.
 
+        Returns
+        -------
+        list of tuples
+            List of (value, count) for the most frequent "k" values
+
         Examples
         --------
         (Need examples)
 
         """
-        column = self.xframe[y_col]
         sk = column.sketch_summary()
         if epsilon:
             sk.set_frequency_sketch_parms(epsilon=epsilon)
@@ -190,20 +203,20 @@ class XPlot(object):
         if len(fi) > 0:
             sorted_fi = sorted(fi.iteritems(), key=operator.itemgetter(1), reverse=True)
         else:
-            return
+            return []
         frequent = [x for x in sorted_fi[:k] if x[1] > 1]
         if len(frequent) > 0:
             xlabel = xlabel or 'Count'
             ylabel = ylabel or 'Value'
             title = title or "Frequent Values"
             self.make_barh(frequent, xlabel=xlabel, ylabel=ylabel, title=title)
+        return frequent
 
     @staticmethod
     def create_histogram_buckets(vals, bins, min_val, max_val):
         if max_val == min_val:
             return None, None
         interval = max_val - min_val
-        print 'interval', interval
         n_buckets = bins or 50
         bucket_vals = [0] * n_buckets
         usetd = isinstance(interval, datetime.timedelta)
@@ -213,10 +226,8 @@ class XPlot(object):
                 bucket_vals[i] = min_val + datetime.timedelta(seconds=(i * delta))
         else:
             delta = float(interval) / n_buckets
-            print 'delta', delta
             for i in range(0, n_buckets):
                 bucket_vals[i] = min_val + (i * delta)
-            print 'bucket vals', bucket_vals
 
         def iterate_values(value_iterator):
             bucket_counts = [0] * n_buckets
@@ -234,7 +245,6 @@ class XPlot(object):
                 elif b < 0:
                     b = 0
                 bucket_counts[b] += 1
-            print 'bucket counts', bucket_counts
             yield bucket_counts
 
         def merge_accumulators(acc1, acc2):
@@ -250,7 +260,8 @@ class XPlot(object):
                   bins=None,
                   sketch=None, 
                   xlabel=None, ylabel=None,
-                  lower_cutoff=0.0, upper_cutoff=1.0):
+                  lower_cutoff=0.0, upper_cutoff=1.0,
+                  lower_bound = None, upper_bound=None):
         """ 
         Plot a histogram.
 
@@ -286,6 +297,12 @@ class XPlot(object):
             Values above this cutoff are placed in the last bin.
             Defaults to 1.0.
 
+        lower_bound : float, optional
+            Values below this bound are placed in the first bin.
+
+        upper_bound : float, optional
+            Values below this bound are placed in the last bin.
+
         bins : int, optional
             The number of bins to use.  Defaults to 50.
 
@@ -303,27 +320,39 @@ class XPlot(object):
         bins = bins or 50
         sk = sketch or column.sketch_summary()
         q_epsilon = 0.01
-        if lower_cutoff > 0.0 or upper_cutoff < 1.0:
+        q_lower = None
+        q_upper = None
+        if lower_cutoff > 0.0:
             q_lower = float(sk.quantile(lower_cutoff)) - q_epsilon
+        if upper_cutoff < 1.0:
             q_upper = float(sk.quantile(upper_cutoff)) + q_epsilon
+        if lower_bound is not None:
+            q_lower = lower_bound
+        if upper_bound is not None:
+            q_upper = upper_bound
         xlabel = xlabel or 'Value'
         ylabel = ylabel or 'Count'
         vals = column.dropna()
 
-        def enforce_cutoff(x):
-            if x < q_lower:
-                return q_lower
-            if x > q_upper:
-                return q_upper
-            return x
-        if lower_cutoff > 0.0 or upper_cutoff < 1.0:
-            vals = vals.apply(enforce_cutoff)
-        bucket_counts, bucket_vals = self.create_histogram_buckets(vals, bins, sk.min(), sk.max())
+        def enforce_lower_cutoff(x):
+            return max(x, q_lower)
+        def enforce_upper_cutoff(x):
+            return min(x, q_upper)
+        if q_lower is not None:
+            vals = vals.apply(enforce_lower_cutoff)
+            hist_min = q_lower
+        else:
+            hist_min = sk.min()
+        if q_upper is not None:
+            vals = vals.apply(enforce_upper_cutoff)
+            hist_max = q_upper
+        else:
+            hist_max = sk.max()
+        bucket_counts, bucket_vals = self.create_histogram_buckets(vals, bins, hist_min, hist_max)
         column = [(x, y) for x, y in zip(bucket_counts, bucket_vals)]
-        print 'column', column
         self.make_bar(column, xlabel=xlabel, ylabel=ylabel, title=title)
 
-    def col_info(self, col_name, table_name=None, title=None, topk=None, bins=None, cutoff=False):
+    def col_info(self, column, column_name=None, table_name=None, title=None, topk=None, bins=None, cutoff=False):
         """ 
         Print column summary information.
 
@@ -332,8 +361,11 @@ class XPlot(object):
 
         Parameters
         ----------
-        col_name : str
-            The column name to summarize.
+        column : XArray
+            The column to summarize.
+
+        column_name : str
+            The column name.
 
         table_name : str, optional
             The table name; used to labeling only.  The table that us used for the data
@@ -357,10 +389,10 @@ class XPlot(object):
         """
 
         title = title or table_name
+        column_name = column_name or ''
         table_name = table_name or ''
         print 'Table Name:  ', table_name
-        print 'Column Name: ', col_name
-        column = self.xframe[col_name]
+        print 'Column Name: ', column_name
         print 'Column Type: ', column.dtype().__name__
         sk = column.sketch_summary()
         print 'Rows:        ', sk.size()
@@ -377,7 +409,7 @@ class XPlot(object):
             top = [x for x in sorted_fi[:topk] if x[1] > 1]
             for key in top:
                 print '   {:10}  {:10}'.format(key[1], key[0])
-        col_type = self.xframe[col_name].dtype()
+        col_type = column.dtype()
         if col_type is int or col_type is float:
             # number: show a histogram
             print 'Num Undefined:', sk.num_undefined()
@@ -406,6 +438,6 @@ class XPlot(object):
             vals = xframes.XArray([key[0] for key in top], dtype=col_type)
             counts = xframes.XArray([key[1] for key in top], dtype=int)
             x_col = 'Count'
-            y_col = col_name
+            y_col = column_name
             tmp = xframes.XFrame({x_col: counts, y_col: vals})
             tmp.show().top_values(x_col, y_col, title=title, k=topk)
