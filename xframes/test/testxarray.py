@@ -689,20 +689,22 @@ class TestXArrayOpVector(XArrayUnitTestCase):
         self.assertTrue(res[2])
 
     def test_and_vector(self):
-        t1 = XArray([0, 0, 1])
-        t2 = XArray([0, 1, 1])
+        t1 = XArray([False, False, True, True])
+        t2 = XArray([False, True, False, True])
         res = t1 & t2
-        self.assertEqual(0, res[0])
-        self.assertEqual(0, res[1])
-        self.assertEqual(1, res[2])
+        self.assertEqual(False, res[0])
+        self.assertEqual(False, res[1])
+        self.assertEqual(False, res[2])
+        self.assertEqual(True, res[3])
 
     def test_or_vector(self):
-        t1 = XArray([0, 0, 1])
-        t2 = XArray([0, 1, 1])
+        t1 = XArray([False, False, True, True])
+        t2 = XArray([False, True, False, True])
         res = t1 | t2
-        self.assertEqual(0, res[0])
-        self.assertEqual(1, res[1])
-        self.assertEqual(1, res[2])
+        self.assertEqual(False, res[0])
+        self.assertEqual(True, res[1])
+        self.assertEqual(True, res[2])
+        self.assertEqual(True, res[3])
 
 
 class TestXArrayOpUnary(XArrayUnitTestCase):
