@@ -613,6 +613,8 @@ class XArray(XObject):
     def __and__(self, other):
         """
         Perform a logical element-wise 'and' against another XArray.
+        Note that this is not the "and" operator, which cannot be overridden,
+        but the "&" operator.
         """
         if isinstance(other, XArray):
             return XArray(impl=self._impl.vector_operator(other._impl, '&'))
@@ -622,6 +624,8 @@ class XArray(XObject):
     def __or__(self, other):
         """
         Perform a logical element-wise 'or' against another XArray.
+        Note that this is not the "or" operator, which cannot be overridden,
+        but the "|" operator.
         """
         if isinstance(other, XArray):
             return XArray(impl=self._impl.vector_operator(other._impl, '|'))

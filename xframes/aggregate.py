@@ -22,7 +22,7 @@ def SUM(src_column):
 # noinspection PyPep8Naming
 def ARGMAX(agg_column, out_column):
     """
-    Builtin arg maximum aggregator for groupby
+    Builtin arg maximum aggregator for groupby.
 
     Examples
     --------
@@ -38,7 +38,7 @@ def ARGMAX(agg_column, out_column):
 # noinspection PyPep8Naming
 def ARGMIN(agg_column, out_column):
     """
-    Builtin arg minimum aggregator for groupby
+    Builtin arg minimum aggregator for groupby.
 
     Examples
     --------
