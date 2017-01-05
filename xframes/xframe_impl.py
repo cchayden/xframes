@@ -494,7 +494,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
             return tuple([cast_val(val, typ, name) for val, typ, name in zip(row, types, names)])
 
         # TODO -- if cast fails, then store None
-        if not (len(types) == 0 or all([t == str for t in types])):
+        if not len(types) == 0:
             res = res.map(lambda row: cast_row(row, types, col_names))
             if row_limit is None:
                 persist(res)
@@ -644,6 +644,29 @@ class XFrameImpl(XObjectImpl, TracedObject):
             dataframe.write.parquet(url)
         else:
             dataframe.saveAsParquetFile(url)
+
+    def save_as_json(self, url, column_names=None, column_type_hints=None, number_of_partitions=None):
+        """
+        Save to a json file.
+        """
+        column_names = column_names or self.col_names
+
+        self._entry(url=url,
+                    column_names=column_names,
+                    column_type_hints=column_type_hints,
+                    number_of_partitions=number_of_partitions)
+        fileio.delete(url)
+        table_name = None
+        dataframe = self.to_spark_dataframe(table_name,
+                                            column_names=column_names,
+                                            column_type_hints=column_type_hints,
+                                            number_of_partitions=number_of_partitions)
+        if dataframe is None:
+            logging.warn('Save_as_json -- dataframe conversion failed.')
+            return
+        else:
+            dataframe.write.json(url)
+
 
     def to_rdd(self, number_of_partitions=None):
         """
@@ -1382,6 +1405,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
 
         def stack_row(row, col, drop_na):
             res = []
+            if row[col] is None:
+                return res
             for val in row[col]:
                 if drop_na and is_missing_or_empty(val):
                     continue
@@ -1475,7 +1500,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
         """
         Remove missing values from an RDD. A missing value is either ``None``
         or ``NaN``.  If ``all_behavior`` is False, a row will be removed if any of the
-        columns in the ``columns`` parameter contains at least one missing
+        columns in the ``columns`` parameter contains a missing
         value.  If ``all_behavior`` is True, a row will be removed if all of the columns
         in the ``columns`` parameter are missing values.
 
