@@ -46,7 +46,7 @@ class XPlot(object):
         self.axes = axes if axes else [0.0, 0.0, 1.5, 1.0]
         self.alpha = alpha or 0.5
 
-    def make_barh(self, items, xlabel, ylabel, title=None):
+    def make_barh(self, items, xlabel, ylabel, append_counts_to_label=False, title=None):
         if not HAS_MATPLOTLIB:
             return
         if items is not None and len(items) > 0:
@@ -54,12 +54,13 @@ class XPlot(object):
                 y_pos = range(len(items))
                 vals = [int(key[1]) for key in items]
                 labels = [str(key[0])[:30] for key in items]
-
+                if append_counts_to_label:
+                    labels = ['{} ({:,})'.format(label, val) for val, label in zip(vals, labels)]
                 def safe_decode(str):
                     try:
                         return str.decode('utf8')
                     except:
-                        return 'string decde error'
+                        return 'string decode error'
                 labels = [safe_decode(label) for label in labels]
                 plt.barh(y_pos, vals, align='center', alpha=self.alpha)
                 plt.yticks(y_pos, labels)
@@ -147,7 +148,9 @@ class XPlot(object):
 
         self.make_barh(items, xlabel, ylabel, title=title)
 
-    def frequent_values(self, column, k=15, title=None, xlabel=None, ylabel=None,
+    def frequent_values(self, column, k=15, title=None,
+                        append_counts_to_label=False,
+                        xlabel=None, ylabel=None,
                         epsilon=None, delta=None, num_items=None):
         """
         Plots the number of occurances of specific values in a column.  
@@ -165,6 +168,9 @@ class XPlot(object):
 
         title : str, optional
             A plot title.
+
+        append_counts_to_label : boolean, optional
+            If true, append the bar count to the label
 
         xlabel : str, optional
             A label for the X axis.
@@ -209,7 +215,7 @@ class XPlot(object):
             xlabel = xlabel or 'Count'
             ylabel = ylabel or 'Value'
             title = title or "Frequent Values"
-            self.make_barh(frequent, xlabel=xlabel, ylabel=ylabel, title=title)
+            self.make_barh(frequent, xlabel, ylabel, append_counts_to_label=append_counts_to_label, title=title)
         return frequent
 
     @staticmethod
