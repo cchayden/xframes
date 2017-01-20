@@ -19,7 +19,7 @@ import pandas
 from xframes import XArray
 from xframes import XFrame
 from xframes.aggregate import SUM, ARGMAX, ARGMIN, MAX, MIN, COUNT, MEAN, \
-    VARIANCE, STDV, SELECT_ONE, CONCAT
+    VARIANCE, STDV, SELECT_ONE, CONCAT, UNIQUE
 
 
 def delete_file_or_dir(path):
@@ -28,7 +28,6 @@ def delete_file_or_dir(path):
     elif os.path.isfile(path):
         os.remove(path)
 
-
 class XFrameUnitTestCase(unittest.TestCase):
 
     def assertEqualLen(self, expect, obj):
@@ -36,6 +35,22 @@ class XFrameUnitTestCase(unittest.TestCase):
 
     def assertColumnEqual(self, expect, obj):
         return self.assertListEqual(expect, list(obj))
+
+    def assertDictKeysEqual(self, expected, actual):
+        expected_keys = sorted(expected.keys())
+        actual_keys = sorted(actual.keys())
+        self.assertListEqual(expected_keys, actual_keys)
+
+    def assertDictValsEqual(self, expected, actual):
+        for key in expected.keys():
+            expected_val = expected[key]
+            actual_val = actual[key]
+            if type(expected_val) is list and type(actual_val) is list:
+                self.assertListEqual(sorted(expected_val), sorted(actual_val))
+            else:
+                self.assertEqual(expected_val, actual_val)
+        expected_keys = sorted(expected.keys())
+        actual_keys = sorted(actual.keys())
 
 
 class TestXFrameVersion(XFrameUnitTestCase):
@@ -3043,6 +3058,23 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
         self.assertDictEqual({'id': 1, 'concat': {'a': 10, 'd': 40, 'f': 60}}, res[0])
         self.assertDictEqual({'id': 2, 'concat': {'b': 20, 'e': 50}}, res[1])
         self.assertDictEqual({'id': 3, 'concat': {'c': 30}}, res[2])
+
+    def test_groupby_unique_list(self):
+        def comp_results(expected, actual):
+            self.assertDictKeysEqual(expected, actual)
+            self.assertDictValsEqual(expected, actual)
+
+        t = XFrame({'id': [1, 2, 3, 1, 2, 1, 1],
+                    'val': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+                    'another': [10, 20, 30, 40, 50, 60, 10]})
+        res = t.groupby('id', {'set': UNIQUE('another')})
+        res = res.topk('id', reverse=True)
+        self.assertEqualLen(3, res)
+        self.assertListEqual(['id', 'set'], res.column_names())
+        self.assertListEqual([int, list], res.column_types())
+        comp_results({'id': 1, 'set': [10, 40, 60]}, res[0])
+        comp_results({'id': 2, 'set': [20, 50]}, res[1])
+        self.assertDictEqual({'id': 3, 'set': [30]}, res[2])
 
     def test_groupby_quantile(self):
         # not implemented
