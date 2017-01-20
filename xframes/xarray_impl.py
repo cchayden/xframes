@@ -746,7 +746,7 @@ class XArrayImpl(XObjectImpl, TracedObject):
         # TODO this forces evaluatuion -- consider not doing it
         errs = res.filter(lambda x: type(x) is ApplyError).take(100)
         if len(errs) > 0:
-            raise ValueError('Transformation failures: errs {}'.format(len(errs)))
+            raise ValueError('Transformation failures: errs {}  err[0]: {}'.format(len(errs), errs[0].msg))
         return self._rv(res, dtype)
 
     def flat_map(self, fn, dtype, skip_undefined, seed):
