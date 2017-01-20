@@ -494,7 +494,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
             return tuple([cast_val(val, typ, name) for val, typ, name in zip(row, types, names)])
 
         # TODO -- if cast fails, then store None
-        if not len(types) == 0:
+        if len(types) != 0:
             res = res.map(lambda row: cast_row(row, types, col_names))
             if row_limit is None:
                 persist(res)
@@ -861,6 +861,12 @@ class XFrameImpl(XObjectImpl, TracedObject):
         rdd2 = labeled_rdd.filter(lambda row: row[1] >= fraction).keys()
         uncache(labeled_rdd)
         return self._rv(rdd1), self._rv(rdd2)
+
+    def persist(self, persist_flag):
+        if persist_flag:
+            self._rdd.persist(StorageLevel.MEMORY_AND_DISK)
+        else:
+            self._rdd.unpersist()
 
     # Materialization
     def materialize(self):
