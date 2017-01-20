@@ -1287,7 +1287,7 @@ class XFrame(XObject):
     def _create_footer(self, html_flag, max_rows_to_display):
         sep = '<br>' if html_flag else '\n'
         if self._is_materialized():
-            footer = '[{} rows x {} columns]{}'.format(self.num_rows(), self.num_columns, sep)
+            footer = '[{} rows x {} columns]{}'.format(self.num_rows(), self.num_columns(), sep)
             if self.num_rows() > max_rows_to_display:
                 footer += sep.join(FOOTER_STRS)
         else:
@@ -2407,8 +2407,8 @@ class XFrame(XObject):
         if format is None:
             if filename.endswith(('.csv', '.csv.gz')):
                 format = 'csv'
-            if filename.endswith(('.tsv', '.tsv.gz')):
-                    format = 'tsv'
+            elif filename.endswith(('.tsv', '.tsv.gz')):
+                format = 'tsv'
             elif filename.endswith('.parquet'):
                 format = 'parquet'
             elif filename.endswith('.json'):
@@ -2416,19 +2416,19 @@ class XFrame(XObject):
             else:
                 format = 'binary'
         else:
-            if format is 'csv':
+            if format == 'csv':
                 if not filename.endswith(('.csv', '.csv.gz')):
                     filename += '.csv'
-            if format is 'tsv':
+            elif format == 'tsv':
                 if not filename.endswith(('.tsv', '.tsv.gz')):
                     filename += '.tsv'
-            elif format is 'json':
+            elif format == 'json':
                 if not filename.endswith('.json'):
                     filename += '.json'
-            elif format is 'parquet':
+            elif format == 'parquet':
                 if not filename.endswith('.parquet'):
                     filename += '.parquet'
-            elif format is not 'binary':
+            elif format != 'binary':
                 raise ValueError("Invalid format: {}. Supported formats are 'csv', 'tsv', 'parquet', 'json', and 'binary'."
                                  .format(format))
 
@@ -2436,22 +2436,22 @@ class XFrame(XObject):
         url = make_internal_url(filename)
         XFrameImpl.check_output_uri(url)
 
-        if format is 'binary':
+        if format == 'binary':
             self._impl.save(url)
 
-        elif format is 'csv':
+        elif format == 'csv':
             if not filename.endswith(('.csv', '.csv.gz')):
                 raise ValueError('File name must end with .csv or .csv.gz.')
             self._impl.save_as_csv(url)
-        elif format is 'tsv':
+        elif format == 'tsv':
             if not filename.endswith(('.tsv', '.tsv.gz')):
                 raise ValueError('File name must end with .tsv or .tsv.gz.')
             self._impl.save_as_csv(url, delimiter='\t')
-        elif format is 'json':
+        elif format == 'json':
             if not filename.endswith('.json'):
                 raise ValueError('File name must end with .json.')
             self._impl.save_as_json(url, number_of_partitions=8)
-        elif format is 'parquet':
+        elif format == 'parquet':
             if not filename.endswith('.parquet'):
                 raise ValueError('File name must end with .parquet.')
             self._impl.save_as_parquet(url, number_of_partitions=8)
@@ -3047,6 +3047,20 @@ class XFrame(XObject):
             raise KeyError('Cannot find column {}.'.format(name))
         self._impl.remove_column_in_place(name)
         return self
+
+    def persist(self, persist_flag):
+        """
+        Persist or unpersist the underlying data storage object.
+
+        Persisting makes a copy of the object on the disk, so that it does not have to be recomputed in times of
+        low memory.  Unpersisting frees up this space.
+
+        Parameters
+        ----------
+        persist_flag : boolean
+            If True, peersist the object.  If False, unpersist it.
+        """
+        self._impl.persist(persist_flag)
 
     def _materialize(self):
         """
