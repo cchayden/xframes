@@ -25,6 +25,11 @@ def collect_non_missing_kv(rows, key_col, val_col):
         return None
     return {row[key_col]: row[val_col] for row in non_missing_rows}
 
+def collect_unique_non_missing(rows, src_col, out_col=None):
+    out_col = out_col or src_col
+    return list({row[out_col] for row in rows if not is_missing(row[src_col])})
+
+
 # Each of these functions operates on a pyspark resultIterable
 #  produced by groupByKey and directly produces the aggregated result.
 
@@ -137,7 +142,15 @@ def agg_concat_dict(rows, cols):
     return vals
 
 
-def agg_quantile(rows, cols): 
+def agg_unique_list(rows, cols):
+    # cols: [src_col]
+    vals = collect_unique_non_missing(rows, cols[0])
+    if len(vals) == 0:
+        return []
+    return vals
+
+
+def agg_quantile(rows, cols):
     # cols: [src_col, quantile]
     # cols: [src_col, [quantile ...]]
     # not imlemented
@@ -213,4 +226,5 @@ aggregator_properties.add(AggregatorPropertySet('__builtin__stdv__', agg_std, 's
 aggregator_properties.add(AggregatorPropertySet('__builtin__select_one__', agg_select_one, 'select_one', 0))
 aggregator_properties.add(AggregatorPropertySet('__builtin__concat__list__', agg_concat_list, 'concat', list))
 aggregator_properties.add(AggregatorPropertySet('__builtin__concat__dict__', agg_concat_dict, 'concat', dict))
+aggregator_properties.add(AggregatorPropertySet('__builtin__unique__list__', agg_unique_list, 'set', list))
 aggregator_properties.add(AggregatorPropertySet('__builtin__quantile__', agg_quantile, 'quantile', float))

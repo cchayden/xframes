@@ -209,6 +209,23 @@ def CONCAT(src_column, dict_value_column=None):
     else:
         return '__builtin__concat__dict__', [src_column, dict_value_column]
 
+# noinspection PyPep8Naming
+def UNIQUE(src_column, dict_value_column=None):
+    """
+    Builtin aggregator that combines distinct values from one  column in one group
+    into a list value or array value.
+
+    Examples
+    --------
+
+    To combine values from one column that belong to one group into a list value:
+
+    >>> xf.groupby(["user"],
+       {"friends": aggregate.SET("friend")})
+
+    """
+    return '__builtin__unique__list__', [src_column]
+
 
 # noinspection PyPep8Naming
 def QUANTILE(src_column, *args):
