@@ -532,7 +532,7 @@ class XFrame(XObject):
         -------
         A new XFrame with the contents that were read.
         """
-        na_values = na_values or '[NA]'
+        na_values = na_values or ['']
         parsing_config = dict()
         parsing_config['delimiter'] = delimiter
         parsing_config['use_header'] = header
@@ -1002,7 +1002,7 @@ class XFrame(XObject):
         Set error_bad_lines=False to skip bad lines
         """
 
-        na_values = na_values or ['NA']
+        na_values = na_values or ['']
         ret = cls._read_csv_impl(url,
                                  delimiter=delimiter,
                                  header=header,
