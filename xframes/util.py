@@ -891,3 +891,5 @@ def safe_cast_val(val, typ):
         return ''
     except TypeError:
         return None
+    except ValueError:
+        return None
