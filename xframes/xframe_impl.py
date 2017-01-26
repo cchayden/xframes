@@ -604,7 +604,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
 
         # Make a CSV file from an RDD
 
-        # this will ensure that we get everything in one fie
+        # this will ensure that we get everything in one file
         data = csv_data.repartition(1)
 
         # save the data in the part file
