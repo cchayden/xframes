@@ -485,9 +485,11 @@ class XFrameImpl(XObjectImpl, TracedObject):
                     return date_parser.parse(val)
                 return typ(val)
             except ValueError:
-                raise ValueError('Cast failed: ({}) {}  col: {}'.format(typ, val, name))
+               # raise ValueError('Cast failed: ({}) {}  col: {}'.format(typ, val, name))
+                return None
             except TypeError:
-                raise TypeError('Cast failed: ({}) {}  col: {}'.format(typ, val, name))
+                # raise TypeError('Cast failed: ({}) {}  col: {}'.format(typ, val, name))
+                return None
 
         # This is where the result is cast as a tuple
         def cast_row(row, types, names):
