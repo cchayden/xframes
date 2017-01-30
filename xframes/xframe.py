@@ -1163,7 +1163,7 @@ class XFrame(XObject):
         """
         return self._impl.dump_debug_info()
 
-    def _get_pretty_tables(self, wrap_text=False, max_row_width=MAX_ROW_WIDTH,
+    def _get_pretty_tables(self, wrap_text=False, max_wrap_rows=2, max_row_width=MAX_ROW_WIDTH,
                            max_column_width=30, max_columns=20,
                            max_rows_to_display=60):
         """
@@ -1174,6 +1174,9 @@ class XFrame(XObject):
         Parameters
         ----------
         wrap_text : bool, optional
+
+        max_wrap_rows : int, optional
+            Max number of rows after wrapping, Default 2
 
         max_row_width : int, optional
             Max number of characters per table.
@@ -1210,7 +1213,7 @@ class XFrame(XObject):
         for index, col_name in enumerate(self.column_names()[:max_columns]):
             cols[col_name] = [row[index] for row in head_rows]
 
-        def truncate_str(s, wrap_str=False):
+        def truncate_str(s, wrap_str, max_wrap_rows):
             # Truncate and optionally wrap the input string as unicode, replace
             # unconvertible character with a diamond ?.
             s = repr(s)
@@ -1224,12 +1227,12 @@ class XFrame(XObject):
             if len(s) <= max_column_width:
                 return unicode(s, errors='replace')
             else:
-                # if wrap_str is true, wrap the text and take at most 2 rows
+                # if wrap_str is true, wrap the text and take at most max_wrap_rows
                 if wrap_str:
                     wrapped_lines = wrap(s, max_column_width)
-                    ret = '\n'.join(wrapped_lines[:2])
-                    last_line = wrapped_lines[:2][-1]
-                    if len(last_line) >= max_column_width or len(wrapped_lines) > 2:
+                    ret = '\n'.join(wrapped_lines[:max_wrap_rows])
+                    last_line = wrapped_lines[:max_wrap_rows][-1]
+                    if len(last_line) >= max_column_width or len(wrapped_lines) > max_wrap_rows:
                         space_left = max_column_width - len(last_line)
                         space_truncate = max(0, 4 - space_left)
                         if space_truncate > 0:
@@ -1256,15 +1259,15 @@ class XFrame(XObject):
             while len(columns) > 0:
                 col = columns.pop()
                 # check the max length of element in the column
-                header = truncate_str(col, wrap_text)
+                header = truncate_str(col, wrap_text, max_wrap_rows)
                 if n_rows > 0:
                     col_width = min(max_column_width, max(max(len(str(x)) for x in cols[col]), len(header) + 3))
                 else:
                     col_width = max_column_width
                 if table_width + col_width < max_row_width:
                     # truncate the header if necessary
-                    # tbl.add_column(header, [truncate_str(str(x), wrap_text) for x in headxf[col]])
-                    tbl.add_column(header, [truncate_str(str(x), wrap_text) for x in cols[col]])
+                    # tbl.add_column(header, [truncate_str(str(x, max_wrap_rows), wrap_text) for x in headxf[col]])
+                    tbl.add_column(header, [truncate_str(str(x), wrap_text, max_wrap_rows) for x in cols[col]])
                     table_width = str(tbl).find('\n')
                     num_column_of_last_table += 1
                 else:
@@ -1295,7 +1298,9 @@ class XFrame(XObject):
             footer += '\n'.join(LAZY_FOOTER_STRS)
         return footer
 
-    def print_rows(self, num_rows=10, num_columns=40, max_column_width=30, max_row_width=MAX_ROW_WIDTH):
+    def print_rows(self, num_rows=10, num_columns=40,
+                   max_column_width=30, max_row_width=MAX_ROW_WIDTH,
+                   wrap_text=False, max_wrap_rows=2):
         """
         Print the first rows and columns of the XFrame in human readable format.
 
@@ -1315,6 +1320,13 @@ class XFrame(XObject):
             new line. `max_row_width` is automatically reset to be the
             larger of itself and `max_column_width`.
 
+        wrap_text : boolean, optional
+            Wrap the text within a cell.  Defaults to False.
+
+        max_wrap_rows : int, optional
+            When wrapping is in effect, the maximum number of resulting rows for each cell
+            before truncation takes place.
+
         See Also
         --------
         xframes.XFrame.head
@@ -1327,7 +1339,8 @@ class XFrame(XObject):
         max_rows_to_display = num_rows
         max_row_width = max(max_row_width, max_column_width + 1)
 
-        row_of_tables = self._get_pretty_tables(wrap_text=False,
+        row_of_tables = self._get_pretty_tables(wrap_text=wrap_text,
+                                                max_wrap_rows=max_wrap_rows,
                                                 max_rows_to_display=num_rows,
                                                 max_columns=num_columns,
                                                 max_column_width=max_column_width,
