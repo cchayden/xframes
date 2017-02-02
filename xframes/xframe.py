@@ -2394,7 +2394,7 @@ class XFrame(XObject):
             remote URL. If the format is 'binary', a directory will be created
             at the location which will contain the xframe.
 
-        format : {'binary', 'csv', 'parquet', json}, optional
+        format : {'binary', 'csv', 'tsv', 'parquet', json}, optional
             Format in which to save the XFrame. Binary saved XFrames can be
             loaded much faster and without any format conversion losses. If not
             given, will try to infer the format from filename given. If file
@@ -3045,7 +3045,7 @@ class XFrame(XObject):
                 # implementation.
                 single_column = (self.num_columns() == 1)
                 if single_column:
-                    self._impl.replace_single_column_in_place(sa_value._impl)
+                    self._impl.replace_single_column_in_place(key, sa_value._impl)
                 else:
                     self._impl.replace_selected_column_in_place(key, sa_value._impl)
 

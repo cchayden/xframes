@@ -1294,7 +1294,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
         lineage = self.lineage.add_col_const(name)
         return self._replace(res, lineage=lineage)
 
-    def replace_single_column_in_place(self, col):
+    def replace_single_column_in_place(self, column_name, col):
         """
         Replace the column in a single-column table with the given one.
 
@@ -1304,7 +1304,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
         res = col.rdd().map(lambda item: (item, ))
         col_type = infer_type_of_rdd(col.rdd())
         self.column_types[0] = col_type
-        lineage = col.lineage
+        lineage = self.lineage.replace_column(col, column_name)
         return self._replace(res, lineage=lineage)
 
     def replace_selected_column(self, column_name, col):
