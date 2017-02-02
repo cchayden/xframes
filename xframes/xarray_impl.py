@@ -473,7 +473,7 @@ class XArrayImpl(XObjectImpl, TracedObject):
         elif op == '*':
             res = pairs.map(lambda x: x[0] * x[1])
         elif op == '/':
-            res = pairs.map(lambda x: x[0] / x[1])
+            res = pairs.map(lambda x: x[0] / x[1] if x[1] != 0 else None)
         elif op == '<':
             res = pairs.map(lambda x: x[0] < x[1])
             res_type = int
@@ -552,7 +552,7 @@ class XArrayImpl(XObjectImpl, TracedObject):
         elif op == '*':
             res = self._rdd.map(lambda x: other * x)
         elif op == '/':
-            res = self._rdd.map(lambda x: other / x)
+            res = self._rdd.map(lambda x: other / x if x != 0 else None)
         else:
             raise NotImplementedError(op)
         return self._rv(res)
