@@ -150,6 +150,7 @@ class XPlot(object):
 
     def frequent_values(self, column, k=15, title=None,
                         append_counts_to_label=False,
+                        normalize=False,
                         xlabel=None, ylabel=None,
                         epsilon=None, delta=None, num_items=None):
         """
@@ -171,6 +172,9 @@ class XPlot(object):
 
         append_counts_to_label : boolean, optional
             If true, append the bar count to the label
+
+        normalize : bool, optional
+            If true, plot percentages instead of counts.  Defaults to False.
 
         xlabel : str, optional
             A label for the X axis.
@@ -211,8 +215,12 @@ class XPlot(object):
         else:
             return []
         frequent = [x for x in sorted_fi[:k] if x[1] > 1]
+        if normalize:
+            total_count = float(sum([f[1] for f in frequent]))
+            frequent = [(k, v * 100.0 /total_count) for k, v in frequent]
         if len(frequent) > 0:
-            xlabel = xlabel or 'Count'
+            default_xlabel = 'Percentage' if normalize else 'Count'
+            xlabel = xlabel or default_xlabel
             ylabel = ylabel or 'Value'
             title = title or "Frequent Values"
             self.make_barh(frequent, xlabel, ylabel, append_counts_to_label=append_counts_to_label, title=title)
