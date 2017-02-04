@@ -217,7 +217,7 @@ class XPlot(object):
         frequent = [x for x in sorted_fi[:k] if x[1] > 1]
         if normalize:
             total_count = float(sum([f[1] for f in frequent]))
-            frequent = [(k, v * 100.0 /total_count) for k, v in frequent]
+            frequent = [(k, round(v * 100.0 /total_count)) for k, v in frequent]
         if len(frequent) > 0:
             default_xlabel = 'Percentage' if normalize else 'Count'
             xlabel = xlabel or default_xlabel
