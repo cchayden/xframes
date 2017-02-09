@@ -13,7 +13,7 @@ def SUM(src_column):
 
     Get the sum of the rating column for each user.
     >>> xf.groupby("user",
-    {'rating_sum':aggregate.SUM('rating')})
+        {'rating_sum':aggregate.SUM('rating')})
 
     """
     return '__builtin__sum__', [src_column]
