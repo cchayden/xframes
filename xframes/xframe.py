@@ -1774,8 +1774,8 @@ class XFrame(XObject):
             col_indexes = [self.column_names().index(col) for col in use_columns]
             rows = [[row[i] for i in col_indexes] for row in rows]
             names = [name for name in names if name in use_columns]
-        dryrun = [fn(dict(zip(names, row))) for row in rows]
         if dtype is None:
+            dryrun = [fn(dict(zip(names, row))) for row in rows]
             dtype = infer_type_of_list(dryrun)
 
         if not seed:
