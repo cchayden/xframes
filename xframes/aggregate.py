@@ -1,49 +1,10 @@
-import os
+
+from aggregator_property_set import AggregatorPropertySet
 
 # Builtin aggregators for groupby
 from aggregator_impl import agg_sum, agg_argmax, agg_argmin, agg_max, agg_min, \
     agg_count, agg_mean, agg_variance, agg_stdv, agg_select_one, \
     agg_concat_list, agg_concat_dict, agg_values, agg_values_count, agg_quantile
-
-
-class AggregatorPropertySet(object):
-    """ Store aggregator properties for one aggregator. """
-
-    def __init__(self, agg_function, output_type, default_col_name, num_args):
-        """
-        Create a new instance.
-
-        Parameters
-        ----------
-        agg_function: func(rows, cols)
-            The agregator function.
-            This is given a pyspark resultIterable produced by groupByKey
-               and containing the rows matching a single group.
-            It's responsibility is to compute and return the aggregate value for thhe group.
-
-        output_type: type or int
-            If a type is given, use that type as the output column type.
-            If an integer is given, then the output type is the same as the
-                input type of the column indexed by the integer.
-
-        default_col_name: str
-            The name of the aggregate column, if not supplied explicitly.
-            If not given, the column name is the aggregator function name.
-
-        num_args : int
-            The number of arguments to the aggregator function
-        """
-
-        self.agg_function = agg_function
-        self.default_col_name = default_col_name
-        self.output_type = output_type
-        self.num_args = num_args
-
-    def get_output_type(self, input_type):
-        candidate = self.output_type
-        if isinstance(candidate, int):
-            return input_type[candidate]
-        return candidate
 
 
 # noinspection PyPep8Naming
@@ -55,8 +16,7 @@ def SUM(src_column):
     --------
 
     Get the sum of the rating column for each user.
-    >>> xf.groupby("user",
-                    {'rating_sum':aggregate.SUM('rating')})
+    >>> xf.groupby("user", {'rating_sum':aggregate.SUM('rating')})
 
     """
     return AggregatorPropertySet(agg_sum, int, 'sum', 1), [src_column]
@@ -206,13 +166,11 @@ def SELECT_ONE(src_column):
 
     Get one rating row from a user.
 
-    >>> xf.groupby("user",
-                   {'rating':aggregate.SELECT_ONE('rating')})
+    >>> xf.groupby("user", {'rating':aggregate.SELECT_ONE('rating')})
 
     If multiple columns are selected, they are guaranteed to come from the
     same row. For instance:
-    >>> xf.groupby("user",
-                   {'rating':aggregate.SELECT_ONE('rating'), 'item':aggregate.SELECT_ONE('item')})
+    >>> xf.groupby("user", {'rating':aggregate.SELECT_ONE('rating'), 'item':aggregate.SELECT_ONE('item')})
 
     The selected 'rating' and 'item' value for each user will come from the
     same row in the XFrame.

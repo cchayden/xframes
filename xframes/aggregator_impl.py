@@ -6,7 +6,6 @@ import random
 import math
 from collections import Counter
 
-
 def _is_missing(x):
     if x is None:
         return True
@@ -28,10 +27,12 @@ def _collect_non_missing(rows, src_col, out_col=None):
 
 def agg_sum(rows, cols):
     src_col = cols[0]
-    vals = _collect_non_missing(rows, src_col)
-    if len(vals) == 0:
-        return 0
-    return sum(vals)
+    total = 0
+    for row in rows:
+        val = row[src_col]
+        if not _is_missing(val):
+            total += val
+    return total
 
 
 def agg_argmax(rows, cols): 
