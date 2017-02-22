@@ -37,7 +37,6 @@ import xframes
 from xframes.xarray_impl import XArrayImpl
 from xframes.xrdd import XRdd
 from xframes.cmp_rows import CmpRows
-from xframes.aggregator_impl import aggregator_properties
 
 if HAS_NUMPY:
     import numpy
@@ -1782,15 +1781,15 @@ class XFrameImpl(XObjectImpl, TracedObject):
         res = self._rdd.filter(filter_fun)
         return self._rv(res)
 
-    def groupby_aggregate(self, key_columns_array, group_columns, group_output_columns, group_ops):
+    def groupby_aggregate(self, key_columns_array, group_columns, group_output_columns, group_properties):
         """
         Perform a group on the key_columns followed by aggregations on the
         columns listed in operations.
 
-        Group_columns, group_output_columns and group_ops are all arrays of equal length
+        Group_columns, group_output_columns and group_properties are all arrays of equal length
         """
         self._entry(key_columns_array=key_columns_array, group_columns=group_columns,
-                    group_output_columns=group_output_columns, group_ops=group_ops)
+                    group_output_columns=group_output_columns, group_properties=group_properties)
 
         # make key column indexes
         key_cols = [self.col_names.index(col) for col in key_columns_array]
@@ -1801,8 +1800,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
 
         # look up operators
         # make new column names
-        default_group_output_columns = [aggregator_properties[op].default_col_name
-                                        for op in group_ops]
+        default_group_output_columns = [property.default_col_name for property in group_properties]
+
         group_output_columns = [col if col != '' else deflt
                                 for col, deflt in zip(group_output_columns,
                                                       default_group_output_columns)]
@@ -1821,8 +1820,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
         new_col_types = [self.column_types[index] for index in key_cols]
         # get existing types of group columns
         group_types = [get_group_types(cols) for cols in group_cols]
-        agg_types = [aggregator_properties[op].get_output_type(group_type)
-                     for op, group_type in zip(group_ops, group_types)]
+        agg_types = [property.get_output_type(group_type)
+                     for property, group_type in zip(group_properties, group_types)]
 
         new_col_types.extend(agg_types)
 
@@ -1841,7 +1840,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
             # apply each of the aggregator functions and collect their results into a list
             return [aggregator(rows, cols)
                     for aggregator, cols in zip(aggregators, group_cols)]
-        aggregators = [aggregator_properties[op].agg_function for op in group_ops]
+        aggregators = [property.agg_function for property in group_properties]
         aggregates = grouped.map(lambda (x, y): (x, build_aggregates(y, aggregators, group_cols)))
 
         def concatenate(old_vals, new_vals):

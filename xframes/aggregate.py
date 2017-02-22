@@ -1,6 +1,49 @@
 import os
 
 # Builtin aggregators for groupby
+from aggregator_impl import agg_sum, agg_argmax, agg_argmin, agg_max, agg_min, \
+    agg_count, agg_mean, agg_variance, agg_stdv, agg_select_one, \
+    agg_concat_list, agg_concat_dict, agg_values, agg_values_count, agg_quantile
+
+
+class AggregatorPropertySet(object):
+    """ Store aggregator properties for one aggregator. """
+
+    def __init__(self, agg_function, output_type, default_col_name, num_args):
+        """
+        Create a new instance.
+
+        Parameters
+        ----------
+        agg_function: func(rows, cols)
+            The agregator function.
+            This is given a pyspark resultIterable produced by groupByKey
+               and containing the rows matching a single group.
+            It's responsibility is to compute and return the aggregate value for thhe group.
+
+        output_type: type or int
+            If a type is given, use that type as the output column type.
+            If an integer is given, then the output type is the same as the
+                input type of the column indexed by the integer.
+
+        default_col_name: str
+            The name of the aggregate column, if not supplied explicitly.
+            If not given, the column name is the aggregator function name.
+
+        num_args : int
+            The number of arguments to the aggregator function
+        """
+
+        self.agg_function = agg_function
+        self.default_col_name = default_col_name
+        self.output_type = output_type
+        self.num_args = num_args
+
+    def get_output_type(self, input_type):
+        candidate = self.output_type
+        if isinstance(candidate, int):
+            return input_type[candidate]
+        return candidate
 
 
 # noinspection PyPep8Naming
@@ -13,10 +56,10 @@ def SUM(src_column):
 
     Get the sum of the rating column for each user.
     >>> xf.groupby("user",
-        {'rating_sum':aggregate.SUM('rating')})
+                    {'rating_sum':aggregate.SUM('rating')})
 
     """
-    return '__builtin__sum__', [src_column]
+    return AggregatorPropertySet(agg_sum, int, 'sum', 1), [src_column]
 
 
 # noinspection PyPep8Naming
@@ -30,9 +73,9 @@ def ARGMAX(agg_column, out_column):
     Get the movie with maximum rating per user.
 
     >>> xf.groupby("user",
-                 {'best_movie':aggregate.ARGMAX('rating','movie')})
+                    {'best_movie':aggregate.ARGMAX('rating','movie')})
     """
-    return '__builtin__argmax__', [agg_column, out_column]
+    return AggregatorPropertySet(agg_argmax, 1, 'argmax', 2), [agg_column, out_column]
 
 
 # noinspection PyPep8Naming
@@ -46,10 +89,10 @@ def ARGMIN(agg_column, out_column):
     Get the movie with minimum rating per user.
 
     >>> xf.groupby("user",
-                 {'best_movie':aggregate.ARGMIN('rating','movie')})
+                    {'best_movie':aggregate.ARGMIN('rating','movie')})
 
     """
-    return '__builtin__argmin__', [agg_column, out_column]
+    return AggregatorPropertySet(agg_argmin, 1, 'argmin', 2), [agg_column, out_column]
 
 
 # noinspection PyPep8Naming
@@ -63,10 +106,10 @@ def MAX(src_column):
     Get the maximum rating of each user.
 
     >>> xf.groupby("user",
-                 {'rating_max':aggregate.MAX('rating')})
+                    {'rating_max':aggregate.MAX('rating')})
 
     """
-    return '__builtin__max__', [src_column]
+    return AggregatorPropertySet(agg_max, 0, 'max', 1), [src_column]
 
 
 # noinspection PyPep8Naming
@@ -80,14 +123,14 @@ def MIN(src_column):
     Get the minimum rating of each user.
 
     >>> xf.groupby("user",
-                 {'rating_min':aggregate.MIN('rating')})
+                    {'rating_min':aggregate.MIN('rating')})
 
     """
-    return '__builtin__min__', [src_column]
+    return AggregatorPropertySet(agg_min, 0, 'min', 1), [src_column]
 
 
 # noinspection PyPep8Naming
-def COUNT(*args):
+def COUNT():
     """
     Builtin count aggregator for groupby
 
@@ -97,11 +140,10 @@ def COUNT(*args):
     Get the number of occurrences of each user.
 
     >>> xf.groupby("user",
-                 {'count':aggregate.COUNT()})
+                    {'count':aggregate.COUNT()})
 
     """
-    # arguments if any are ignored
-    return '__builtin__count__', [""]
+    return AggregatorPropertySet(agg_count, int, 'count', 0), ['']
 
 
 # noinspection PyPep8Naming
@@ -115,9 +157,9 @@ def MEAN(src_column):
     Get the average rating of each user.
 
     >>> xf.groupby("user",
-                 {'rating_mean':aggregate.MEAN('rating')})
+                    {'rating_mean':aggregate.MEAN('rating')})
     """
-    return '__builtin__avg__', [src_column]
+    return AggregatorPropertySet(agg_mean, float, 'mean', 1), [src_column]
 
 
 # noinspection PyPep8Naming
@@ -134,7 +176,7 @@ def VARIANCE(src_column):
                  {'rating_var':aggregate.VARIANCE('rating')})
 
     """
-    return '__builtin__var__', [src_column]
+    return AggregatorPropertySet(agg_variance, float, 'variance', 1), [src_column]
 
 
 # noinspection PyPep8Naming
@@ -148,10 +190,10 @@ def STDV(src_column):
     Get the rating standard deviation of each user.
 
     >>> xf.groupby("user",
-                 {'rating_stdv':aggregate.STDV('rating')})
+                    {'rating_stdv':aggregate.STDV('rating')})
 
     """
-    return '__builtin__stdv__', [src_column]
+    return AggregatorPropertySet(agg_stdv, float, 'stdv', 1), [src_column]
 
 
 # noinspection PyPep8Naming
@@ -162,16 +204,15 @@ def SELECT_ONE(src_column):
     Examples
     --------
 
-    xxx
     Get one rating row from a user.
 
     >>> xf.groupby("user",
-    {'rating':aggregate.SELECT_ONE('rating')})
+                   {'rating':aggregate.SELECT_ONE('rating')})
 
     If multiple columns are selected, they are guaranteed to come from the
     same row. For instance:
     >>> xf.groupby("user",
-    {'rating':aggregate.SELECT_ONE('rating'), 'item':aggregate.SELECT_ONE('item')})
+                   {'rating':aggregate.SELECT_ONE('rating'), 'item':aggregate.SELECT_ONE('item')})
 
     The selected 'rating' and 'item' value for each user will come from the
     same row in the XFrame.
@@ -180,7 +221,7 @@ def SELECT_ONE(src_column):
     # use seed to make selection repeatable
     # it would be more random to use the column name
     seed = src_column
-    return '__builtin__select_one__', [src_column, seed]
+    return AggregatorPropertySet(agg_select_one, 0, 'select-one', 1), [src_column, seed]
 
 
 # noinspection PyPep8Naming
@@ -196,24 +237,25 @@ def CONCAT(src_column, dict_value_column=None):
     one dictionary value:
 
     >>> xf.groupby(["document"],
-       {"word_count": aggregate.CONCAT("word", "count")})
+                   {"word_count": aggregate.CONCAT("word", "count")})
 
     To combine values from one column that belong to one group into a list value:
 
     >>> xf.groupby(["user"],
-       {"friends": aggregate.CONCAT("friend")})
+                   {"friends": aggregate.CONCAT("friend")})
 
     """
     if dict_value_column is None:
-        return '__builtin__concat__list__', [src_column]
+        return AggregatorPropertySet(agg_concat_list, list, 'concat', 1), [src_column]
     else:
-        return '__builtin__concat__dict__', [src_column, dict_value_column]
+        return AggregatorPropertySet(agg_concat_dict, dict, 'concat', 1), [src_column, dict_value_column]
+
 
 # noinspection PyPep8Naming
-def UNIQUE(src_column, dict_value_column=None):
+def VALUES(src_column):
     """
     Builtin aggregator that combines distinct values from one  column in one group
-    into a list value or array value.
+    into a list value.
 
     Examples
     --------
@@ -221,10 +263,28 @@ def UNIQUE(src_column, dict_value_column=None):
     To combine values from one column that belong to one group into a list value:
 
     >>> xf.groupby(["user"],
-       {"friends": aggregate.SET("friend")})
+                     {"friends": aggregate.VALUES("friend")})
 
     """
-    return '__builtin__unique__list__', [src_column]
+    return AggregatorPropertySet(agg_values, list, 'values', 1), [src_column]
+
+
+# noinspection PyPep8Naming
+def VALUES_COUNT(src_column):
+    """
+    Builtin aggregator that combines distinct values from one  column in one group
+    into a dictionary value of unique values and their counts.
+
+    Examples
+    --------
+
+    To combine values from one column that belong to one group into a dictionary of friend: count values:
+
+    >>> xf.groupby(["user"],
+       {"friends": aggregate.VALUES_COUNT("friend")})
+
+    """
+    return AggregatorPropertySet(agg_values_count, dict, 'values-count', 1), [src_column]
 
 
 # noinspection PyPep8Naming
@@ -237,13 +297,16 @@ def QUANTILE(src_column, *args):
     --------
 
     To extract the median
-        >>> xf.groupby("user", {'rating_quantiles':aggregate.QUANTILE('rating', 0.5)})
+        >>> xf.groupby("user",
+                        {'rating_quantiles': aggregate.QUANTILE('rating', 0.5)})
 
     To extract a few quantiles
-        >>> xf.groupby("user", {'rating_quantiles':aggregate.QUANTILE('rating', [0.25,0.5,0.75])})
+        >>> xf.groupby("user",
+                        {'rating_quantiles': aggregate.QUANTILE('rating', [0.25,0.5,0.75])})
 
     Or equivalently
-        >>> xf.groupby("user", {'rating_quantiles':aggregate.QUANTILE('rating', 0.25,0.5,0.75)})
+        >>> xf.groupby("user",
+                        {'rating_quantiles': aggregate.QUANTILE('rating', 0.25,0.5,0.75)})
 
     The returned quantiles are guaranteed to have 0.5% accuracy. That is to say,
     if the requested quantile is 0.50, the resultant quantile value may be
@@ -257,4 +320,4 @@ def QUANTILE(src_column, *args):
     if not hasattr(quantiles, '__iter__'):
         quantiles = [quantiles]
     query = ",".join([str(i) for i in quantiles])
-    return '__builtin__quantile__[' + query + ']', [src_column]
+    return AggregatorPropertySet(agg_quantile, float, 'quantile', 1), [src_column], '[' + query + ']'
