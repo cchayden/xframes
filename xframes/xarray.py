@@ -27,7 +27,7 @@ if HAS_NUMPY:
 Copyright (c) 2014, Dato, Inc.
 All rights reserved.
 
-Copyright (c) 2016, Atigeo, Inc.
+Copyright (c) 2016, Charles Hayden
 All rights reserved.
 """
 
@@ -87,8 +87,6 @@ class XArray(XObject):
     The following functionality is currently not implemented:
         - numpy.ndarray as row data
         - pandas.Series data
-        - array.array as row data
-        - datetime.datetime data type
         - count_words, count_ngrams
         - sketch sub_sketch_keys
 
@@ -111,6 +109,9 @@ class XArray(XObject):
 
     xframes.XArray.spark_sql_context
         Returns the spark sql context.
+
+    xframes.XArray.hive_context
+        Returns the spark hive context.
 
     Examples
     --------
@@ -2343,7 +2344,7 @@ class XArray(XObject):
                 raise TypeError("'column_types' must be a list.")
 
             for column_type in column_types:
-                if column_type not in (int, float, str, list, dict, array.array):
+                if column_type not in (int, float, str, list, dict, array.arr):
                     raise TypeError("'Column_types' contains unsupported types. " +
                                     "Supported types are ['float', 'int', 'list', " +
                                     "'dict', 'str', 'array.array'].")

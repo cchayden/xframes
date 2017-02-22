@@ -7,7 +7,7 @@ summary information about columns.
 Copyright (c) 2015, Dato, Inc.
 All rights reserved.
 
-Copyright (c) 2015, Atigeo, Inc.
+Copyright (c) 2015, Charles Hayden
 All rights reserved.
 """
 

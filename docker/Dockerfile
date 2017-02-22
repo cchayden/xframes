@@ -1,6 +1,6 @@
 FROM ipython/scipyserver
 
-MAINTAINER xFrames Project <xframes-dev@atigeo.com>
+MAINTAINER xFrames Project <cchayden@gmail.com>
 
 VOLUME /notebooks
 WORKDIR /notebooks

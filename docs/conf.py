@@ -54,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'xFrame'
-copyright = u'2015, Atigeo'
+copyright = u'2015, Charles Hayden'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -199,7 +199,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'xFrame.tex', u'xFrame Documentation',
-   u'Atigeo', 'manual'),
+   u'Charles Hayden', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -229,7 +229,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'xframe', u'xFrame Documentation',
-     [u'Atigeo'], 1)
+     [u'Charles Hayden'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -243,7 +243,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'xFrame', u'xFrame Documentation',
-   u'Atigeo', 'xFrame', 'One line description of project.',
+   u'Charles Hayden', 'xFrame', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -352,3 +352,14 @@ pdf_use_numbered_links = False
 
 # Background images fitting mode
 pdf_fit_background_mode = 'scale'
+
+
+
+########### don't Skip __init__
+def skip(app, what, name, obj, skip, options):
+    if name == "__init__":
+        return False
+    return skip
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)

@@ -226,13 +226,13 @@ def download_dataset(url_str, extract=True, force=False, output_dir="."):
         logging.info("File is already downloaded {}".format(fname))
 
 
-XFRAMES_CURRENT_VERSION_URL = "http://atigeo.com/files/xframes_current_version"
+XFRAMES_CURRENT_VERSION_URL = "http://chayden.net/files/xframes_current_version"
 
 
 def get_newest_version(timeout=5, url=XFRAMES_CURRENT_VERSION_URL):
     """
-    Returns the version of XPatterns XFrames currently available from atigeo.com.
-    Will raise an exception if we are unable to reach the atigeo.com servers.
+    Returns the version of XFrames currently available from github.
+    Will raise an exception if we are unable to reach the version server.
 
     Parameters
     ----------
@@ -252,8 +252,8 @@ def perform_version_check(configfile=(os.path.join(os.path.expanduser("~"), ".xf
                           url=XFRAMES_CURRENT_VERSION_URL):
     """
     Checks if currently running version of XFrames is less than the version
-    available from atigeo.com. Prints a message if the atigeo.com servers
-    are reachable, and the current version is out of date. Does nothing
+    available from github. Prints a message if the version server
+    is reachable, and the current version is out of date. Does nothing
     otherwise.
 
     If the configfile contains a key "skip_version_check" in the Product
@@ -282,7 +282,7 @@ def perform_version_check(configfile=(os.path.join(os.path.expanduser("~"), ".xf
                 msg = ("A newer version of XPatterns XFrames (v{}) is available! "
                        "Your current version is v{}.\n"
                        "You can use pip to upgrade the xframes package. "
-                       "For more information see http://atigeo.com/products/xframes/upgrade.").format(
+                       "For more information see http://chayden.net/xframes/upgrade.").format(
                            latest_version, XObject.version())
                 print >>stderr, msg
                 return True

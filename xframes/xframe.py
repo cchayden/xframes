@@ -37,7 +37,7 @@ import util
 Copyright (c) 2014, Dato, Inc.
 All rights reserved.
 
-Copyright (c) 2016, Atigeo, Inc.
+Copyright (c) 2016, Charles Hayden, Inc.
 All rights reserved.
 """
 
@@ -63,12 +63,10 @@ class XFrame(XObject):
     to the values in each column.  The column names and types are stored in the XFrame
     instance, and give the mapping to the row list.
 
-    An XFrame can be constructed from the following data
-    formats:
+    An XFrame can be constructed from the following data formats:
 
     * csv file (comma separated value)
-    * xframe directory archive (A directory where an xframe was saved
-      previously)
+    * xframe directory archive (A directory where an xframe was saved previously)
     * a spark RDD plus the column names and types
     * a spark.DataFrame
     * general text file (with csv parsing options, See :py:meth:`read_csv()`)
@@ -85,13 +83,12 @@ class XFrame(XObject):
     * HDFS
     * Hive
     * Amazon S3
-    * HTTP(S).
+    * HTTP(S)
 
     Only basic examples of construction are covered here. For more information
     and examples, please see the `User Guide`.
 
     XFrames are immutable except for assignments to a column.
-
 
     Parameters
     ----------
@@ -143,7 +140,7 @@ class XFrame(XObject):
         Create a new XFrame from a csv file. Preferred for text and CSV formats,
         because it has a lot more options for controlling the parser.
 
-    xframes.XFrame.read_parquet`
+    xframes.XFrame.read_parquet
         Read an XFrame from a parquet file.
 
     xframes.XFrame.from_rdd
@@ -179,10 +176,10 @@ class XFrame(XObject):
         val str
     Rows: 3
     Data:
-       id  val
-    0  1   A
-    1  2   B
-    2  3   C
+          id  val
+       0  1   A
+       1  2   B
+       2  3   C
 
     Create an XFrame from a remote CSV file.
 
@@ -194,7 +191,9 @@ class XFrame(XObject):
 
     # noinspection PyShadowingBuiltins
     def __init__(self, data=None, format='auto', impl=None, verbose=False):
-        """__init__(data=list(), format='auto')
+        """
+        __init__(data=list(), format='auto')
+
         Construct a new XFrame from a url, a pandas.DataFrame or a Spark RDD or DataFrame.
         """
         if impl:
@@ -1478,6 +1477,7 @@ class XFrame(XObject):
         --------
         xframes.XFrame.column_types
             This is a synonym for dtype.
+
         """
         return self.column_types()
 
@@ -1615,43 +1615,53 @@ class XFrame(XObject):
 
         Parameters
         ----------
-        table_name: str, optional
+        table_name : str, optional
             If given, give this name to the temporary table.
 
         column_names : list, optional
             A list of the column names to assign.
             Defaults to the names in the table, edited to fit the Dataframe restrictions.
 
-        column_type_hints: dict, optional
+        column_type_hints : dict, optional
             Column types must be supplied when creating a DataFrame.  These hints specify these
             types,  If hints are not given,
-            the column types are derived from the XFrame column types.  The column types in DataFrames are
-            more restricted in XFrames.
+            the column types are derived from the XFrame column types.  
+            The column types in DataFrames are more restricted in XFrames.
 
             XFrames attempts to supply the correct column types, but
-            cannot always determine the correct settings.  The caller can supply hints to ensure the desired settings, but
-            the caller is still responsible for making sure the values in the XFrame are consistent with these settings.
-            *  Integers: In DataFrames integers must fit in 64 bits.  In python, large integers can be larger.
-               If an XFrame contains such integers, it will fail to store as a DataFrame.  The column can be
-               converted to strings in this case.
-            * Lists must be of a uniform type in a DataFrame.  The caller must convert lists to meet this requirement, and
-               must provide a hint specifying the element type.
-            * Dictionaries must have a uniform key and value type.  The caller must convert dictionaries to meet this
-               requirement and must provide a hint specifying the key and value types.
+            cannot always determine the correct settings.  The caller can supply hints to 
+            ensure the desired settings, but
+            the caller is still responsible for making sure the values in the XFrame are 
+            consistent with these settings.
+            * Integers: In DataFrames integers must fit in 64 bits.  In python, large
+              integers can be larger.
+              If an XFrame contains such integers, it will fail to store as a DataFrame.
+              The column can be
+              converted to strings in this case.
+
+            * Lists must be of a uniform type in a DataFrame.  The caller must convert 
+              lists to meet this requirement, and
+              must provide a hint specifying the element type.
+
+            * Dictionaries must have a uniform key and value type.  
+              The caller must convert dictionaries to meet this
+              requirement and must provide a hint specifying the key and value types.
 
             Hints are given as a dictionary of column_name: column_hint.  Any column without a hint
             is handled using the XFrames column type.
-            For simple types, hints are just type names (as strings): int, long float, bool, datetime, or str.
+            For simple types, hints are just type names (as strings): int, long float, 
+            bool, datetime, or str.
             For lists, hints are "list[<type>]" where <type> is one of the simple types.
-            For dictionaries, hints are "dict{<key_type>:<value_type>}" where key_type and value_type is one of the
-                simple types.
+            For dictionaries, hints are "dict{<key_type>:<value_type>}" where key_type and 
+            value_type is one of the simple types.
 
-        number_of_partitions: int, optional
+        number_of_partitions : int, optional
             The number of partitions to create.
 
         Returns
         -------
-        out: spark.DataFrame
+        out : spark.DataFrame
+            The converted spark dataframe.
         """
         return self._impl.to_spark_dataframe(table_name, column_names, column_type_hints, number_of_partitions)
 
@@ -2938,16 +2948,16 @@ class XFrame(XObject):
 
         If `key` is:
             * str
-                Calls `select_column` on `key`
+              Calls `select_column` on `key`
             * XArray
-                Performs a logical filter.  Expects given XArray to be the same
-                length as all columns in current XFrame.  Every row
-                corresponding with an entry in the given XArray that is
-                equivalent to False is filtered from the result.
+              Performs a logical filter.  Expects given XArray to be the same
+              length as all columns in current XFrame.  Every row
+              corresponding with an entry in the given XArray that is
+              equivalent to False is filtered from the result.
             * int
-                Returns a single row of the XFrame (the `key`th one) as a dictionary.
+              Returns a single row of the XFrame (the `key`th one) as a dictionary.
             * slice
-                Returns an XFrame including only the sliced rows.
+              Returns an XFrame including only the sliced rows.
         """
         if isinstance(key, XArray):
             return self.select_rows(key)
@@ -3126,9 +3136,9 @@ class XFrame(XObject):
         key: int or slice
             If `key` is:
                 * int
-                    Returns a single row of the XFrame (the `key`th one) as a dictionary.
+                  Returns a single row of the XFrame (the `key`th one) as a dictionary.
                 * slice
-                    Returns an XFrame including only the sliced rows.
+                  Returns an XFrame including only the sliced rows.
 
         Returns
         -------
@@ -3347,7 +3357,7 @@ class XFrame(XObject):
             be a list of aggregators, in which case column names will be
             automatically assigned.
 
-        *args
+        \*args
             All other remaining arguments will be interpreted in the same
             way as the operations argument.
 
@@ -4017,6 +4027,7 @@ class XFrame(XObject):
         ...                       'category.food': [1, 1, None, None],
         ...                       'category.service': [None, 1, 1, None],
         ...                       'category.shop': [1, 1, None, 1]})
+
         >>> xf
         +----------+-----------------+---------------+------------------+---------------+
         | business | category.retail | category.food | category.service | category.shop |
@@ -4098,6 +4109,7 @@ class XFrame(XObject):
         |    4     | array('d', [0.0, 1.0, 0.0, ... |
         +----------+--------------------------------+
         [4 rows x 2 columns]
+
         """
         if columns is not None and column_prefix is not None:
             raise ValueError("'Columns' and 'column_prefix' parameter cannot be given at the same time.")

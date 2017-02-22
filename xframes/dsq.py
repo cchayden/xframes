@@ -21,7 +21,7 @@ This is a Python implementation of distributed streaming quantiles using the
 count-min sketch.  It is suitable for using in a distributed computing
 environment, like Spark.
 
-Modifications by Charles Hayden at Atigeo.
+Modifications by Charles Hayden
   Use array instead of list for counts.
 """
 
