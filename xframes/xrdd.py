@@ -173,6 +173,10 @@ class XRdd(TracedObject):
         self._entry()
         res = self._rdd.foreach(fn)
 
+    def foreachPartition(self, fn):
+        self._entry()
+        self._rdd.foreachPartition(fn)
+
     def map(self, fn, preserves_partitioning=False):
         self._entry(preserves_partitioning=preserves_partitioning)
         res = self._rdd.map(fn, preserves_partitioning)

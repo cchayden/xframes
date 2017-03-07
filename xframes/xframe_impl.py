@@ -12,7 +12,7 @@ import ast
 import shutil
 import re
 import copy
-import datetime
+from datetime import datetime
 from dateutil import parser as date_parser
 import logging
 
@@ -469,8 +469,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
                     return 0
                 if typ is float:
                     return 0.0
-                if typ is datetime.datetime:
-                    return datetime.datetime(1, 1, 1)
+                if typ is datetime:
+                    return datetime(1, 1, 1)
                 if typ is str:
                     return ''
                 if typ is dict:
@@ -480,7 +480,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
             try:
                 if typ in (dict, list):
                     return ast.literal_eval(val)
-                elif typ is datetime.datetime:
+                elif typ is datetime:
                     return date_parser.parse(val)
                 return typ(val)
             except ValueError:
@@ -1618,7 +1618,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
         lineage = self.lineage.pack_columns(columns)
         return xframes.xarray_impl.XArrayImpl(res, dtype, lineage)
 
-    def foreach(self, fn, use_columns, seed):
+    def foreach(self, row_fn, init_fn, use_columns, seed):
         """
         Apply the specified function to each each row.
         """
@@ -1629,16 +1629,19 @@ class XFrameImpl(XObjectImpl, TracedObject):
         names = self.col_names
         use_columns_index = [names.index(col) for col in use_columns]
 
-        # fn needs the row as a dict
+        # row_fn needs the row as a dict
         def build_row(names, row):
             if use_columns:
                 names = [name for name in names if name in use_columns]
                 row = [row[i] for i in use_columns_index]
             return dict(zip(names, row))
 
-        def transformer(row):
-            fn(build_row(names, row))
-        self._rdd.foreach(transformer)
+        def partition_iterator(iterator):
+            if init_fn is not None:
+                init_fn()
+            for row in iterator:
+                row_fn(build_row(names, row))
+        self._rdd.foreachPartition(partition_iterator)
 
     def apply(self, fn, dtype, use_columns, seed):
         """

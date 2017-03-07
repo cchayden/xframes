@@ -1729,15 +1729,19 @@ class XFrame(XObject):
             raise ValueError('Argument must be an XArray')
         return XFrame(impl=self._impl.logical_filter(xa.impl()))
 
-    def foreach(self, fn, use_columns=None, seed=None):
+    def foreach(self, row_fn, init_fn=None, use_columns=None, seed=None):
         """
         Apply the given function to each row of a XFrame.
 
         Parameters
         ----------
-        fn : function
-            The function to be applied to row of the XFrame.
+        row_fn : function
+            The function to be applied to each row of the XFrame.
             Any value that is returned is ignored.
+
+        init_fn : function, optional
+            The function to be applied before row_fn is called.
+            The rows are processed in groups: init_fn is called once for each group.
 
         use_columns : str | list[str], optional
             The column or list of columns to be supplied in the row passed to the function.
@@ -1761,8 +1765,10 @@ class XFrame(XObject):
         >>> xf.foreach(lambda x: send(row['user_id'], row['movie_id'], row['rating']))
         """
 
-        if not inspect.isfunction(fn):
-            raise TypeError('Input must be a function.')
+        if not inspect.isfunction(row_fn):
+            raise TypeError('Row_fn must be a function.')
+        if init_fn is not None and not inspect.isfunction(init_fn):
+            raise TypeError('Init_fn must be a function.')
         if isinstance(use_columns, basestring):
             use_columns = [use_columns]
         names = self._impl.column_names()
@@ -1775,7 +1781,7 @@ class XFrame(XObject):
         if not use_columns:
             use_columns = self.column_names()
 
-        self._impl.foreach(fn, use_columns, seed)
+        self._impl.foreach(row_fn, init_fn, use_columns, seed)
 
     def apply(self, fn, dtype=None, use_columns=None, seed=None):
         """
@@ -1832,8 +1838,8 @@ class XFrame(XObject):
             col_indexes = [self.column_names().index(col) for col in use_columns]
             rows = [[row[i] for i in col_indexes] for row in rows]
             names = [name for name in names if name in use_columns]
-        dryrun = [fn(dict(zip(names, row))) for row in rows]
         if dtype is None:
+            dryrun = [fn(dict(zip(names, row))) for row in rows]
             dtype = infer_type_of_list(dryrun)
 
         if not seed:
@@ -1911,9 +1917,8 @@ class XFrame(XObject):
             col_indexes = [self.column_names().index(col_name) for col_name in use_columns]
             rows = [[row[i] for i in col_indexes] for row in rows]
             names = [name for name in names if name in use_columns]
-        # do the dryrun so we can see some diagnostic output
-        dryrun = [fn(dict(zip(names, row))) for row in rows]
         if dtype is None:
+            dryrun = [fn(dict(zip(names, row))) for row in rows]
             dtype = infer_type_of_list(dryrun)
         if not seed:
             seed = int(time.time())

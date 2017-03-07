@@ -1775,6 +1775,32 @@ class TestXFrameForeach(XFrameUnitTestCase):
         self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
         self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
 
+    def test_foreach_init(self):
+        path = 'tmp/foreach.csv'
+        # truncate file
+        with open(path, 'w') as f:
+            pass
+        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
+
+        def append_to_file(row):
+            with open(path, 'a') as f:
+                f.write('{},{}\n'.format(row['id'], row['val']))
+        def add_to_file():
+            with open(path, 'a') as f:
+                f.write('99,"xx"\n')
+
+        t.foreach(append_to_file, add_to_file)
+        # Read back as an XFrame
+        res = XFrame.read_csv(path, header=False)
+        res = res.rename(['id', 'val']).sort('id')
+        rows = res.filterby([1, 2, 3], 'id')
+        self.assertEqualLen(3, rows)
+        self.assertListEqual([int, str], rows.dtype())
+        self.assertDictEqual({'id': 1, 'val': 'a'}, rows[0])
+        self.assertDictEqual({'id': 2, 'val': 'b'}, rows[1])
+        other = res.filterby(99, 'id')
+        self.assertGreater(len(other), 0)
+
 
 class TestXFrameApply(XFrameUnitTestCase):
     """
