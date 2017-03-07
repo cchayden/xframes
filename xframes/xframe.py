@@ -1731,17 +1731,27 @@ class XFrame(XObject):
 
     def foreach(self, row_fn, init_fn=None, use_columns=None, seed=None):
         """
-        Apply the given function to each row of a XFrame.
+        Apply the given function to each row of a XFrame.  This is intended to be used
+        for functions with side effects.
+
+        Rows are processed in groups.  Each group is processed sequentially in one execution context.
+        An initial funciton, if given, is executed forst for each group.
+        Its results are passed to each row function.
+        The row function receives the row data as a dictionary of column name: column value.
 
         Parameters
         ----------
         row_fn : function
             The function to be applied to each row of the XFrame.
             Any value that is returned is ignored.
+            The row_fn takes two parameters: row and init.
+            The row is a dictionary of column-name: column_value.
+            The init value is returned by init_fn.
 
         init_fn : function, optional
             The function to be applied before row_fn is called.
             The rows are processed in groups: init_fn is called once for each group.
+            If no init_fn is supplied, the row_fn is passed None as its second parameter.
 
         use_columns : str | list[str], optional
             The column or list of columns to be supplied in the row passed to the function.
@@ -1750,19 +1760,20 @@ class XFrame(XObject):
         seed : int, optional
             Used as the seed if a random number generator is included in `fn`.
 
-        Returns
-        -------
-        out : XArray
-            The XArray transformed by fn.  Each element of the XArray is of
-            type `dtype`
-
         Examples
         --------
-        send rows to an external sink.
+        Send rows to an external sink.
 
         >>> xf = xframes.XFrame({'user_id': [1, 2, 3], 'movie_id': [3, 3, 6],
                                   'rating': [4, 5, 1]})
-        >>> xf.foreach(lambda x: send(row['user_id'], row['movie_id'], row['rating']))
+        >>> xf.foreach(lambda row, ini: send(row['user_id'], row['movie_id'], row['rating']))
+
+        Send rows to an external sink with modification.
+
+        >>> xf = xframes.XFrame({'user_id': [1, 2, 3], 'movie_id': [3, 3, 6],
+                                  'rating': [4, 5, 1]})
+        >>> xf.foreach(lambda row, bias: send(row['user_id'], row['movie_id'], row['rating'] + bias),
+                    lambda: 10)
         """
 
         if not inspect.isfunction(row_fn):

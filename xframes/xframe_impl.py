@@ -1618,7 +1618,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
         lineage = self.lineage.pack_columns(columns)
         return xframes.xarray_impl.XArrayImpl(res, dtype, lineage)
 
-    def foreach(self, row_fn, init_fn, use_columns, seed):
+    def foreach(self, row_fn, initialization_fn, use_columns, seed):
         """
         Apply the specified function to each each row.
         """
@@ -1637,10 +1637,12 @@ class XFrameImpl(XObjectImpl, TracedObject):
             return dict(zip(names, row))
 
         def partition_iterator(iterator):
-            if init_fn is not None:
-                init_fn()
+            if initialization_fn is not None:
+                ini_val = initialization_fn()
+            else:
+                ini_val = None
             for row in iterator:
-                row_fn(build_row(names, row))
+                row_fn(build_row(names, row), ini_val)
         self._rdd.foreachPartition(partition_iterator)
 
     def apply(self, fn, dtype, use_columns, seed):
