@@ -1,4 +1,4 @@
-__all__ = ['xframe', 'xarray', 'xplot', 'sketch']
+__all__ = ['xframe', 'xarray', 'xstream', 'xplot', 'sketch']
 
 from xframes.spark_context import SparkInitContext, CommonSparkContext
 from xframes.xarray import XArray

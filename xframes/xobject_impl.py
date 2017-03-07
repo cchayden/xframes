@@ -39,6 +39,11 @@ class XObjectImpl(object):
         return CommonSparkContext.hive_context()
 
     @staticmethod
+    def streaming_context():
+        return CommonSparkContext.streaming_context()
+
+
+    @staticmethod
     def check_input_uri(uri):
         if ',' in uri:
             uri_list = uri.split(',')

@@ -102,5 +102,19 @@ class XObject(object):
         """
         return XObjectImpl.spark_sql_context()
 
+
+    @staticmethod
+    def streaming_context():
+        """
+        Get the spark streaming context.
+
+        Returns
+        -------
+        out : SparkStreamingContext
+            The spark streaming context.
+            If no streaming context has been created yet, then one is created.
+        """
+        return XObjectImpl.streaming_context()
+
 #    def dump_debug_info(self):
 #        return self._impl.dump_debug_info()
