@@ -125,8 +125,11 @@ class CommonSparkContext(object):
             print 'Spark Config: {}'.format(config_pairs)
 
         self._sc = SparkContext(conf=self._config)
-        self._sqlc = SQLContext(self._sc)
-        self._hivec = HiveContext(self._sc)
+        # Create these when needed
+        self._sqlc = None
+        self._hivec = None
+        self._streamingc = None
+
         self.zip_path = []
         version = [int(n) for n in self._sc.version.split('.')]
         self.status_tracker = self._sc.statusTracker()
@@ -227,6 +230,10 @@ class CommonSparkContext(object):
         out : sql.SqlContext
             The spark sql context.
         """
+        from pyspark import SQLContext
+        if self._sqlc is None:
+            self._sqlc = SQLContext(self._sc)
+
         return self._sqlc
 
     def hivec(self):
@@ -238,7 +245,31 @@ class CommonSparkContext(object):
         out : sql.HiveContext
             The hive context.
         """
+        from pyspark import HiveContext
+        if self._hivec is None:
+            self._hivec = HiveContext(self._sc)
+
         return self._hivec
+
+    def streamingc(self, interval=1):
+        """
+        Gets the streaming context.
+
+        Parameters
+        ----------
+        interval : int, optional
+            The batch duration in seconds for the stream.  Default is one second.
+
+        Returns
+        -------
+        out : streaming.StreamingContext
+            The streaming context.
+        """
+        from pyspark.streaming import StreamingContext
+        if self._streamingc is None:
+            self._streamingc = StreamingContext(self._sc, interval)
+
+        return self._streamingc
 
     def version(self):
         """
@@ -341,6 +372,23 @@ class CommonSparkContext(object):
             The Hive object from spark.
         """
         return CommonSparkContext().hivec()
+
+    @staticmethod
+    def streaming_context(interval=1):
+        """
+        Returns the streaming context.
+
+        Parameters
+        ----------
+        interval : int, optional
+            The batch duration in seconds for the stream.  Default is one second.
+
+        Returns
+        -------
+        out : streaming.StreamingContext
+            The streaming context.
+        """
+        return CommonSparkContext().streamingc(interval)
 
     @staticmethod
     def spark_version():
