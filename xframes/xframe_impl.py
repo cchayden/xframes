@@ -1618,6 +1618,28 @@ class XFrameImpl(XObjectImpl, TracedObject):
         lineage = self.lineage.pack_columns(columns)
         return xframes.xarray_impl.XArrayImpl(res, dtype, lineage)
 
+    def foreach(self, fn, use_columns, seed):
+        """
+        Apply the specified function to each each row.
+        """
+        self._entry(use_columns=use_columns, seed=seed)
+        if seed:
+            distribute_seed(self._rdd, seed)
+            random.seed(seed)
+        names = self.col_names
+        use_columns_index = [names.index(col) for col in use_columns]
+
+        # fn needs the row as a dict
+        def build_row(names, row):
+            if use_columns:
+                names = [name for name in names if name in use_columns]
+                row = [row[i] for i in use_columns_index]
+            return dict(zip(names, row))
+
+        def transformer(row):
+            fn(build_row(names, row))
+        self._rdd.foreach(transformer)
+
     def apply(self, fn, dtype, use_columns, seed):
         """
         Transform each row to an XArray according to a

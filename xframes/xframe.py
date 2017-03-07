@@ -1729,6 +1729,54 @@ class XFrame(XObject):
             raise ValueError('Argument must be an XArray')
         return XFrame(impl=self._impl.logical_filter(xa.impl()))
 
+    def foreach(self, fn, use_columns=None, seed=None):
+        """
+        Apply the given function to each row of a XFrame.
+
+        Parameters
+        ----------
+        fn : function
+            The function to be applied to row of the XFrame.
+            Any value that is returned is ignored.
+
+        use_columns : str | list[str], optional
+            The column or list of columns to be supplied in the row passed to the function.
+            If not given, all columns wll be used to build the row.
+
+        seed : int, optional
+            Used as the seed if a random number generator is included in `fn`.
+
+        Returns
+        -------
+        out : XArray
+            The XArray transformed by fn.  Each element of the XArray is of
+            type `dtype`
+
+        Examples
+        --------
+        send rows to an external sink.
+
+        >>> xf = xframes.XFrame({'user_id': [1, 2, 3], 'movie_id': [3, 3, 6],
+                                  'rating': [4, 5, 1]})
+        >>> xf.foreach(lambda x: send(row['user_id'], row['movie_id'], row['rating']))
+        """
+
+        if not inspect.isfunction(fn):
+            raise TypeError('Input must be a function.')
+        if isinstance(use_columns, basestring):
+            use_columns = [use_columns]
+        names = self._impl.column_names()
+        if use_columns:
+            col_indexes = [self.column_names().index(col) for col in use_columns]
+            names = [name for name in names if name in use_columns]
+        if not seed:
+            seed = int(time.time())
+
+        if not use_columns:
+            use_columns = self.column_names()
+
+        self._impl.foreach(fn, use_columns, seed)
+
     def apply(self, fn, dtype=None, use_columns=None, seed=None):
         """
         Transform each row to an :class:`~xframes.XArray` according to a

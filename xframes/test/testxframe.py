@@ -1486,6 +1486,10 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         self.assertListEqual(['new'], lineage.keys())
         self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['new'])
 
+    def test_foreach(self):
+        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
+        t.foreach(lambda row: row['id'] * 2)
+
     def test_apply(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.apply(lambda row: row['id'] * 2)
@@ -1745,6 +1749,31 @@ class TestXFrameToDataframeplus(XFrameUnitTestCase):
         self.assertEqual(1, df['id'][0])
         self.assertEqual(2, df['id'][1])
         self.assertEqual('a', df['val'][0])
+
+
+class TestXFrameForeach(XFrameUnitTestCase):
+    """
+    Tests XFrame foreach
+    """
+
+    def test_foreach(self):
+        path = 'tmp/foreach.csv'
+        # truncate file
+        with open(path, 'w') as f:
+            pass
+        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
+
+        def append_to_file(row):
+            with open(path, 'a') as f:
+                f.write('{},{}\n'.format(row['id'], row['val']))
+        t.foreach(append_to_file)
+        # Read back as an XFrame
+        res = XFrame.read_csv(path, header=False)
+        res = res.rename(['id', 'val']).sort('id')
+        self.assertEqualLen(3, res)
+        self.assertListEqual([int, str], res.dtype())
+        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
+        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
 
 
 class TestXFrameApply(XFrameUnitTestCase):
