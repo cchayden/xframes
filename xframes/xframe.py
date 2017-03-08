@@ -1299,7 +1299,7 @@ class XFrame(XObject):
 
     def print_rows(self, num_rows=10, num_columns=40,
                    max_column_width=30, max_row_width=MAX_ROW_WIDTH,
-                   wrap_text=False, max_wrap_rows=2):
+                   wrap_text=False, max_wrap_rows=2, footer=True):
         """
         Print the first rows and columns of the XFrame in human readable format.
 
@@ -1326,6 +1326,9 @@ class XFrame(XObject):
             When wrapping is in effect, the maximum number of resulting rows for each cell
             before truncation takes place.
 
+        footer : bool, optional
+            True to pinrt a footer.
+
         See Also
         --------
         xframes.XFrame.head
@@ -1344,7 +1347,10 @@ class XFrame(XObject):
                                                 max_columns=num_columns,
                                                 max_column_width=max_column_width,
                                                 max_row_width=max_row_width)
-        footer = self._create_footer(False, max_rows_to_display)
+        if footer:
+            footer = self._create_footer(False, max_rows_to_display)
+        else:
+            footer = ''
         print '\n'.join([str(tb) for tb in row_of_tables]) + '\n' + footer
 
     def __str__(self, num_rows=10, footer=True):
@@ -1479,7 +1485,7 @@ class XFrame(XObject):
             This is a synonym for dtype.
 
         """
-        return self.column_types()
+        return copy.copy(self._impl.dtype())
 
     def lineage(self):
         """
@@ -1729,7 +1735,7 @@ class XFrame(XObject):
             raise ValueError('Argument must be an XArray')
         return XFrame(impl=self._impl.logical_filter(xa.impl()))
 
-    def foreach(self, row_fn, init_fn=None, use_columns=None, seed=None):
+    def foreach(self, row_fn, init_fn=None, final_fn=None, use_columns=None, seed=None):
         """
         Apply the given function to each row of a XFrame.  This is intended to be used
         for functions with side effects.
@@ -1752,6 +1758,11 @@ class XFrame(XObject):
             The function to be applied before row_fn is called.
             The rows are processed in groups: init_fn is called once for each group.
             If no init_fn is supplied, the row_fn is passed None as its second parameter.
+            Init_fn takes no parameters.
+
+        final_fn : function, optional
+            The function to be applied after all row_fn calls are made.
+            Final_fn takes one parameter, the value returned by the init_fn.
 
         use_columns : str | list[str], optional
             The column or list of columns to be supplied in the row passed to the function.
@@ -1780,6 +1791,8 @@ class XFrame(XObject):
             raise TypeError('Row_fn must be a function.')
         if init_fn is not None and not inspect.isfunction(init_fn):
             raise TypeError('Init_fn must be a function.')
+        if final_fn is not None and not inspect.isfunction(final_fn):
+            raise TypeError('Final_fn must be a function.')
         if isinstance(use_columns, basestring):
             use_columns = [use_columns]
         names = self._impl.column_names()
@@ -1792,7 +1805,7 @@ class XFrame(XObject):
         if not use_columns:
             use_columns = self.column_names()
 
-        self._impl.foreach(row_fn, init_fn, use_columns, seed)
+        self._impl.foreach(row_fn, init_fn, final_fn, use_columns, seed)
 
     def apply(self, fn, dtype=None, use_columns=None, seed=None):
         """
@@ -1915,6 +1928,9 @@ class XFrame(XObject):
         >>> xf.transform_col('user_id', dtype=str)
 
         """
+        names = self._impl.column_names()
+        if not col in names:
+            raise ValueError('Column name must be in XFrame')
         if fn is None:
             def fn(row):
                 return row[col]
@@ -1923,7 +1939,6 @@ class XFrame(XObject):
         if isinstance(use_columns, basestring):
             use_columns = [use_columns]
         rows = self._impl.head_as_list(10)
-        names = self._impl.column_names()
         if use_columns:
             col_indexes = [self.column_names().index(col_name) for col_name in use_columns]
             rows = [[row[i] for i in col_indexes] for row in rows]
@@ -5163,16 +5178,3 @@ class XFrame(XObject):
         (3, 2)
         """
         return self.num_rows(), self.num_columns()
-
-    def show(self):
-        """
-        Create an XPlot object from an XFrame.  
-
-        This can be used to produce plots.
-
-        See Also
-        --------
-        xframes.XPlot : Plot library
-        """
-
-        return XPlot(self)
