@@ -2,7 +2,7 @@ __all__ = ['xframe', 'xarray', 'xstream', 'xplot', 'sketch']
 
 from xframes.spark_context import SparkInitContext, CommonSparkContext
 from xframes.xarray import XArray
-from xframes.xframe import XFrame
+from xframes.xframe import XFrame, MAX_ROW_WIDTH, HTML_MAX_ROW_WIDTH
 from xframes.xrdd import XRdd
 from xframes.sketch import Sketch
 from xframes.xplot import XPlot
