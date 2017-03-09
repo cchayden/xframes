@@ -127,7 +127,7 @@ class XStreamImpl(XObjectImpl, TracedObject):
         res = self._dstream.map(transformer)
         return self._rv(res, column_names, column_types)
 
-    def count(self):
+    def num_rows(self):
         self._entry()
         res = self._dstream.count().map(lambda c: (c,))
         return self._rv(res, ['count'], [int])

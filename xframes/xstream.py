@@ -25,6 +25,31 @@ __all__ = ['XStream']
 class XStream(XObject):
     """
     Provides for streams of XFrames.
+
+    An XStream represents a time sequence of XFrames.  These are usually read from a
+    live sources, and are processed in batches at a selectable interval.
+
+    XStream objects encapsulate the logic associated with the stream.
+    The interface includes a number of class methods that act as factory methods,
+    connecting up to external systems are returning an XStream.
+
+    XStream also includes a number of transformers, taking one or two XStreams and transforming them
+    into another XStream.
+
+    Finally, XStream includes a number of sinks, that print, save, or expose the stream to external systems.
+
+    XFrame instances are created immediately (and can be used in Jupyter notebooks without restrictions).
+    But data does not flow through the streams until the application calls "start".  This data flow happens in
+    another thread, so your program gets control back immediately after calling "start".
+
+    Methods that print data (such as print_frames) do not produce output until data starts flowing.  Their output
+    goes to stdout, along with anything that you main thread is doing, which works well in a notebook environment.
+
+    As with the other parts of XFrames (and Spark) many of the operators take functional arguments, containing
+    the actions to be applied to the data structures.  These functions run in a worker environment, not on
+    the main thread (they run in another process, generally on another machine).  Thus you will not see anythin
+    that you write to stdout or stderr from these functions.  If you know where to look, you can find this output in the
+    Spark worker log files.
     """
 
     def __init__(self, impl=None, verbose=False):
@@ -37,11 +62,43 @@ class XStream(XObject):
 
     @staticmethod
     def create_from_text_files(directory_path):
+        """
+        Create XStream (stream of XFrames) from text gathered files in a directory.
+
+        Monitors the directory.  As new files are added, they are read into XFrames and
+        introduced to the stream.
+
+        Parameters
+        ----------
+        directory_path : str
+            The directory where files are stored.
+
+        Returns
+        -------
+        XStream
+            An XStream (of XFrames) made up or rows read from files in the directory.
+        """
         impl = XStreamImpl.create_from_text_files(directory_path)
         return XStream(impl=impl)
 
     @staticmethod
     def create_from_socket_stream(hostname, port):
+        """
+        Create XStream (stream of XFrames) from text gathered from a socket.
+
+        Parameters
+        ----------
+        hostname : str
+            The data hostname.
+
+        port : str
+            The port to connect to.
+
+        Returns
+        -------
+        XStream
+            An XStream (of XFrames) made up or rows read from the socket.
+        """
         impl = XStreamImpl.create_from_socket_stream(hostname, port)
         return XStream(impl=impl)
 
@@ -144,6 +201,12 @@ class XStream(XObject):
     def dump_debug_info(self):
         """
         Print information about the Spark RDD associated with this XFrame.
+
+        See Also
+        --------
+        xframes.XFrame.dump_debug_info
+            Corresponding function on individual frame.
+
         """
         return self._impl.dump_debug_info()
 
@@ -155,6 +218,12 @@ class XStream(XObject):
         -------
         out : list[string]
             Column names of the XStream.
+
+        See Also
+        --------
+        xframes.XFrame.column_names
+            Corresponding function on individual frame.
+
         """
         return copy.copy(self._impl.column_names())
 
@@ -169,8 +238,8 @@ class XStream(XObject):
 
         See Also
         --------
-        xframes.XFrame.dtype
-            This is a synonym for column_types.
+        xframes.XFrame.column_types
+            Corresponding function on individual frame.
         """
         return copy.copy(self._impl.dtype())
 
@@ -185,8 +254,8 @@ class XStream(XObject):
 
         See Also
         --------
-        xframes.XFrame.column_types
-            This is a synonym for dtype.
+        xframes.XFrame.dtype
+            Corresponding function on individual frame.
 
         """
         return self.column_types()
@@ -202,10 +271,16 @@ class XStream(XObject):
                 The files that were used to build the XArray
             * key 'column': dict{col_name: set[filename]}
                 The set of files that were used to build each column
+
+        See Also
+        --------
+        xframes.XFrame.lineage
+            Corresponding function on individual frame.
+
         """
         return self._impl.lineage_as_dict()
 
-    def count(self):
+    def num_rows(self):
         """
         Counts the rows in each XFrame in the stream.
 
@@ -216,10 +291,15 @@ class XStream(XObject):
             Each XFrame has one column, "count" containing the number of
             rows in each consittuent XFrame.
 
-        """
-        return XStream(impl=self._impl.count())
+        See Also
+        --------
+        xframes.XFrame.num_rows
+            Corresponding function on individual frame.
 
-    def count_unique(self, col):
+        """
+        return XStream(impl=self._impl.num_rows())
+
+    def count_distinct(self, col):
         """
         Counts the number of different values in a column of each XFrame in the stream.
 
@@ -271,7 +351,12 @@ class XStream(XObject):
         -------
         out : XStream
             A new XStream containing the results of the ``flat_map`` of the
-            original XStream.
+            XFrames in the XStream.
+
+        See Also
+        --------
+        xframes.XFrame.flat_map
+            Corresponding function on individual frame.
         """
         if not inspect.isfunction(fn):
             raise TypeError('Input must be a function')
@@ -338,6 +423,10 @@ class XStream(XObject):
         out : XStream
             The filtered XStream.
 
+        See Also
+        --------
+        xframes.XFrame.filterby
+            Corresponding function on individual frame.
         """
         if isinstance(values, types.FunctionType) and column_name is None:
             return XStream(impl=self._impl.filter_by_function_row(values, exclude))
@@ -455,6 +544,11 @@ class XStream(XObject):
             remote URL.
         suffix : string, optional
             The filename suffix.  Defaults to no suffix.
+
+        See Also
+        --------
+        xframes.XFrame.save
+            Corresponding function on individual frame.
         """
         if not isinstance(prefix, basestring):
             raise TypeError('Prefix must be string')
@@ -465,5 +559,39 @@ class XStream(XObject):
     def print_frames(self, num_rows=10, num_columns=40,
                    max_column_width=30, max_row_width=xframes.MAX_ROW_WIDTH,
                    wrap_text=False, max_wrap_rows=2, footer=True):
+        """
+        Print the first rows and columns of each XFrame in the XStream in human readable format.
+
+        Parameters
+        ----------
+        num_rows : int, optional
+            Number of rows to print.
+
+        num_columns : int, optional
+            Number of columns to print.
+
+        max_column_width : int, optional
+            Maximum width of a column. Columns use fewer characters if possible.
+
+        max_row_width : int, optional
+            Maximum width of a printed row. Columns beyond this width wrap to a
+            new line. `max_row_width` is automatically reset to be the
+            larger of itself and `max_column_width`.
+
+        wrap_text : boolean, optional
+            Wrap the text within a cell.  Defaults to False.
+
+        max_wrap_rows : int, optional
+            When wrapping is in effect, the maximum number of resulting rows for each cell
+            before truncation takes place.
+
+        footer : bool, optional
+            True to pinrt a footer.
+
+        See Also
+        --------
+        xframes.XFrame.print_rows
+            Corresponding function on individual frame.
+        """
         self._impl.print_frames(num_rows, num_columns, max_column_width, max_row_width,
                          wrap_text, max_wrap_rows, footer)
