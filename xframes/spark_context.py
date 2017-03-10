@@ -11,16 +11,9 @@ import logging
 from xframes.environment import Environment
 from xframes.xrdd import XRdd
 
-
 def get_xframes_home():
     import xframes
     return os.path.dirname(xframes.__file__)
-
-
-def merge_dicts(x, y):
-    z = x.copy()
-    z.update(y)
-    return z
 
 
 # CommonSparkContext wraps SparkContext, which must only be instantiated once in a program.
@@ -90,6 +83,8 @@ class SparkInitContext:
 
 def create_spark_config(env):
     # Create the context for configuring spark
+    from xframes.utils import merge_dicts
+
     default_context = {'spark.master': 'local[*]',
                        'spark.app.name': 'xFrames'}
     # get values from [spark] section
