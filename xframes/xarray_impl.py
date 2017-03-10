@@ -20,10 +20,11 @@ from xframes.xobject_impl import XObjectImpl
 from xframes.traced_object import TracedObject
 from xframes.spark_context import CommonSparkContext
 import xframes.fileio as fileio
-from xframes.util import infer_type_of_list, cache, uncache
-from xframes.util import infer_type, infer_types, is_numeric_type
-from xframes.util import is_missing
-from xframes.util import distribute_seed
+from xframes.utils import cache, uncache
+from xframes.utils import distribute_seed
+from xframes.type_utils import infer_type_of_list
+from xframes.type_utils import infer_type, infer_types, is_numeric_type
+from xframes.type_utils import is_missing
 from xframes.xrdd import XRdd
 
 
@@ -76,11 +77,18 @@ class XArrayImpl(XObjectImpl, TracedObject):
         if rdd is None:
             sc = CommonSparkContext.spark_context()
             rdd = XRdd(sc.parallelize([]))
-        super(XArrayImpl, self).__init__(rdd)
+        super(XArrayImpl, self).__init__()
+        self._rdd = self._wrap_rdd(rdd)
         self.elem_type = elem_type
         self.lineage = lineage or Lineage.init_array_lineage(Lineage.EMPTY)
         self.materialized = False
         self.iter_pos = 0
+
+    def _replace_rdd(self, rdd):
+        self._rdd = self._wrap_rdd(rdd)
+
+    def dump_debug_info(self):
+        return self._rdd.toDebugString()
 
     def _rv(self, rdd, typ=None, lineage=None):
         """

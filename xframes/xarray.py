@@ -17,7 +17,8 @@ from xframes.deps import pandas, HAS_PANDAS
 from xframes.deps import HAS_NUMPY
 from xframes.xobject import XObject
 from xframes.xarray_impl import XArrayImpl
-from xframes.util import make_internal_url, infer_type_of_list, is_numeric_val, classify_auto
+from xframes.utils import make_internal_url
+from xframes.type_utils import infer_type_of_list, is_numeric_val, classify_auto
 import xframes
 
 if HAS_NUMPY:
@@ -27,7 +28,7 @@ if HAS_NUMPY:
 Copyright (c) 2014, Dato, Inc.
 All rights reserved.
 
-Copyright (c) 2016, Charles Hayden
+Copyright (c) 2017, Charles Hayden
 All rights reserved.
 """
 
@@ -165,7 +166,7 @@ class XArray(XObject):
         """
         Print information about the Spark RDD associated with this XArray.
         """
-        return self._impl.dump_debug_info()
+        return self._impl._dump_debug_info()
 
     @classmethod
     def read_text(cls, path, delimiter=None, nrows=None, verbose=False):
@@ -2344,7 +2345,7 @@ class XArray(XObject):
                 raise TypeError("'column_types' must be a list.")
 
             for column_type in column_types:
-                if column_type not in (int, float, str, list, dict, array.arr):
+                if column_type not in (int, float, str, list, dict, array.array):
                     raise TypeError("'Column_types' contains unsupported types. " +
                                     "Supported types are ['float', 'int', 'list', " +
                                     "'dict', 'str', 'array.array'].")
