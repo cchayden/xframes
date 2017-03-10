@@ -3,7 +3,7 @@ This module defines the XStream class which provides the
 ability to process streaming operations.
 """
 
-import json
+import array
 import inspect
 import types
 import copy
@@ -11,11 +11,12 @@ import copy
 
 from xframes.xobject import XObject
 from xframes.xstream_impl import XStreamImpl
+from xframes.xframe import XFrame
 from xframes.xarray import XArray
 import xframes
 
 """
-Copyright (c) 2017, Charles Hayden, Inc.
+Copyright (c) 2017, Charles Hayden
 All rights reserved.
 """
 
@@ -53,7 +54,7 @@ class XStream(XObject):
     """
 
     def __init__(self, impl=None, verbose=False):
-
+        self._verbose = verbose
         if impl:
             self._impl = impl
             return
@@ -102,6 +103,17 @@ class XStream(XObject):
         impl = XStreamImpl.create_from_socket_stream(hostname, port)
         return XStream(impl=impl)
 
+    @staticmethod
+    def set_checkpoint(checkpoint_dir):
+        """
+        Set the checkpoint director for storing state.
+
+        Parameters
+        ----------
+        checkpoint_dir : string
+            Path to a directory for storing checkpoints
+        """
+        XStreamImpl.set_checkpoint(checkpoint_dir)
 
     @staticmethod
     def create_from_kafka_topics(topics, kafka_servers=None, kafka_params=None):
@@ -139,13 +151,6 @@ class XStream(XObject):
             kafka_servers = 'localhost:9092'
         elif isinstance(topics, list):
             kafka_servers = ','.join(kafka_servers)
-
-        def default_ingest_fn(kafka_tuple):
-            try:
-                # loads the kafka value: drop the key and assume it is in json format
-                return json.loads(kafka_tuple[1])
-            except:
-                return None
 
         impl = XStreamImpl.create_from_kafka_topics(topics, kafka_servers, kafka_params)
         return XStream(impl=impl)
@@ -299,6 +304,192 @@ class XStream(XObject):
         """
         return XStream(impl=self._impl.num_rows())
 
+    def to_dstream(self):
+        """
+        Convert the current XStream to a Spark DStream.  The RDD contained in the DStream
+        consists of tuples containing the column data.  No conversion is necessary: the internal DStream is
+        returned.
+
+        Returns
+        -------
+        out : spark.DStream
+            The spark DStream that is used to represent the XStream.
+
+        See Also
+        --------
+        xframes.XFrame.to_rdd
+            Converts to a Spark RDD.
+            Corresponding function on individual frame.
+
+        """
+        return self._impl.to_dstream()
+
+    @classmethod
+    def from_dstream(cls, dstream, col_names, column_types):
+        """
+        Create a XStream from a spark DStream.  The data should be:
+
+        Parameters
+        ----------
+        dstream : spark.DStream
+            Data used to populate the XStream
+
+        col_names : list of string
+            The column names to use.
+
+        column_types : list of type
+            The column types to use.
+
+        Returns
+        -------
+        out : XStream
+
+        See Also
+        --------
+        from_rdd
+            Converts from a Spark RDD.
+            Corresponding function on individual frame.
+        """
+        return XStream(impl=XStreamImpl(dstream, col_names, column_types))
+
+    def _groupby(self, key_columns, operations, *args):
+
+        # TODO: groupby CONCAT produces unicode output from utf8 input
+        # TODO: Preserve character encoding.
+
+        operations = operations or {}
+        # some basic checking first
+        # make sure key_columns is a list
+        if isinstance(key_columns, str):
+            key_columns = [key_columns]
+        # check that every column is a string, and is a valid column name
+        my_column_names = self.column_names()
+        my_column_types = self.column_types()
+        key_columns_array = []
+        for column in key_columns:
+            if not isinstance(column, str):
+                raise TypeError('Column name must be a string.')
+            if column not in my_column_names:
+                raise KeyError("Column '{}' does not exist in XFrame".format(column))
+            col_type = my_column_types[my_column_names.index(column)]
+            if col_type is dict:
+                raise TypeError('Cannot group on a dictionary column.')
+            key_columns_array.append(column)
+
+        group_output_columns = []
+        group_columns = []
+        group_properties = []
+
+        all_ops = [operations] + list(args)
+        for op_entry in all_ops:
+            # if it is not a dict, nor a list, it is just a single aggregator
+            # element (probably COUNT). wrap it in a list so we can reuse the
+            # list processing code
+            operation = op_entry
+            if not (isinstance(operation, list) or isinstance(operation, dict)):
+                operation = [operation]
+            if isinstance(operation, dict):
+                # now sweep the dict and add to group_columns and group_properties
+                for key, val in operation.iteritems():
+                    if not isinstance(val, tuple) and not callable(val):
+                        raise TypeError("Unexpected type in aggregator definition of output column: '{}'"
+                                        .format(key))
+                    if callable(val):
+                        prop, column = val()
+                    else:
+                        prop, column = val
+                    num_args = prop.num_args
+                    if num_args == 2 and (isinstance(column[0], tuple)) != (isinstance(key, tuple)):
+                        raise TypeError('Output column(s) and aggregate column(s) for ' +
+                                        'aggregate operation should be either all tuple or all string.')
+
+                    if num_args == 2 and isinstance(column[0], tuple):
+                        for (col, output) in zip(column[0], key):
+                            group_columns += [[col, column[1]]]
+                            group_properties += [prop]
+                            group_output_columns += [output]
+                    else:
+                        group_columns += [column]
+                        group_properties += [prop]
+                        group_output_columns += [key]
+
+            elif isinstance(operation, list):
+                # we will be using automatically defined column names
+                for val in operation:
+                    if not isinstance(val, tuple) and not callable(val):
+                        raise TypeError('Unexpected type in aggregator definition.')
+                    if callable(val):
+                        prop, column = val()
+                    else:
+                        prop, column = val
+                    num_args = prop.num_args
+                    if num_args == 2 and isinstance(column[0], tuple):
+                        for col in column[0]:
+                            group_columns += [[col, column[1]]]
+                            group_properties += [prop]
+                            group_output_columns += ['']
+                    else:
+                        group_columns += [column]
+                        group_properties += [prop]
+                        group_output_columns += ['']
+
+        # let's validate group_columns
+        for cols in group_columns:
+            for col in cols:
+                if not isinstance(col, str):
+                    raise TypeError('Column name must be a string.')
+
+                # TODO:  test for num_args != 0 or don't store empty column name
+                if col != '' and col not in my_column_names:
+                    raise KeyError("Column '{}' does not exist in XFrame.".format(col))
+
+        return XFrame(impl=self._impl.groupby_aggregate(key_columns_array,
+                                                        group_columns,
+                                                        group_output_columns,
+                                                        group_properties))
+
+    def groupby(self, key_columns, operations=None, *args):
+        """
+        Perform a group on the `key_columns` followed by aggregations on the
+        columns listed in `operations`.
+
+        The `operations` parameter is a dictionary that indicates which
+        aggregation operators to use and which columns to use them on. The
+        available operators are SUM, MAX, MIN, COUNT, MEAN, VARIANCE, STD, CONCAT,
+        SELECT_ONE, ARGMIN, ARGMAX, and QUANTILE.
+        See :mod:`~xframes.aggregate` for more detail on the aggregators.
+
+        Parameters
+        ----------
+        key_columns : string | list[string]
+            Column(s) to group by. Key columns can be of any type other than
+            dictionary.
+
+        operations : dict, list, optional
+            Dictionary of columns and aggregation operations. Each key is a
+            output column name and each value is an aggregator. This can also
+            be a list of aggregators, in which case column names will be
+            automatically assigned.
+
+        \*args
+            All other remaining arguments will be interpreted in the same
+            way as the operations argument.
+
+        Returns
+        -------
+        out_xf : XFrame
+            A new XFrame, with a column for each groupby column and each
+            aggregation operation.
+
+        See Also
+        --------
+        xframes.XFrame.groupby
+            Corresponding function on individual frame.
+
+        """
+        return self._groupby(key_columns, operations, *args)
+
+
     def count_distinct(self, col):
         """
         Counts the number of different values in a column of each XFrame in the stream.
@@ -312,7 +503,7 @@ class XStream(XObject):
 
         """
         names = self._impl.column_names()
-        if not col in names:
+        if col not in names:
             raise ValueError('Column name must be in XStream')
         return XStream(impl=self._impl.count_distinct(col))
 
@@ -372,15 +563,75 @@ class XStream(XObject):
         col_names = col_names or self._impl.column_names()
         column_types = column_types or self._impl.column_types
         if len(col_names) != len(column_types):
-            raise ValueError('Col_names must be same length as column_types: {} {}'.\
+            raise ValueError('Col_names must be same length as column_types: {} {}'.
                              format(len(col_names), len(column_types)))
         if not inspect.isfunction(row_fn):
             raise TypeError('Row_fn must be a function.')
         return XStream(impl=self._impl.transform_row(row_fn, col_names, column_types))
 
+    def apply(self, fn, dtype):
+        """
+        Transform each XFrame in an XStream to an :class:`~xframes.XArray` according to a
+        specified function. Returns a XStream of XArray of `dtype` where each element
+        in this XArray is transformed by `fn(x)` where `x` is a single row in
+        the xframe represented as a dictionary.  The `fn` should return
+        exactly one value which can be cast into type `dtype`.
+
+        Parameters
+        ----------
+        fn : function
+            The function to transform each row of the XFrame. The return
+            type should be convertible to `dtype` if `dtype` is not None.
+
+        dtype : data type
+            The `dtype` of the new XArray. If None, the first 100
+            elements of the array are used to guess the target
+            data type.
+
+        Returns
+        -------
+        out : XStream
+            The stream of XArray transformed by fn.  Each element of the XArray is of
+            type `dtype`
+        """
+        if not inspect.isfunction(fn):
+            raise TypeError('Input must be a function.')
+        if not type(dtype) is type:
+            raise TypeError('Dtype must be a type')
+
+        return XStream(impl=self._impl.apply(fn, dtype))
+
     def transform_col(self, col, fn, dtype):
+        """
+        Transform a single column according to a specified function.
+        The remaining columns are not modified.
+        The type of the transformed column types becomes `dtype`, with
+        the new value being the result of `fn(x)`, where `x` is a single row in
+        the XFrame represented as a dictionary.  The `fn` should return
+        exactly one value which can be cast into type `dtype`.
+
+        Parameters
+        ----------
+        col : string
+            The name of the column to transform.
+
+        fn : function, optional
+            The function to transform each row of the XFrame. The return
+            type should be convertible to `dtype`
+            If the function is not given, an identity function is used.
+
+        dtype : dtype, optional
+            The column data type of the new XArray. If None, the first 100
+            elements of the array are used to guess the target
+            data type.
+
+        Returns
+        -------
+        out : XStream
+            An XStream with the given column transformed by the function and cast to the given type.
+        """
         names = self._impl.column_names()
-        if not col in names:
+        if col not in names:
             raise ValueError('Column name must be in XStream')
         if fn is None:
             def fn(row):
@@ -392,7 +643,7 @@ class XStream(XObject):
 
         return XStream(impl=self._impl.transform_col(col, fn, dtype))
 
-    def filterby(self, values, column_name, exclude=False):
+    def filterby(self, values, col_name, exclude=False):
         """
         Filter an XStream by values inside an iterable object. Result is an
         XStream that only includes (or excludes) the rows that have a column
@@ -410,7 +661,7 @@ class XStream(XObject):
             column given by 'column_name'.  The result includes
             rows where the function returns True.
 
-        column_name : str | None
+        col_name : str | None
             The column of the XFrame to match with the given `values`.  This can only be None if the values
             argument is a function.  In this case, the function is passed the whole row.
 
@@ -428,20 +679,20 @@ class XStream(XObject):
         xframes.XFrame.filterby
             Corresponding function on individual frame.
         """
-        if isinstance(values, types.FunctionType) and column_name is None:
+        if isinstance(values, types.FunctionType) and col_name is None:
             return XStream(impl=self._impl.filter_by_function_row(values, exclude))
 
-        if not isinstance(column_name, str):
+        if not isinstance(col_name, str):
             raise TypeError('Column_name must be a string.')
 
         existing_columns = self.column_names()
-        if column_name not in existing_columns:
-            raise KeyError("Column '{}' not in XFrame.".format(column_name))
+        if col_name not in existing_columns:
+            raise KeyError("Column '{}' not in XFrame.".format(col_name))
 
         if isinstance(values, types.FunctionType):
-            return XStream(impl=self._impl.filter_by_function(values, column_name, exclude))
+            return XStream(impl=self._impl.filter_by_function(values, col_name, exclude))
 
-        existing_type = self.column_types()[existing_columns.index(column_name)]
+        existing_type = self.column_types()[existing_columns.index(col_name)]
 
         # If we are given the values directly, use filter.
         if not isinstance(values, XArray):
@@ -464,19 +715,20 @@ class XStream(XObject):
             if value_type != existing_type:
                 raise TypeError("Value type ({}) does not match column type ({}).".format(
                     value_type.__name__, existing_type.__name__))
-            return XStream(impl=self._impl.filter(values, column_name, exclude))
+            return XStream(impl=self._impl.filter(values, col_name, exclude))
 
+        # TODO: Below is unimplemented
         # If we have xArray, then use a different strategy based on join.
-        value_xf = XStream().add_column(values, column_name)
+        value_xf = XStream().add_column(values, col_name)
 
         # Make sure the values list has unique values, or else join will not filter.
-        value_xf = value_xf.groupby(column_name, {})
+        value_xf = value_xf.groupby(col_name, {})
 
-        existing_type = self.column_types()[existing_columns.index(column_name)]
+        existing_type = self.column_types()[existing_columns.index(col_name)]
         given_type = value_xf.column_types()[0]
         if given_type is not existing_type:
             raise TypeError("Type of given values ('{}') does not match type of column '{}' ('{}') in XFrame."
-                            .format(given_type, column_name, existing_type))
+                            .format(given_type, col_name, existing_type))
 
         if exclude:
             id_name = "id"
@@ -486,17 +738,463 @@ class XStream(XObject):
                 id_name += '1'
             value_xf = value_xf.add_row_number(id_name)
 
-            tmp = XStream(impl=self._impl.join(value_xf._impl,
-                                              'left',
-                                              {column_name: column_name}))
+            tmp = XStream(impl=self._impl.join(value_xf.impl(),
+                                               'left',
+                                               {col_name: col_name}))
             # DO NOT CHANGE the next line -- it is xArray operator
             ret_xf = tmp[tmp[id_name] == None]
             del ret_xf[id_name]
             return ret_xf
         else:
-            return XStream(impl=self._impl.join(value_xf._impl,
-                                               'inner',
-                                               {column_name: column_name}))
+            return XStream(impl=self._impl.join(value_xf.impl(),
+                                                'inner',
+                                                {col_name: col_name}))
+
+    def select_column(self, column_name):
+        """
+        Return an XStream of :class:`~xframes.XArray` that corresponds with
+        the given column name. Throws an exception if the column name is something other than a
+        string or if the column name is not found.
+
+        Subscripting an XStream by a column name is equivalent to this function.
+
+        Parameters
+        ----------
+        column_name : str
+            The column name.
+
+        Returns
+        -------
+        out : XStream
+            The XStream of XArray that is referred by `column_name`.
+
+        See Also
+        --------
+        xframes.XFrame.select_column
+            Corresponding function on individual frame.
+        """
+        if not isinstance(column_name, str):
+            raise TypeError('Invalid column_name type: must be str.')
+        return XStream(impl=self._impl.select_column(column_name))
+
+    def select_columns(self, keylist):
+        """
+        Get XFrame composed only of the columns referred to in the given list of
+        keys. Throws an exception if ANY of the keys are not in this XFrame or
+        if `keylist` is anything other than a list of strings.
+
+        Parameters
+        ----------
+        keylist : list[str]
+            The list of column names.
+
+        Returns
+        -------
+        out : XFrame
+            A new XFrame that is made up of the columns referred to in
+            `keylist` from the current XFrame.  The order of the columns
+            is preserved.
+
+        See Also
+        --------
+        xframes.XFrame.select_columns
+            Corresponding function on individual frame.
+        """
+        if not hasattr(keylist, '__iter__'):
+            raise TypeError('Keylist must be an iterable.')
+        if not all([isinstance(x, str) for x in keylist]):
+            raise TypeError('Invalid key type: must be str.')
+
+        key_set = set(keylist)
+        if len(key_set) != len(keylist):
+            for key in key_set:
+                if keylist.count(key) > 1:
+                    raise ValueError("There are duplicate keys in key list: '{}'.".format(key))
+
+        return XStream(impl=self._impl.select_columns(keylist))
+
+    def add_column(self, col, name=''):
+        """
+        Add a column to every XFrame in this XStream. The length of the new column
+        must match the length of the existing XFrame. This
+        operation returns new XFrames with the additional columns.
+        If no `name` is given, a default name is chosen.
+
+        Parameters
+        ----------
+        col : XArray
+            The 'column' of data to add.
+
+        name : string, optional
+            The name of the column. If no name is given, a default name is
+            chosen.
+
+        Returns
+        -------
+        out : XStream
+            A new XStream of XFrame with the new column.
+
+        See Also
+        --------
+        xframes.XFrame.add_column
+            Corresponding function on individual frame.
+        """
+        # Check type for pandas dataframe or XArray?
+        if not isinstance(col, XArray):
+            raise TypeError('Must give column as XArray.')
+        if not isinstance(name, str):
+            raise TypeError('Invalid column name: must be str.')
+        return XStream(impl=self._impl.add_column(col.impl(), name))
+
+    def add_columns(self, cols, namelist=None):
+        """
+        Adds multiple columns to this XFrame. The length of the new columns
+        must match the length of the existing XFrame. This
+        operation returns a new XFrame with the additional columns.
+
+        Parameters
+        ----------
+        cols : list of XArray or XFrame
+            The columns to add.  If `cols` is an XFrame, all columns in it are added.
+
+        namelist : list of string, optional
+            A list of column names. All names must be specified. `Namelist` is
+            ignored if `cols` is an XFrame.  If there are columns with duplicate names, they
+            will be made unambiguous by adding .1 to the second copy.
+
+        Returns
+        -------
+        out : XFrame
+            The XFrame with additional columns.
+
+        See Also
+        --------
+        xframes.XFrame.add_columns
+            Corresponding function on individual frame.
+        """
+        if isinstance(cols, XFrame):
+            return XStream(impl=self._impl.add_columns_frame(cols.impl()))
+        else:
+            if not hasattr(cols, '__iter__'):
+                raise TypeError('Column list must be an iterable.')
+            if not hasattr(namelist, '__iter__'):
+                raise TypeError('Namelist must be an iterable.')
+
+            if not all([isinstance(x, XArray) for x in cols]):
+                raise TypeError('Must give column as XArray.')
+            if not all([isinstance(x, str) for x in namelist]):
+                raise TypeError("Invalid column name in list : must all be 'str'.")
+            if len(namelist) != len(cols):
+                raise ValueError('Namelist length mismatch.')
+
+            cols_impl = [col.impl() for col in cols]
+            return XStream(impl=self._impl.add_columns_array(cols_impl, namelist))
+
+    def replace_column(self, name, col):
+        """
+        Replace a column in this XFrame. The length of the new column
+        must match the length of the existing XFrame. This
+        operation returns a new XFrame with the replacement column.
+
+        Parameters
+        ----------
+        name : string
+            The name of the column.
+
+        col : XArray
+            The 'column' to add.
+
+        Returns
+        -------
+        out : XFrame
+            A new XFrame with specified column replaced.
+
+        See Also
+        --------
+        xframes.XFrame.replace_column
+            Corresponding function on individual frame.
+        """
+        # Check type for pandas dataframe or XArray?
+        if not isinstance(col, XArray):
+            raise TypeError('Must give column as XArray.')
+        if not isinstance(name, str):
+            raise TypeError('Invalid column name: must be str.')
+        if name not in self.column_names():
+            raise ValueError('Column name must be in XFrame')
+        return XStream(impl=self._impl.replace_selected_column(name, col.impl()))
+
+    def remove_column(self, name):
+        """
+        Remove a column from this XFrame. This
+        operation returns a new XFrame with the given column removed.
+
+        Parameters
+        ----------
+        name : string
+            The name of the column to remove.
+
+        Returns
+        -------
+        out : XFrame
+            A new XFrame with given column removed.
+
+        See Also
+        --------
+        xframes.XFrame.remove_column
+            Corresponding function on individual frame.
+        """
+        if name not in self.column_names():
+            raise KeyError('Cannot find column {}.'.format(name))
+        return XStream(impl=self._impl.remove_column(name))
+
+    def remove_columns(self, column_names):
+        """
+        Removes one or more columns from this XFrame. This
+        operation returns a new XFrame with the given columns removed.
+
+        Parameters
+        ----------
+        column_names : list or iterable
+            A list or iterable of the column names.
+
+        Returns
+        -------
+        out : XFrame
+            A new XFrame with given columns removed.
+
+        See Also
+        --------
+        xframes.XFrame.remove_columns
+            Corresponding function on individual frame.
+        """
+        if not hasattr(column_names, '__iter__'):
+            raise TypeError('Column_names must be an iterable.')
+        for name in column_names:
+            if name not in self.column_names():
+                raise KeyError('Cannot find column {}.'.format(name))
+        return XStream(impl=self._impl.remove_columns(column_names))
+
+    def swap_columns(self, column_1, column_2):
+        """
+        Swap the columns with the given names. This
+        operation returns a new XFrame with the given columns swapped.
+
+        Parameters
+        ----------
+        column_1 : string
+            Name of column to swap
+
+        column_2 : string
+            Name of other column to swap
+
+        Returns
+        -------
+        out : XFrame
+            A new XFrame with specified columns swapped.
+
+        See Also
+        --------
+        xframes.XFrame.swap_columns
+            Corresponding function on individual frame.
+        """
+        if column_1 not in self.column_names():
+            raise KeyError("Cannot find column '{}'.".format(column_1))
+        if column_2 not in self.column_names():
+            raise KeyError("Cannot find column '{}'.".format(column_2))
+
+        return XStream(impl=self._impl.swap_columns(column_1, column_2))
+
+    def reorder_columns(self, column_names):
+        """
+        Reorder the columns in the table.  This
+        operation returns a new XFrame with the given columns reordered.
+
+        Parameters
+        ----------
+        column_names : list of string
+            Names of the columns in desired order.
+
+        Returns
+        -------
+        out : XFrame
+            A new XFrame with reordered columns.
+
+        See Also
+        --------
+        xframes.XFrame.reorder_columns
+            Corresponding function on individual frame.
+        """
+        if not hasattr(column_names, '__iter__'):
+            raise TypeError('Keylist must be an iterable.')
+        for col in column_names:
+            if col not in self.column_names():
+                raise KeyError("Cannot find column '{}'.".format(col))
+        for col in self.column_names():
+            if col not in column_names:
+                raise KeyError("Column '{}' not assigned'.".format(col))
+
+        return XStream(impl=self._impl.reorder_columns(column_names))
+
+    def rename(self, names):
+        """
+        Rename the given columns. `Names` can be a dict specifying
+        the old and new names. This changes the names of the columns given as
+        the keys and replaces them with the names given as the values.  Alternatively,
+        `names` can be a list of the new column names.  In this case it must be
+        the same length as the number of columns.  This
+        operation returns a new XFrame with the given columns renamed.
+
+        Parameters
+        ----------
+        names : dict [string, string] | list [ string ]
+            Dictionary of [old_name, new_name] or list of new names
+
+        Returns
+        -------
+        out : XFrame
+            A new XFrame with columns renamed.
+
+        xframes.XFrame.rename
+            Corresponding function on individual frame.
+        """
+        if not isinstance(names, (list, dict)):
+            raise TypeError('Names must be a dictionary: oldname -> newname or a list of newname ({}).'
+                            .format(type(names).__name__))
+        if isinstance(names, dict):
+            new_names = copy.copy(self.column_names())
+            for k in names:
+                if k not in self.column_names():
+                    raise ValueError("Cannot find column '{}' in the XFrame.".format(k))
+                index = self.column_names().index(k)
+                new_names[index] = names[k]
+        else:
+            new_names = names
+            if len(new_names) != len(self.column_names()):
+                raise ValueError('Names must be the same length as the number of columns (names: {} columns: {}).'
+                                 .format(len(new_names), len(self.column_names())))
+        return XStream(impl=self._impl.replace_column_names(new_names))
+
+    def __getitem__(self, key):
+        """
+        This method does things based on the type of `key`.
+
+        If `key` is:
+            * str
+              Calls `select_column` on `key`
+            * int
+              Returns a single row of each XFrame in the XStream (the `key`th one) as a dictionary.
+            * slice
+              Returns an XStream of XFrame including only the sliced rows.
+        """
+        if isinstance(key, list):
+            return self.select_columns(key)
+        if isinstance(key, str):
+            return self.select_column(key)
+        if isinstance(key, unicode):
+            return self.select_column(str(key))
+        if isinstance(key, int):
+            if key < 0:
+                key += len(self)
+            if key >= len(self):
+                raise IndexError('XFrame index out of range.')
+            return list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))[0]
+        if isinstance(key, slice):
+            start = key.start
+            stop = key.stop
+            step = key.step
+            if start is None:
+                start = 0
+            if stop is None:
+                stop = len(self)
+            if step is None:
+                step = 1
+            # handle negative indices
+            if start < 0:
+                start += len(self)
+            if stop < 0:
+                stop += len(self)
+            return XStream(impl=self._impl.copy_range(start, step, stop))
+
+        raise TypeError('Invalid index type: must be ' +
+                        "'int', 'list', slice, or 'str': ({})".format(type(key).__name__))
+
+    def __setitem__(self, key, value):
+        """
+        Adds columns to each XFrame and returns the modified XStream.
+
+        Key can be either a list or a str.  If
+        value is an XArray, it is added to the XFrame as a column.  If it is a
+        constant value (int, str, or float), then a column is created where
+        every entry is equal to the constant value.  Existing columns can also
+        be replaced using this function.
+
+        """
+        if isinstance(key, list):
+            col_list = value
+            if isinstance(value, XFrame):
+                for name in value.column_names():
+                    if name in self.column_names():
+                        raise ValueError("Column '{}' already exists in current XFrame.".format(name))
+                self.impl().add_columns_frame_in_place(value.impl())
+            else:
+                if not hasattr(col_list, '__iter__'):
+                    raise TypeError('Column list must be an iterable.')
+                if not hasattr(key, '__iter__'):
+                    raise TypeError('Namelist must be an iterable.')
+                if not all([isinstance(x, XArray) for x in col_list]):
+                    raise TypeError('Must give column as XArray.')
+                if not all([isinstance(x, str) for x in key]):
+                    raise TypeError("Invalid column name in list : must all be 'str'.")
+                if len(key) != len(col_list):
+                    raise ValueError('Namelist length mismatch.')
+                cols_impl = [col.impl() for col in col_list]
+                self._impl.add_columns_array_in_place(cols_impl, key)
+        elif isinstance(key, str):
+            if isinstance(value, XArray):
+                sa_value = value
+            elif hasattr(value, '__iter__'):  # wrap list, array... to xarray
+                sa_value = XArray(value)
+            else:
+                # Special case of adding a const column.
+                # It is very inefficient to create a column and then zip it in
+                # a) num_rows() is inefficient
+                # b) parallelize is inefficient
+                # c) partitions differ, so zip --> zipWithIndex, sortByKey, etc
+                # Map it in instead
+                if not isinstance(value, (int, float, str, array.array, list, dict)):
+                    raise TypeError("Cannot create xarray of value type '{}'.".format(type(value).__name__))
+                if key not in self.column_names():
+                    self._impl.add_column_const_in_place(key, value)
+                else:
+                    self._impl.replace_column_const_in_place(key, value)
+                return
+
+            # set new column
+            if key not in self.column_names():
+                self._impl.add_column_in_place(sa_value.impl(), key)
+            else:
+                # special case if replacing the only column.
+                # server would fail the replacement if the new column has different
+                # length than current one, which doesn't make sense if we are replacing
+                # the only column. To support this, we call a different function in the
+                # implementation.
+                single_column = (self.num_columns() == 1)
+                if single_column:
+                    self._impl.replace_single_column_in_place(key, sa_value.impl())
+                else:
+                    self._impl.replace_selected_column_in_place(key, sa_value.impl())
+
+        else:
+            raise TypeError('Cannot set column with key type {}.'.format(type(key).__name__))
+
+    def __delitem__(self, name):
+        """
+        Removes a column and returns the modified for each XFram in the XStream.
+        """
+        if name not in self.column_names():
+            raise KeyError('Cannot find column {}.'.format(name))
+        self._impl.remove_column_in_place(name)
+        return self
 
     def process_rows(self, row_fn, init_fn=None, final_fn=None):
         """
@@ -528,6 +1226,36 @@ class XStream(XObject):
         """
         self._impl.process_rows(row_fn, init_fn, final_fn)
 
+    def process_frames(self, row_fn, init_fn=None, final_fn=None):
+        # TODO: review iit_fn and final_fn -- how do they work?
+        """
+        Process the frames in a stream of XFrames using a given frame processing function.
+
+        This is an output operation, and forces the XFrames to be evaluated.
+
+        Parameters
+        ----------
+        frame_fn : function
+            This function is called on each XFrame in the XStream.
+            This function receives two parameters: a frame and an initiali value.
+            The initial value is the return value resulting from calling the init_fn.
+            The frame_fn need not return a value: the function is called for its side effects only.
+
+        init_fn : function, optional
+            The init_fn is a parameterless function, used to set up the environment for the frame function.
+            Its value is passed to each invocation of the frame function.  If no init_fn is passed, then
+            each frame function will receive None as its second argument.
+
+            The rows are processed in parallel in groups on one or more worker machines.  For each
+            group, init_fn is called once, and its return value is passed to each row_fn.  It could be
+            used, for instance, to open a file or socket that is used by each of the row functions.
+
+        final_fn : function, optional
+            The final_fn is called after each group is processed.  It is a function of one parameter, the
+            return value of the initial function.
+        """
+        self._impl.process_frames(row_fn, init_fn, final_fn)
+
     def save(self, prefix, suffix=None):
         """
         Save the XStream to a set of files in the file system.
@@ -557,8 +1285,8 @@ class XStream(XObject):
         self._impl.save(prefix, suffix)
 
     def print_frames(self, num_rows=10, num_columns=40,
-                   max_column_width=30, max_row_width=xframes.MAX_ROW_WIDTH,
-                   wrap_text=False, max_wrap_rows=2, footer=True):
+                     max_column_width=30, max_row_width=xframes.MAX_ROW_WIDTH,
+                     wrap_text=False, max_wrap_rows=2, footer=False):
         """
         Print the first rows and columns of each XFrame in the XStream in human readable format.
 
@@ -594,4 +1322,46 @@ class XStream(XObject):
             Corresponding function on individual frame.
         """
         self._impl.print_frames(num_rows, num_columns, max_column_width, max_row_width,
-                         wrap_text, max_wrap_rows, footer)
+                                wrap_text, max_wrap_rows, footer)
+
+    def update_state(self, fn, col_name, initial_state):
+        # Take the column names and types from the initial state
+        """
+        Update state for an XStream by using the state key in a given column.
+
+        The state is a key-value store.  The key is made up of the values in the given column.
+        For each XFrame in the XStream, all the rows with a given key are passed to the supplied function,
+        which computes a new state.
+
+        Parameters
+        ----------
+        fn : function
+            The given function is supplied with a list of rows in each XFrame that have the same value in the given
+            column (the key), along with the current state.  It returns the new state for that key.
+            The function is: fn(rows, old_state) and returns new_state.
+
+        col_name : str | None
+            The column of the XStream to match supplies the state key.
+
+        initial_state : XFrame
+            Used to initialize the state.  The update function should return a tuple of values
+            that conform to the column names and types of this state.
+
+        Returns
+        -------
+        An XStream made up of XFrames representing the state.
+        """
+        if not isinstance(col_name, str):
+            raise TypeError('Column_name must be a string.')
+
+        existing_columns = self.column_names()
+        if col_name not in existing_columns:
+            raise KeyError("Column '{}' not in XFrame.".format(col_name))
+
+        if not isinstance(fn, types.FunctionType):
+            raise TypeError('Fn must be a function.')
+
+        if not isinstance(initial_state, XFrame):
+            raise TypeError('Initial_state must be an XFrame.')
+
+        return XStream(impl=self._impl.update_state(fn, col_name, initial_state))
