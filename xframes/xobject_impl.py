@@ -4,20 +4,22 @@ This object implements the base of the xframes inheritance hierarchy.
 import os
 
 from pyspark import RDD
+from pyspark.streaming import DStream
 
 from xframes.spark_context import CommonSparkContext
-from xframes.xrdd import XRdd
 import xframes.fileio as fileio
+
+
+class UnimplementedException(Exception):
+    pass
 
 
 class XObjectImpl(object):
     """ Implementation for XObject. """
 
-    def __init__(self, rdd):
-        self._rdd = self._wrap_rdd(rdd)
-
     @staticmethod
     def _wrap_rdd(rdd):
+        from xframes.xrdd import XRdd
         if rdd is None:
             return None
         if isinstance(rdd, RDD):
@@ -25,6 +27,17 @@ class XObjectImpl(object):
         if isinstance(rdd, XRdd):
             return rdd
         raise TypeError('Type is not RDD')
+
+    @staticmethod
+    def _wrap_dstream(dstream):
+        from xframes.xstream import XStream
+        if dstream is None:
+            return None
+        if isinstance(dstream, DStream):
+            return XStream(dstream)
+        if isinstance(dstream, XStream):
+            return dstream
+        raise TypeError('Type is not DStream')
 
     @staticmethod
     def spark_context():
@@ -41,7 +54,6 @@ class XObjectImpl(object):
     @staticmethod
     def streaming_context():
         return CommonSparkContext.streaming_context()
-
 
     @staticmethod
     def check_input_uri(uri):
@@ -60,9 +72,3 @@ class XObjectImpl(object):
             fileio.make_dir(dirname)
             if not fileio.exists(dirname):
                 raise ValueError('Output directory does not exist: {}'.format(dirname))
-
-    def _replace_rdd(self, rdd):
-        self._rdd = self._wrap_rdd(rdd)
-
-    def dump_debug_info(self):
-        return self._rdd.toDebugString()

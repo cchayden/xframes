@@ -13,6 +13,7 @@ import shutil
 import re
 import copy
 from datetime import datetime
+# noinspection PyPackageRequirements
 from dateutil import parser as date_parser
 import logging
 
@@ -27,11 +28,12 @@ import xframes.fileio as fileio
 from xframes.xobject_impl import XObjectImpl
 from xframes.traced_object import TracedObject
 from xframes.spark_context import CommonSparkContext
-from xframes.util import infer_type_of_rdd
-from xframes.util import cache, uncache, persist, unpersist
-from xframes.util import is_missing, is_missing_or_empty
-from xframes.util import to_ptype, to_schema_type, hint_to_schema_type, pytype_from_dtype, safe_cast_val
-from xframes.util import distribute_seed
+from xframes.type_utils import infer_type_of_rdd
+from xframes.utils import cache, uncache, persist, unpersist
+from xframes.type_utils import is_missing, is_missing_or_empty
+from xframes.type_utils import to_ptype, to_schema_type, hint_to_schema_type, pytype_from_dtype, safe_cast_val
+from xframes.utils import distribute_seed
+from xframes.utils import build_row
 from xframes.lineage import Lineage
 import xframes
 from xframes.xarray_impl import XArrayImpl
@@ -76,7 +78,10 @@ class XFrameImpl(XObjectImpl, TracedObject):
         Types permitted include int, long, float, string, list, and dict.
         """
         self._entry(col_names=col_names, column_types=column_types, lineage=lineage)
-        super(XFrameImpl, self).__init__(rdd)
+        super(XFrameImpl, self).__init__()
+        rdd = rdd or CommonSparkContext.spark_context().emptyRDD()
+        self._rdd = self._wrap_rdd(rdd)
+
         col_names = col_names or []
         column_types = column_types or []
         self.col_names = list(col_names)
@@ -86,6 +91,12 @@ class XFrameImpl(XObjectImpl, TracedObject):
         self._num_rows = None
 
         self.materialized = False
+
+    def _replace_rdd(self, rdd):
+        self._rdd = self._wrap_rdd(rdd)
+
+    def dump_debug_info(self):
+        return self._rdd.toDebugString()
 
     def _rv(self, rdd, col_names=None, column_types=None, lineage=None):
         """
@@ -243,7 +254,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
         first_row = rdd.take(1)[0]
         if names is not None:
             if len(names) != len(first_row):
-                raise ValueError('Length of names does not match RDD.')
+                raise ValueError('Length of names does not match RDD: {} {}.'.format(names, first_row))
         if types is not None:
             if len(types) != len(first_row):
                 raise ValueError('Length of types does not match RDD.')
@@ -461,6 +472,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
             col_names = remove_columns(col_names)
 
         # cast to desired type
+        # noinspection PyUnusedLocal
         def cast_val(val, typ, name):
             if val is None:
                 return None
@@ -484,7 +496,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
                     return date_parser.parse(val)
                 return typ(val)
             except ValueError:
-               # raise ValueError('Cast failed: ({}) {}  col: {}'.format(typ, val, name))
+                # raise ValueError('Cast failed: ({}) {}  col: {}'.format(typ, val, name))
                 return None
             except TypeError:
                 # raise TypeError('Cast failed: ({}) {}  col: {}'.format(typ, val, name))
@@ -667,7 +679,6 @@ class XFrameImpl(XObjectImpl, TracedObject):
             return
         else:
             dataframe.write.json(url)
-
 
     def to_rdd(self, number_of_partitions=None):
         """
@@ -1369,13 +1380,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
         names = self.col_names
         use_columns_index = [names.index(col) for col in use_columns]
 
-        # fn needs the row as a dict
-        def build_row(names, row):
-            if use_columns:
-                names = [name for name in names if name in use_columns]
-                row = [row[i] for i in use_columns_index]
-            return dict(zip(names, row))
-        res = self._rdd.flatMap(lambda row: fn(build_row(names, row)))
+        res = self._rdd.flatMap(lambda row: fn(build_row(names, row, use_columns, use_columns_index)))
         res = res.map(tuple)
         lineage = self.lineage.flat_map(column_names, use_columns)
         return self._rv(res, column_names, column_types, lineage)
@@ -1629,20 +1634,13 @@ class XFrameImpl(XObjectImpl, TracedObject):
         names = self.col_names
         use_columns_index = [names.index(col) for col in use_columns]
 
-        # row_fn needs the row as a dict
-        def build_row(names, row):
-            if use_columns:
-                names = [name for name in names if name in use_columns]
-                row = [row[i] for i in use_columns_index]
-            return dict(zip(names, row))
-
         def partition_iterator(iterator):
             if initialization_fn is not None:
                 ini_val = initialization_fn()
             else:
                 ini_val = None
             for row in iterator:
-                row_fn(build_row(names, row), ini_val)
+                row_fn(build_row(names, row, use_columns, use_columns_index), ini_val)
             if final_fn is not None:
                 final_fn(ini_val)
         self._rdd.foreachPartition(partition_iterator)
@@ -1662,15 +1660,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
         names = self.col_names
         use_columns_index = [names.index(col) for col in use_columns]
 
-        # fn needs the row as a dict
-        def build_row(names, row):
-            if use_columns:
-                names = [name for name in names if name in use_columns]
-                row = [row[i] for i in use_columns_index]
-            return dict(zip(names, row))
-
         def transformer(row):
-            result = fn(build_row(names, row))
+            result = fn(build_row(names, row, use_columns, use_columns_index))
             if not isinstance(result, dtype):
                 return safe_cast_val(result, dtype)
             return result
@@ -1699,15 +1690,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
         names = self.col_names
         use_columns_index = [names.index(col_name) for col_name in use_columns]
 
-        # fn needs the row as a dict
-        def build_row(names, row):
-            if use_columns:
-                names = [name for name in names if name in use_columns]
-                row = [row[i] for i in use_columns_index]
-            return dict(zip(names, row))
-
         def transformer(row):
-            result = fn(build_row(names, row))
+            result = fn(build_row(names, row, use_columns, use_columns_index))
             if not isinstance(result, dtype):
                 result = safe_cast_val(result, dtype)
             lst = list(row)
@@ -1742,14 +1726,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
         names = self.col_names
         use_columns_index = [names.index(col) for col in use_columns]
 
-        def build_row(names, row):
-            if use_columns:
-                names = [name for name in names if name in use_columns]
-                row = [row[i] for i in use_columns_index]
-            return dict(zip(names, row))
-
         def transformer(row):
-            result = fn(build_row(names, row))
+            result = fn(build_row(names, row, use_columns, use_columns_index))
             lst = list(row)
             for dtype_index, col_index in enumerate(col_indexes):
                 dtype = dtypes[dtype_index]
@@ -1829,7 +1807,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
 
         # look up operators
         # make new column names
-        default_group_output_columns = [property.default_col_name for property in group_properties]
+        default_group_output_columns = [prop.default_col_name for prop in group_properties]
 
         group_output_columns = [col if col != '' else deflt
                                 for col, deflt in zip(group_output_columns,
@@ -1849,8 +1827,8 @@ class XFrameImpl(XObjectImpl, TracedObject):
         new_col_types = [self.column_types[index] for index in key_cols]
         # get existing types of group columns
         group_types = [get_group_types(cols) for cols in group_cols]
-        agg_types = [property.get_output_type(group_type)
-                     for property, group_type in zip(group_properties, group_types)]
+        agg_types = [prop.get_output_type(group_type)
+                     for prop, group_type in zip(group_properties, group_types)]
 
         new_col_types.extend(agg_types)
 
@@ -1869,7 +1847,7 @@ class XFrameImpl(XObjectImpl, TracedObject):
             # apply each of the aggregator functions and collect their results into a list
             return [aggregator(rows, cols)
                     for aggregator, cols in zip(aggregators, group_cols)]
-        aggregators = [property.agg_function for property in group_properties]
+        aggregators = [prop.agg_function for prop in group_properties]
         aggregates = grouped.map(lambda (x, y): (x, build_aggregates(y, aggregators, group_cols)))
 
         def concatenate(old_vals, new_vals):
