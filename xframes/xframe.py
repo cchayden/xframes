@@ -11,6 +11,7 @@ from textwrap import wrap
 import inspect
 import time
 import itertools
+# noinspection PyPackageRequirements
 from dateutil import parser as date_parser
 import datetime
 import copy
@@ -26,18 +27,17 @@ from xframes.prettytable import PrettyTable
 from xframes.deps import dataframeplus, HAS_DATAFRAME_PLUS
 from xframes.xobject import XObject
 from xframes.xframe_impl import XFrameImpl
-from xframes.xplot import XPlot
 from xframes.xarray_impl import infer_type_of_list
-from xframes.util import make_internal_url, classify_type, classify_auto
+from xframes.utils import make_internal_url
+from xframes.type_utils import classify_type, classify_auto, is_sortable_type, is_xframe_type
 from xframes.xarray import XArray
 import xframes
-import util
 
 """
 Copyright (c) 2014, Dato, Inc.
 All rights reserved.
 
-Copyright (c) 2016, Charles Hayden, Inc.
+Copyright (c) 2017, Charles Hayden
 All rights reserved.
 """
 
@@ -360,6 +360,43 @@ class XFrame(XObject):
             else:
                 return 'xframe'
         raise ValueError('Cannot infer input type for data {}.'.format(data))
+
+    @classmethod
+    def empty(cls, column_names, column_types):
+        """
+        Create an empty XFrame.
+
+        Creates an empty XFrame, with column names and column types.
+
+        Parameters
+        ----------
+        column_names : list[str]
+            The column names.
+
+        colum_types : list[type]
+            The column types.
+
+        Returns
+        -------
+        XFrame
+            An empty XFrame with the given column names and types.
+        """
+        if not isinstance(column_names, list):
+            raise TypeError('Column_names must be a list')
+        for name in column_names:
+            if not isinstance(name, basestring):
+                raise TypeError('Column_names must be strings')
+        for typ in column_types:
+            if not isinstance(typ, type):
+                raise TypeError('Column_types must be types')
+            if not is_xframe_type(typ):
+                raise TypeError('Type "{}" is not a valid column type.'.format(typ.__name__))
+
+        if not isinstance(column_types, list):
+            raise TypeError('Column_types must be a list')
+        if len(column_names) != len(column_types):
+            raise ValueError('Column_names and column_types must be of the same length.')
+        return XFrame(impl=XFrameImpl(col_names=column_names, column_types=column_types))
 
     @classmethod
     def set_max_row_width(cls, width):
@@ -1266,7 +1303,7 @@ class XFrame(XObject):
                 if table_width + col_width < max_row_width:
                     # truncate the header if necessary
                     # tbl.add_column(header, [truncate_str(str(x, max_wrap_rows), wrap_text) for x in headxf[col]])
-                    tbl.add_column(header, [truncate_str(str(x), wrap_text, max_wrap_rows) for x in cols[col]])
+                    tbl.add_column(str(header), [truncate_str(str(x), wrap_text, max_wrap_rows) for x in cols[col]])
                     table_width = str(tbl).find('\n')
                     num_column_of_last_table += 1
                 else:
@@ -1795,10 +1832,6 @@ class XFrame(XObject):
             raise TypeError('Final_fn must be a function.')
         if isinstance(use_columns, basestring):
             use_columns = [use_columns]
-        names = self._impl.column_names()
-        if use_columns:
-            col_indexes = [self.column_names().index(col) for col in use_columns]
-            names = [name for name in names if name in use_columns]
         if not seed:
             seed = int(time.time())
 
@@ -1929,7 +1962,7 @@ class XFrame(XObject):
 
         """
         names = self._impl.column_names()
-        if not col in names:
+        if col not in names:
             raise ValueError('Column name must be in XFrame')
         if fn is None:
             def fn(row):
@@ -2250,6 +2283,10 @@ class XFrame(XObject):
             will be automatically inferred by running `fn` on the first
             10 rows of the output.
 
+        use_columns : str | list[str], optional
+            The column or list of columns to be supplied in the row passed to the function.
+            If not given, all columns wll be used to build the row.
+
         seed : int, optional
             Used as the seed if a random number generator is included in `fn`.
 
@@ -2472,6 +2509,7 @@ class XFrame(XObject):
         xf = self[self[column_name].topk_index(topk=k, reverse=reverse)]
         return xf.sort(column_name, ascending=reverse)
 
+    # noinspection PyShadowingBuiltins
     def save(self, filename, format=None):
         """
         Save the XFrame to a file system for later use.
@@ -2531,7 +2569,8 @@ class XFrame(XObject):
                 if not filename.endswith('.parquet'):
                     filename += '.parquet'
             elif format != 'binary':
-                raise ValueError("Invalid format: {}. Supported formats are 'csv', 'tsv', 'parquet', 'json', and 'binary'."
+                raise ValueError("Invalid format: {}. Supported formats are " +
+                                 "'csv', 'tsv', 'parquet', 'json', and 'binary'."
                                  .format(format))
 
         # Save the XFrame
@@ -2766,7 +2805,7 @@ class XFrame(XObject):
             if len(namelist) != len(cols):
                 raise ValueError('Namelist length mismatch.')
 
-            cols_impl = [col._impl for col in cols]
+            cols_impl = [col.impl() for col in cols]
             return XFrame(impl=self._impl.add_columns_array(cols_impl, namelist))
 
     def replace_column(self, name, col):
@@ -2811,7 +2850,7 @@ class XFrame(XObject):
             raise TypeError('Invalid column name: must be str.')
         if name not in self.column_names():
             raise ValueError('Column name must be in XFrame')
-        return XFrame(impl=self._impl.replace_selected_column(name, col._impl))
+        return XFrame(impl=self._impl.replace_selected_column(name, col.impl()))
 
     def remove_column(self, name):
         """
@@ -3070,7 +3109,7 @@ class XFrame(XObject):
             return XFrame(impl=self._impl.copy_range(start, step, stop))
 
         raise TypeError('Invalid index type: must be XArray, ' +
-                            "'int', 'list', slice, or 'str': ({})".format(type(key).__name__))
+                        "'int', 'list', slice, or 'str': ({})".format(type(key).__name__))
 
     def __setitem__(self, key, value):
         """
@@ -3101,7 +3140,7 @@ class XFrame(XObject):
                     raise TypeError("Invalid column name in list : must all be 'str'.")
                 if len(key) != len(col_list):
                     raise ValueError('Namelist length mismatch.')
-                cols_impl = [ col._impl for col in col_list]
+                cols_impl = [col.impl() for col in col_list]
                 self._impl.add_columns_array_in_place(cols_impl, key)
         elif isinstance(key, str):
             if isinstance(value, XArray):
@@ -3134,9 +3173,9 @@ class XFrame(XObject):
                 # implementation.
                 single_column = (self.num_columns() == 1)
                 if single_column:
-                    self._impl.replace_single_column_in_place(key, sa_value._impl)
+                    self._impl.replace_single_column_in_place(key, sa_value.impl())
                 else:
-                    self._impl.replace_selected_column_in_place(key, sa_value._impl)
+                    self._impl.replace_selected_column_in_place(key, sa_value.impl())
 
         else:
             raise TypeError('Cannot set column with key type {}.'.format(type(key).__name__))
@@ -3361,10 +3400,10 @@ class XFrame(XObject):
                         raise TypeError("Unexpected type in aggregator definition of output column: '{}'"
                                         .format(key))
                     if callable(val):
-                        property, column = val()
+                        prop, column = val()
                     else:
-                        property, column = val
-                    num_args = property.num_args
+                        prop, column = val
+                    num_args = prop.num_args
                     if num_args == 2 and (isinstance(column[0], tuple)) != (isinstance(key, tuple)):
                         raise TypeError('Output column(s) and aggregate column(s) for ' +
                                         'aggregate operation should be either all tuple or all string.')
@@ -3372,11 +3411,11 @@ class XFrame(XObject):
                     if num_args == 2 and isinstance(column[0], tuple):
                         for (col, output) in zip(column[0], key):
                             group_columns += [[col, column[1]]]
-                            group_properties += [property]
+                            group_properties += [prop]
                             group_output_columns += [output]
                     else:
                         group_columns += [column]
-                        group_properties += [property]
+                        group_properties += [prop]
                         group_output_columns += [key]
 
             elif isinstance(operation, list):
@@ -3385,18 +3424,18 @@ class XFrame(XObject):
                     if not isinstance(val, tuple) and not callable(val):
                         raise TypeError('Unexpected type in aggregator definition.')
                     if callable(val):
-                        property, column = val()
+                        prop, column = val()
                     else:
-                        property, column = val
-                    num_args = property.num_args
+                        prop, column = val
+                    num_args = prop.num_args
                     if num_args == 2 and isinstance(column[0], tuple):
                         for col in column[0]:
                             group_columns += [[col, column[1]]]
-                            group_properties += [property]
+                            group_properties += [prop]
                             group_output_columns += ['']
                     else:
                         group_columns += [column]
-                        group_properties += [property]
+                        group_properties += [prop]
                         group_output_columns += ['']
 
         # let's validate group_columns
@@ -3405,7 +3444,8 @@ class XFrame(XObject):
                 if not isinstance(col, str):
                     raise TypeError('Column name must be a string.')
 
-                if col != '' and col not in my_column_names:      # <====== test for num_args != 0 or don't store empty column name
+                # TODO:  test for num_args != 0 or don't store empty column name
+                if col != '' and col not in my_column_names:
                     raise KeyError("Column '{}' does not exist in XFrame.".format(col))
 
         return XFrame(impl=self._impl.groupby_aggregate(key_columns_array,
@@ -4013,7 +4053,7 @@ class XFrame(XObject):
             tmp = XFrame(impl=self._impl.join(value_xf._impl,
                                               'left',
                                               {column_name: column_name}))
-            # DO NOT CHANGE the next line -- it is xArray operator
+            # DO NOT CHANGE the next line -- it is XArray operator ==
             ret_xf = tmp[tmp[id_name] == None]
             del ret_xf[id_name]
             return ret_xf
@@ -4852,7 +4892,7 @@ class XFrame(XObject):
                 raise TypeError('Only string parameter can be passed in as column names.')
             if column not in my_column_names:
                 raise ValueError("XFrame has no column named: '{}'.".format(column))
-            if not util.is_sortable_type(self[column].dtype()):
+            if not is_sortable_type(self[column].dtype()):
                 raise TypeError("Only columns of type ('str', 'int', 'float', " +
                                 "'numpy.int32, 'numpy.float64'') can be sorted: {}."
                                 .format(self[column].dtype()))
