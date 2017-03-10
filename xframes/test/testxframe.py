@@ -1488,7 +1488,7 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
 
     def test_foreach(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        t.foreach(lambda row: row['id'] * 2)
+        t.foreach(lambda row, ini: row['id'] * 2)
 
     def test_apply(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
