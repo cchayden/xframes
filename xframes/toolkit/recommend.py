@@ -12,7 +12,7 @@ from xframes.toolkit.model import Model, ModelBuilder
 from xframes import XArray, XFrame
 from xframes.xarray_impl import XArrayImpl
 from xframes.xframe_impl import XFrameImpl
-from xframes.util import delete_file_or_dir
+from xframes.utils import delete_file_or_dir
 from xframes import fileio
 
 ##

@@ -20,7 +20,7 @@ from xframes.spark_context import CommonSparkContext
 from xframes.toolkit.model import Model, ModelBuilder
 from xframes import XFrame, XArray
 from xframes.xarray_impl import XArrayImpl
-from xframes.util import delete_file_or_dir
+from xframes.utils import delete_file_or_dir
 from xframes import fileio
 
 __all__ = ['LogisticRegressionWithSGDBuilder', 

@@ -14,7 +14,8 @@ from xframes.xobject_impl import XObjectImpl
 from xframes.traced_object import TracedObject
 from xframes.dsq import QuantileAccumulator
 from xframes.frequent import FreqSketch
-from xframes import util
+from xframes import utils
+from xframes.type_utils import is_numeric_type, is_date_type
 from xframes import xarray_impl
 
 __all__ = ['Sketch']
@@ -39,7 +40,7 @@ class SketchImpl(XObjectImpl, TracedObject):
     exit_trace = False
 
     def __init__(self):
-        super(SketchImpl, self).__init__(None)
+        super(SketchImpl, self).__init__()
         self.defined = None
         self.dtype = None
         self.sketch_type = None
@@ -83,9 +84,9 @@ class SketchImpl(XObjectImpl, TracedObject):
         defined.cache()
         self.dtype = xa.dtype()
         self.count = defined.count()
-        if util.is_numeric_type(self.dtype):
+        if is_numeric_type(self.dtype):
             self.sketch_type = 'numeric'
-        elif util.is_date_type(self.dtype):
+        elif is_date_type(self.dtype):
             self.sketch_type = 'date'
         else:
             self.sketch_type = 'non-numeric'
@@ -97,7 +98,7 @@ class SketchImpl(XObjectImpl, TracedObject):
     def _create_stats(self):
         # calculate some basic statistics
         if self.stats is None:
-            if util.is_date_type(self.dtype):
+            if is_date_type(self.dtype):
                 try:
                     self.min_val = normalize_number(self.defined.min())
                     self.max_val = normalize_number(self.defined.max())
