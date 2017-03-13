@@ -260,6 +260,7 @@ class XFrameImpl(TracedObject):
     @classmethod
     def load_from_rdd(cls, rdd, names=None, types=None):
         cls._entry(names=names, types=types)
+        # TODO handle empty RDDs, which cause take to fail
         first_row = rdd.take(1)[0]
         if names is not None:
             if len(names) != len(first_row):
