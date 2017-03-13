@@ -10,7 +10,6 @@ import logging
 
 import py4j
 
-from xframes.xobject_impl import XObjectImpl
 from xframes.traced_object import TracedObject
 from xframes.dsq import QuantileAccumulator
 from xframes.frequent import FreqSketch
@@ -34,7 +33,7 @@ def normalize_number(x):
     return None if is_missing(x) else x
 
 
-class SketchImpl(XObjectImpl, TracedObject):
+class SketchImpl(TracedObject):
 
     entry_trace = False
     exit_trace = False
