@@ -75,7 +75,7 @@ class Lineage(object):
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
     @staticmethod
-    def from_array_lineage(xa_lineage, col_name):
+    def from_array_lineage(xa_lineage, column_name):
         """
         Create a new lineage for a single-column XFrame from the lineage of an XArray.
 
@@ -84,7 +84,7 @@ class Lineage(object):
         xa_lineage : Lineage
             The lineage of an XArray.
 
-        col_name : str
+        column_name : str
             The name of the column in the XFrame.
 
         Returns
@@ -92,9 +92,9 @@ class Lineage(object):
             out : Lineage
         """
         assert isinstance(xa_lineage, Lineage)
-        assert isinstance(col_name, basestring)
+        assert isinstance(column_name, basestring)
         table_lineage = xa_lineage.table_lineage
-        column_lineage = {col_name: xa_lineage.column_lineage[Lineage.XARRAY]}
+        column_lineage = {column_name: xa_lineage.column_lineage[Lineage.XARRAY]}
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
     def as_dict(self):
@@ -127,22 +127,22 @@ class Lineage(object):
             raise ValueError("Lineage must contain 'table' and 'column'.")
         return Lineage(table_lineage=lineage['table'], column_lineage=lineage['column'])
 
-    def to_array_lineage(self, col_name):
+    def to_array_lineage(self, column_name):
         """
         Create an XArray lineage from one column of an existing lineage.
 
         Parameters
         ----------
-        col_name : str
+        column_name : str
             The column name of the lineage.
 
         Returns
         -------
         out : Lineage
         """
-        assert isinstance(col_name, basestring)
+        assert isinstance(column_name, basestring)
         table_lineage = self.table_lineage
-        column_lineage = {Lineage.XARRAY: self.column_lineage[col_name]}
+        column_lineage = {Lineage.XARRAY: self.column_lineage[column_name]}
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
     @staticmethod
@@ -169,7 +169,7 @@ class Lineage(object):
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
     @staticmethod
-    def init_frame_lineage(origin, col_names):
+    def init_frame_lineage(origin, column_names):
         """
         Create a lineage for an XFrame.
 
@@ -178,7 +178,7 @@ class Lineage(object):
         origin : str
             The parent filename or token.
 
-        col_names : list[str]
+        column_names : list[str]
             The column names in the XFrame.
 
         Returns
@@ -186,12 +186,14 @@ class Lineage(object):
             out : Lineage
         """
         assert isinstance(origin, basestring)
-        assert isinstance(col_names, list)
+        assert isinstance(column_names, list)
         if origin is None:
             table_lineage = frozenset()
         else:
             table_lineage = frozenset([origin])
-        column_lineage = {col_name: frozenset([(name, col_name) for name in table_lineage]) for col_name in col_names}
+        column_lineage = {column_name: frozenset([(name, column_name)
+                                                  for name in table_lineage])
+                          for column_name in column_names}
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
     def add_column(self, col, name):
@@ -249,7 +251,7 @@ class Lineage(object):
             column_lineage[name] = col.lineage.column_lineage[Lineage.XARRAY]
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
-    def add_col_const(self, name):
+    def add_column_const(self, name):
         """
         Add a constant column to an XFrame lineage.
 
@@ -268,7 +270,7 @@ class Lineage(object):
         column_lineage[name] = frozenset([(Lineage.CONST, name)])
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
-    def add_col_index(self, name):
+    def add_column_index(self, name):
         """
         Add an index column to an XFrame lineage.
 
@@ -373,7 +375,7 @@ class Lineage(object):
         column_lineage = {map_name(k): v for k, v in self.column_lineage.iteritems()}
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
-    def replace_column(self, col, col_name):
+    def replace_column(self, col, column_name):
         """
         Replace one column in an XFrame lineage with an XArrayImpl lineage.
 
@@ -382,7 +384,7 @@ class Lineage(object):
         col : XArrayImpl
             The column to add to the lineage.
 
-        col_name : str
+        column_name : str
             The column name.
 
         Returns
@@ -391,10 +393,10 @@ class Lineage(object):
         """
         from xframes.xarray_impl import XArrayImpl
         assert isinstance(col, XArrayImpl)
-        assert isinstance(col_name, basestring)
+        assert isinstance(column_name, basestring)
         table_lineage = self.table_lineage | col.lineage.table_lineage
         column_lineage = copy.copy(self.column_lineage)
-        column_lineage[col_name] = col.lineage.column_lineage[Lineage.XARRAY]
+        column_lineage[column_name] = col.lineage.column_lineage[Lineage.XARRAY]
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
     def remove_column(self, name):
@@ -506,8 +508,8 @@ class Lineage(object):
         """
         assert isinstance(column_names, list)
         table_lineage = self.table_lineage
-        col_lineage_value = self.column_lineage[Lineage.XARRAY]
-        column_lineage = {k: col_lineage_value for k in column_names}
+        column_lineage_value = self.column_lineage[Lineage.XARRAY]
+        column_lineage = {k: column_lineage_value for k in column_names}
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
     def stack(self, column_name, new_column_names):
@@ -528,11 +530,11 @@ class Lineage(object):
         assert isinstance(column_name, basestring)
         assert isinstance(new_column_names, list)
         table_lineage = self.table_lineage
-        col_lineage_value = self.column_lineage[column_name]
+        column_lineage_value = self.column_lineage[column_name]
         column_lineage = copy.copy(self.column_lineage)
         del column_lineage[column_name]
         for name in new_column_names:
-            column_lineage[name] = col_lineage_value
+            column_lineage[name] = column_lineage_value
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
 
     def apply(self, use_columns):
@@ -558,7 +560,7 @@ class Lineage(object):
 
     def transform_col(self, column_name, use_columns):
         """
-        Create a new lineage where col_name is transformed and uses columns use_columns.
+        Create a new lineage where column_name is transformed and uses columns use_columns.
 
         Parameters
         ----------
@@ -583,7 +585,7 @@ class Lineage(object):
 
     def transform_cols(self, column_names, use_columns):
         """
-        Create a new lineage where col_name is transformed and uses columns use_columns.
+        Create a new lineage where column_name is transformed and uses columns use_columns.
 
         Parameters
         ----------
