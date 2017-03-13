@@ -156,6 +156,9 @@ class XStreamImpl(TracedObject):
         self._entry(number_of_partitions=number_of_partitions)
         return self._dstream.repartition(number_of_partitions) if number_of_partitions is not None else self._dstream
 
+    def set_checkpoint_interval(self, interval):
+        self._dstream.checkpoint(interval)
+
     def transform_row(self, row_fn, column_names, column_types):
         self._entry(column_names=column_names, column_types=column_types)
         input_column_names = self.col_names

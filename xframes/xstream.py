@@ -122,7 +122,8 @@ class XStream(object):
 
         Returns
         -------
-        XStream
+        :class:`.XStream`
+
             An XStream (of XFrames) made up or rows read from files in the directory.
         """
         impl = XStreamImpl.create_from_text_files(directory_path)
@@ -143,7 +144,8 @@ class XStream(object):
 
         Returns
         -------
-        XStream
+        :class:`.XStream`
+
             An XStream (of XFrames) made up or rows read from the socket.
         """
         impl = XStreamImpl.create_from_socket_stream(hostname, port)
@@ -176,6 +178,12 @@ class XStream(object):
             more details on kafka consumer configuration params.
             If no kafka params are supplied, the list of kafka servers specified in this
             function is passed as the "bootstrap.servers" param.
+
+        Returns
+        -------
+        :class:`.XStream`
+
+            An XStream (of XFrames) made up or rows read from the socket.
         """
         if isinstance(topics, basestring):
             topics = [topics]
@@ -386,6 +394,9 @@ class XStream(object):
         """
         return XStream(impl=XStreamImpl(dstream, col_names, column_types))
 
+    def set_checkpoint_interval(self, interval):
+        self._impl.set_checkpoint_interval(interval)
+
     def _groupby(self, key_columns, operations, *args):
 
         # TODO: groupby CONCAT produces unicode output from utf8 input
@@ -511,7 +522,10 @@ class XStream(object):
 
         Returns
         -------
-        out_xf : XFrame
+        :class:`.XStream`
+
+            An XStream (of XFrames) made up or rows read from the socket.
+
             A new XFrame, with a column for each groupby column and each
             aggregation operation.
 
@@ -529,7 +543,7 @@ class XStream(object):
 
         Returns
         -------
-        stream of XFrames
+        :class:`.XStream` of :class:`.XFrame`
             Returns a new XStream consisting of one-row XFrames.
             Each XFrame has one column, "count" containing the number of
             rows in each consittuent XFrame.
@@ -604,7 +618,7 @@ class XStream(object):
 
     def apply(self, fn, dtype):
         """
-        Transform each XFrame in an XStream to an :class:`~xframes.XArray` according to a
+        Transform each XFrame in an XStream to an XArray according to a
         specified function. Returns a XStream of XArray of `dtype` where each element
         in this XArray is transformed by `fn(x)` where `x` is a single row in
         the xframe represented as a dictionary.  The `fn` should return
@@ -623,8 +637,8 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XStream`
-            The stream of XArray transformed by fn.  Each element of the XArray is of
+        :class:`.XStream` of :class:`.XFrame`
+            The stream of XFrame transformed by fn.  Each element of the XArray is of
             type `dtype`
         """
         if not inspect.isfunction(fn):
@@ -660,7 +674,7 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XStream`
+        :class:`.XStream` of :class:`.XFrame`
             An XStream with the given column transformed by the function and cast to the given type.
         """
         names = self._impl.column_names()
@@ -681,7 +695,7 @@ class XStream(object):
         Filter an XStream by values inside an iterable object. Result is an
         XStream that only includes (or excludes) the rows that have a column
         with the given `column_name` which holds one of the values in the
-        given `values` :class:`~xframes.XArray`. If `values` is not an
+        given `values` XArray. If `values` is not an
         XArray, we attempt to convert it to one before filtering.
 
         Parameters
@@ -704,7 +718,7 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XStream`
+        :class:`.XStream` of :class:`.XFrame`
             The filtered XStream.
 
         See Also
@@ -785,7 +799,7 @@ class XStream(object):
 
     def select_column(self, column_name):
         """
-        Return an XStream of :class:`~xframes.XArray` that corresponds with
+        Return an XStream of XArray that corresponds with
         the given column name. Throws an exception if the column name is something other than a
         string or if the column name is not found.
 
@@ -798,7 +812,7 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XStream`
+        :class:`.XStream` of :class:`.XFrame`
             The XStream of XArray that is referred by `column_name`.
 
         See Also
@@ -823,9 +837,9 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XFrame`
-            A new XFrame that is made up of the columns referred to in
-            `keylist` from the current XFrame.  The order of the columns
+        :class:`.XStream` of :class:`.XFrame`
+            A new XStream that is made up of XFrames of the columns referred to in
+            `keylist` from each XFrame.  The order of the columns
             is preserved.
 
         See Also
@@ -864,7 +878,7 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XStream`
+        :class:`.XStream` of :class:`.XFrame`
             A new XStream of XFrame with the new column.
 
         See Also
@@ -897,8 +911,8 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XFrame`
-            The XFrame with additional columns.
+        :class:`.XStream` of :class:`.XFrame`
+            The XStream with additional columns.
 
         See Also
         --------
@@ -939,8 +953,8 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XFrame`
-            A new XFrame with specified column replaced.
+        :class:`.XStream` of :class:`.XFrame`
+            A new XStream of XFrames with specified column replaced.
 
         See Also
         --------
@@ -968,8 +982,8 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XFrame`
-            A new XFrame with given column removed.
+        :class:`.XStream` of :class:`.XFrame`
+            XStream of XFrames with given column removed.
 
         See Also
         --------
@@ -992,8 +1006,8 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XFrame`
-            A new XFrame with given columns removed.
+        :class:`.XStream` of :class:`.XFrame`
+            XStream of XFrames with given columns removed.
 
         See Also
         --------
@@ -1022,8 +1036,8 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XFrame`
-            A new XFrame with specified columns swapped.
+        :class:`.XStream` of :class:`.XFrame`
+            XStream of XFrames with specified columns swapped.
 
         See Also
         --------
@@ -1049,8 +1063,8 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XFrame`
-            A new XFrame with reordered columns.
+        :class:`.XStream` of :class:`.XFrame`
+            XStream of XFrames with reordered columns.
 
         See Also
         --------
@@ -1084,9 +1098,11 @@ class XStream(object):
 
         Returns
         -------
-        :class:`.XFrame`
-            A new XFrame with columns renamed.
+        :class:`.XStream` of :class:`.XFrame`
+            XStream of XFrames with columns renamed.
 
+        See Also
+        --------
         xframes.XFrame.rename
             Corresponding function on individual frame.
         """
@@ -1208,7 +1224,7 @@ class XStream(object):
 
     def process_rows(self, row_fn, init_fn=None, final_fn=None):
         """
-        Process the rows in a stream of XFrames using a given row processing function.
+        Process the rows in an XStream of XFrames using a given row processing function.
 
         This is an output operation, and forces the XFrames to be evaluated.
 
@@ -1233,15 +1249,25 @@ class XStream(object):
         final_fn : function, optional
             The final_fn is called after each group is processed.  It is a function of one parameter, the
             return value of the initial function.
+
+        Returns
+        -------
+        :class:`.XStream` of :class:`.XFrame`
+            XStream of XFrames that have been processed by the row function.
+
+        See Also
+        --------
+        xframes.XStream.process_frames
+            Processes whole frames for their side effects only.
         """
         self._impl.process_rows(row_fn, init_fn, final_fn)
 
     def process_frames(self, frame_fn, init_fn=None, final_fn=None):
-        # TODO: review iit_fn and final_fn -- how do they work?
+        # TODO: review init_fn and final_fn -- how do they work?
         """
-        Process the frames in a stream of XFrames using a given frame processing function.
+        Process the XFrames in an XStream using a given frame processing function.
 
-        This is an output operation, and forces the XFrames to be evaluated.
+        This is an output operation, and forces the XFrames to be evaluated, for their side effects.
 
         Parameters
         ----------
@@ -1263,6 +1289,11 @@ class XStream(object):
         final_fn : function, optional
             The final_fn is called after each group is processed.  It is a function of one parameter, the
             return value of the initial function.
+
+        See Also
+        --------
+        xframes.XStream.process_rows
+            Processes individual rows and return a result.
         """
         self._impl.process_frames(frame_fn, init_fn, final_fn)
 
