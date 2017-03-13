@@ -60,7 +60,7 @@ class AggregatorPropertySet(object):
     the same restrictions apply.
     """
 
-    def __init__(self, agg_function, output_type, default_col_name, num_args):
+    def __init__(self, agg_function, output_type, default_column_name, num_args):
         """
         Create a new instance.
 
@@ -77,7 +77,7 @@ class AggregatorPropertySet(object):
             If an integer is given, then the output type is the same as the
             input type of the column indexed by the integer.
 
-        default_col_name: str
+        default_column_name: str
             The name of the aggregate column, if not supplied explicitly.
 
         num_args : int
@@ -86,7 +86,7 @@ class AggregatorPropertySet(object):
         """
 
         self.agg_function = agg_function
-        self.default_col_name = default_col_name
+        self.default_column_name = default_column_name
         self.output_type = output_type
         self.num_args = num_args
 
