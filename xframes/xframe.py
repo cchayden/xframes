@@ -185,6 +185,8 @@ class XFrame(object):
         ...     delimiter=',', header=True, comment_char="#",
         ...     column_type_hints={'user_id': int})
 
+        .. document private functions
+        .. automethod:: xframes.XFrame.__getitem__
         """
         if impl:
             self._impl = impl
@@ -3053,11 +3055,15 @@ class XFrame(object):
 
     def __getitem__(self, key):
         """
+        This provides XFrame "indexing", for examle xf['column_name'].
+        The type of the index determine what the construct does: electing a column,
+        doing a logical filter, or returning one or more rows from the XFrame.
+
         This method does things based on the type of `key`.
 
         If `key` is:
             * str
-              Calls `select_column` on `key`
+              Calls `select_column` on `key` to return a single column as an XArray.
             * XArray
               Performs a logical filter.  Expects given XArray to be the same
               length as all columns in current XFrame.  Every row
@@ -3067,6 +3073,13 @@ class XFrame(object):
               Returns a single row of the XFrame (the `key`th one) as a dictionary.
             * slice
               Returns an XFrame including only the sliced rows.
+
+        Examples
+        --------
+        >>> xf = xframes.XFrame({'id': [4, 6, 8], 'val': ['D', 'F', 'H']})
+        >>> xf
+#    xxxxx
+
         """
         if isinstance(key, XArray):
             return self.select_rows(key)
@@ -3303,9 +3316,6 @@ class XFrame(object):
         >>> xf = xframes.XFrame({'id': [4, 6, 8], 'val': ['D', 'F', 'H']})
         >>> xf2 = xframes.XFrame({'id': [1, 2, 3], 'val': ['A', 'B', 'C']})
         >>> xf = xf.append(xf2)
-        >>> xf
-        +----+-----+
-        | id | val |
         +----+-----+
         | 4  |  D  |
         | 6  |  F  |
