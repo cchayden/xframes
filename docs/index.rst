@@ -15,6 +15,7 @@ The main classes that make up XFrames are:
    xframe
    xarray
    xstream
+   xstate
    aggregate
    custom_aggregator
    sketch
