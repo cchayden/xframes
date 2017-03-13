@@ -187,8 +187,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : dict
-            A dict of the properties used to initialize the spark context.
+        dict : A dict of the properties used to initialize the spark context.
         """
         props = self._config.getAll()
         return {prop[0]: prop[1] for prop in props}
@@ -199,8 +198,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : Environment
-            The environment.  This contains all the values from the configuration file(s).
+        :class:`.Environment` : The environment.  This contains all the values from the configuration file(s).
         """
 
         return self._env
@@ -211,7 +209,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : SparkContext
+        :class:`~pyspark.SparkContext`
             The spark context.  There is a single spark context per process.
         """
         return self._sc
@@ -222,7 +220,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : sql.SqlContext
+        :class:`~pyspark.sql.SqlContext`
             The spark sql context.
         """
         from pyspark import SQLContext
@@ -237,7 +235,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : sql.HiveContext
+        :class:`~pyspark.sql.HiveContext`
             The hive context.
         """
         from pyspark import HiveContext
@@ -257,7 +255,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : streaming.StreamingContext
+        :class:`~pyspark.streaming.StreamingContext`
             The streaming context.
         """
         from pyspark.streaming import StreamingContext
@@ -272,7 +270,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out: lst[int]
+        list[int]
             The spark version, as a list of integers.
         """
         return [int(n) for n in self._sc.version.split('.')]
@@ -285,7 +283,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out: map(job_id: job_info}
+        map(job_id: job_info}
             A map of the active job IDs and their corresponding job info
         """
         return {job_id: self.status_tracker.getJobInfo(job_id) for job_id in self.status_tracker.getActiveJobIds()}
@@ -296,7 +294,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out: boolean
+        boolean
             True if spark is running in cluster mode.  Cluster mode means that spark is running on a platform separate
             the program.  In practice, cluster mode means that file arguments must be located on
             a network filesystem such as HDFS or NFS.
@@ -327,7 +325,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : pyspark.SparkContext
+        :class:`~pyspark.SparkContext`
             The SparkContext object from spark.
         """
         return CommonSparkContext().sc()
@@ -339,7 +337,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : list
+        list
             A list of the key-value pairs stored as tuples, used to initialize the spark context.
         """
         return CommonSparkContext().config()
@@ -351,7 +349,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : pyspark.sql.SQLContext
+        :class:`~pyspark.sql.SQLContext'
             The SQLContext object from spark.
         """
         return CommonSparkContext().sqlc()
@@ -363,7 +361,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : pyspark.sql.HiveContext
+        :class:`~pyspark.streaming.HiveContext`
             The Hive object from spark.
         """
         return CommonSparkContext().hivec()
@@ -380,7 +378,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out : streaming.StreamingContext
+        :class:`~pyspark.streaming.StreamingContext`
             The streaming context.
         """
         return CommonSparkContext().streamingc(interval)
@@ -392,7 +390,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out: list[int]
+        list[int]
             The spark version, as a list of integers.
         """
         return CommonSparkContext().version()
@@ -404,7 +402,7 @@ class CommonSparkContext(object):
 
         Returns
         -------
-        out: boolean
+        boolean
             True if spark is running in cluster mode.  Cluster mode means that spark is running on a platform separate
             the program.  In practice, cluster mode means that file arguments must be located on
             a network filesystem such as HDFS or NFS.

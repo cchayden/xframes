@@ -8,12 +8,10 @@ import inspect
 import types
 import copy
 
-
-from xframes.xobject import XObject
 from xframes.xstream_impl import XStreamImpl
 from xframes.xframe import XFrame
 from xframes.xarray import XArray
-import xframes
+from xframes import object_utils
 
 """
 Copyright (c) 2017, Charles Hayden
@@ -23,7 +21,7 @@ All rights reserved.
 __all__ = ['XStream']
 
 
-class XStream(XObject):
+class XStream(object):
     """
     Provides for streams of XFrames.
 
@@ -54,12 +52,60 @@ class XStream(XObject):
     """
 
     def __init__(self, impl=None, verbose=False):
+        """
+        Construct an XStream.  You rarely construct an XStream directly, but through the factory methods.
+
+        Parameters
+        ----------
+
+        verbose : bool, optional
+            If True, print progress messages.
+
+        See Also
+        --------
+        xframes.XStream.create_from_text_files
+            Create an XStream from text files.
+
+        xframes.XStream.create_from_socket_stream
+            Create an XStream from data received over a socket.
+
+        xframes.XStream.create_from_kafka_topic
+            Create from a kafka topic.
+        """
         self._verbose = verbose
         if impl:
             self._impl = impl
             return
 
         self._impl = XStreamImpl(None)
+
+    def num_columns(self):
+        """
+        The number of columns in this XFrame.
+
+        Returns
+        -------
+        int
+            Number of columns in the XFrame.
+
+        See Also
+        --------
+        xframes.XFrame.num_rows
+            Returns the number of rows.
+        """
+        return self._impl.num_columns()
+
+    @staticmethod
+    def set_checkpoint(checkpoint_dir):
+        """
+        Set the checkpoint director for storing state.
+
+        Parameters
+        ----------
+        checkpoint_dir : string
+            Path to a directory for storing checkpoints
+        """
+        XStreamImpl.set_checkpoint(checkpoint_dir)
 
     @staticmethod
     def create_from_text_files(directory_path):
@@ -104,19 +150,7 @@ class XStream(XObject):
         return XStream(impl=impl)
 
     @staticmethod
-    def set_checkpoint(checkpoint_dir):
-        """
-        Set the checkpoint director for storing state.
-
-        Parameters
-        ----------
-        checkpoint_dir : string
-            Path to a directory for storing checkpoints
-        """
-        XStreamImpl.set_checkpoint(checkpoint_dir)
-
-    @staticmethod
-    def create_from_kafka_topics(topics, kafka_servers=None, kafka_params=None):
+    def create_from_kafka_topic(topics, kafka_servers=None, kafka_params=None):
         """
         Create XStream (stream of XFrames) from one or more kafka topics.
 
@@ -152,7 +186,7 @@ class XStream(XObject):
         elif isinstance(topics, list):
             kafka_servers = ','.join(kafka_servers)
 
-        impl = XStreamImpl.create_from_kafka_topics(topics, kafka_servers, kafka_params)
+        impl = XStreamImpl.create_from_kafka_topic(topics, kafka_servers, kafka_params)
         return XStream(impl=impl)
 
     @staticmethod
@@ -221,7 +255,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : list[string]
+        list[string]
             Column names of the XStream.
 
         See Also
@@ -238,7 +272,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : list[type]
+        list[type]
             Column types of the XFrame.
 
         See Also
@@ -254,7 +288,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : list[type]
+        list[type]
             Column types of the XFrame.
 
         See Also
@@ -271,7 +305,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : dict
+        dict
             * key 'table': set[filename]
                 The files that were used to build the XArray
             * key 'column': dict{col_name: set[filename]}
@@ -312,7 +346,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : spark.DStream
+        spark.DStream
             The spark DStream that is used to represent the XStream.
 
         See Also
@@ -342,7 +376,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XStream
+        :class:`.XStream`
 
         See Also
         --------
@@ -489,7 +523,6 @@ class XStream(XObject):
         """
         return self._groupby(key_columns, operations, *args)
 
-
     def count_distinct(self, col):
         """
         Counts the number of different values in a column of each XFrame in the stream.
@@ -540,7 +573,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XStream
+        :class:`.XStream`
             A new XStream containing the results of the ``flat_map`` of the
             XFrames in the XStream.
 
@@ -559,15 +592,15 @@ class XStream(XObject):
             raise ValueError('Number of output columns must match the size of column names.')
         return XStream(impl=self._impl.flat_map(fn, column_names, column_types))
 
-    def transform_row(self, row_fn, col_names, column_types):
-        col_names = col_names or self._impl.column_names()
-        column_types = column_types or self._impl.column_types
-        if len(col_names) != len(column_types):
-            raise ValueError('Col_names must be same length as column_types: {} {}'.
-                             format(len(col_names), len(column_types)))
+    def transform_row(self, row_fn, column_names, column_types):
+        column_names = column_names
+        column_types = column_types
+        if len(column_names) != len(column_types):
+            raise ValueError('Column_names must be same length as column_types: {} {}'.
+                             format(len(column_names), len(column_types)))
         if not inspect.isfunction(row_fn):
             raise TypeError('Row_fn must be a function.')
-        return XStream(impl=self._impl.transform_row(row_fn, col_names, column_types))
+        return XStream(impl=self._impl.transform_row(row_fn, column_names, column_types))
 
     def apply(self, fn, dtype):
         """
@@ -590,7 +623,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XStream
+        :class:`.XStream`
             The stream of XArray transformed by fn.  Each element of the XArray is of
             type `dtype`
         """
@@ -627,7 +660,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XStream
+        :class:`.XStream`
             An XStream with the given column transformed by the function and cast to the given type.
         """
         names = self._impl.column_names()
@@ -671,7 +704,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XStream
+        :class:`.XStream`
             The filtered XStream.
 
         See Also
@@ -765,7 +798,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XStream
+        :class:`.XStream`
             The XStream of XArray that is referred by `column_name`.
 
         See Also
@@ -790,7 +823,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that is made up of the columns referred to in
             `keylist` from the current XFrame.  The order of the columns
             is preserved.
@@ -831,7 +864,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XStream
+        :class:`.XStream`
             A new XStream of XFrame with the new column.
 
         See Also
@@ -864,7 +897,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             The XFrame with additional columns.
 
         See Also
@@ -906,7 +939,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with specified column replaced.
 
         See Also
@@ -921,7 +954,7 @@ class XStream(XObject):
             raise TypeError('Invalid column name: must be str.')
         if name not in self.column_names():
             raise ValueError('Column name must be in XFrame')
-        return XStream(impl=self._impl.replace_selected_column(name, col.impl()))
+        return XStream(impl=self._impl.replace_selected_column(name, col.impl(), col.dtype()))
 
     def remove_column(self, name):
         """
@@ -935,7 +968,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with given column removed.
 
         See Also
@@ -959,7 +992,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with given columns removed.
 
         See Also
@@ -989,7 +1022,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with specified columns swapped.
 
         See Also
@@ -1016,7 +1049,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with reordered columns.
 
         See Also
@@ -1051,7 +1084,7 @@ class XStream(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with columns renamed.
 
         xframes.XFrame.rename
@@ -1081,10 +1114,8 @@ class XStream(XObject):
         If `key` is:
             * str
               Calls `select_column` on `key`
-            * int
-              Returns a single row of each XFrame in the XStream (the `key`th one) as a dictionary.
-            * slice
-              Returns an XStream of XFrame including only the sliced rows.
+            * list
+              Calls select_columns on `key`
         """
         if isinstance(key, list):
             return self.select_columns(key)
@@ -1092,31 +1123,9 @@ class XStream(XObject):
             return self.select_column(key)
         if isinstance(key, unicode):
             return self.select_column(str(key))
-        if isinstance(key, int):
-            if key < 0:
-                key += len(self)
-            if key >= len(self):
-                raise IndexError('XFrame index out of range.')
-            return list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))[0]
-        if isinstance(key, slice):
-            start = key.start
-            stop = key.stop
-            step = key.step
-            if start is None:
-                start = 0
-            if stop is None:
-                stop = len(self)
-            if step is None:
-                step = 1
-            # handle negative indices
-            if start < 0:
-                start += len(self)
-            if stop < 0:
-                stop += len(self)
-            return XStream(impl=self._impl.copy_range(start, step, stop))
 
         raise TypeError('Invalid index type: must be ' +
-                        "'int', 'list', slice, or 'str': ({})".format(type(key).__name__))
+                        "''list' or 'str': ({})".format(type(key).__name__))
 
     def __setitem__(self, key, value):
         """
@@ -1179,10 +1188,11 @@ class XStream(XObject):
                 # the only column. To support this, we call a different function in the
                 # implementation.
                 single_column = (self.num_columns() == 1)
+                col_type = self.column_types()[0]
                 if single_column:
-                    self._impl.replace_single_column_in_place(key, sa_value.impl())
+                    self._impl.replace_single_column_in_place(key, sa_value.impl(), col_type)
                 else:
-                    self._impl.replace_selected_column_in_place(key, sa_value.impl())
+                    self._impl.replace_selected_column_in_place(key, sa_value.impl(), col_type)
 
         else:
             raise TypeError('Cannot set column with key type {}.'.format(type(key).__name__))
@@ -1226,7 +1236,7 @@ class XStream(XObject):
         """
         self._impl.process_rows(row_fn, init_fn, final_fn)
 
-    def process_frames(self, row_fn, init_fn=None, final_fn=None):
+    def process_frames(self, frame_fn, init_fn=None, final_fn=None):
         # TODO: review iit_fn and final_fn -- how do they work?
         """
         Process the frames in a stream of XFrames using a given frame processing function.
@@ -1254,7 +1264,7 @@ class XStream(XObject):
             The final_fn is called after each group is processed.  It is a function of one parameter, the
             return value of the initial function.
         """
-        self._impl.process_frames(row_fn, init_fn, final_fn)
+        self._impl.process_frames(frame_fn, init_fn, final_fn)
 
     def save(self, prefix, suffix=None):
         """
@@ -1285,7 +1295,7 @@ class XStream(XObject):
         self._impl.save(prefix, suffix)
 
     def print_frames(self, num_rows=10, num_columns=40,
-                     max_column_width=30, max_row_width=xframes.MAX_ROW_WIDTH,
+                     max_column_width=30, max_row_width=None,
                      wrap_text=False, max_wrap_rows=2, footer=False):
         """
         Print the first rows and columns of each XFrame in the XStream in human readable format.
@@ -1321,8 +1331,13 @@ class XStream(XObject):
         xframes.XFrame.print_rows
             Corresponding function on individual frame.
         """
+        max_row_width = max_row_width or object_utils.MAX_ROW_WIDTH
         self._impl.print_frames(num_rows, num_columns, max_column_width, max_row_width,
                                 wrap_text, max_wrap_rows, footer)
+
+    def print_count(self):
+        self._impl.print_count()
+
 
     def update_state(self, fn, col_name, initial_state):
         # Take the column names and types from the initial state

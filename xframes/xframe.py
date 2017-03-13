@@ -25,11 +25,12 @@ import pyspark
 from xframes.deps import pandas, HAS_PANDAS
 from xframes.prettytable import PrettyTable
 from xframes.deps import dataframeplus, HAS_DATAFRAME_PLUS
-from xframes.xobject import XObject
 from xframes.xframe_impl import XFrameImpl
 from xframes.xarray_impl import infer_type_of_list
 from xframes.utils import make_internal_url
 from xframes.type_utils import classify_type, classify_auto, is_sortable_type, is_xframe_type
+from xframes.object_utils import check_input_uri, check_output_uri
+from xframes import object_utils
 from xframes.xarray import XArray
 import xframes
 
@@ -43,18 +44,9 @@ All rights reserved.
 
 __all__ = ['XFrame']
 
-FOOTER_STRS = ['Note: Only the head of the XFrame is printed.  You can use ',
-               'print_rows(num_rows=m, num_columns=n) to print more rows and columns.']
-
-LAZY_FOOTER_STRS = ['Note: Only the head of the XFrame is printed. This XFrame is lazily ',
-                    'evaluated.  You can use len(xf) to force materialization.']
-
-MAX_ROW_WIDTH = 70
-HTML_MAX_ROW_WIDTH = 120
-
 
 # noinspection PyUnresolvedReferences,PyShadowingNames
-class XFrame(XObject):
+class XFrame(object):
     """
     A tabular, column-mutable dataframe object that can scale to big data. 
     XFrame is able to hold data that are much larger than the machine's main
@@ -62,139 +54,137 @@ class XFrame(XObject):
     Each row of the RDD is a list, whose elements correspond
     to the values in each column.  The column names and types are stored in the XFrame
     instance, and give the mapping to the row list.
-
-    An XFrame can be constructed from the following data formats:
-
-    * csv file (comma separated value)
-    * xframe directory archive (A directory where an xframe was saved previously)
-    * a spark RDD plus the column names and types
-    * a spark.DataFrame
-    * general text file (with csv parsing options, See :py:meth:`read_csv()`)
-    * parquet file
-    * a Python dictionary
-    * pandas.DataFrame
-    * JSON
-    * Apache Avro
-
-    and from the following sources:
-
-    * your local file system
-    * the XFrames Server's file system
-    * HDFS
-    * Hive
-    * Amazon S3
-    * HTTP(S)
-
-    Only basic examples of construction are covered here. For more information
-    and examples, please see the `User Guide`.
-
-    XFrames are immutable except for assignments to a column.
-
-    Parameters
-    ----------
-    data : array | pandas.DataFrame | spark.rdd | spark.DataFrame | string | dict, optional
-        The actual interpretation of this field is dependent on the `format`
-        parameter. If `data` is an array, Pandas DataFrame or Spark RDD, the contents are
-        stored in the XFrame. If `data` is an object supporting iteritems, then is is handled
-        like a dictionary.  If `data` is an object supporting iteration, then the values
-        are iterated to form the XFrame.  If `data` is a string, it is interpreted as a
-        file. Files can be read from local file system or urls (hdfs://, s3://, or other
-        Hadoop-supported file systems).  To read files from s3, you must set the
-        AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables, even if the
-        file is publicly accessible.
-
-    format : string, optional
-        Format of the data. The default, "auto" will automatically infer the
-        input data format. The inference rules are simple: If the data is an
-        array or a dataframe, it is associated with 'array' and 'dataframe'
-        respectively. If the data is a string, it is interpreted as a file, and
-        the file extension is used to infer the file format. The explicit
-        options are:
-
-        - "auto"
-        - "array"
-        - "dict"
-        - "xarray"
-        - "pandas.dataframe"
-        - "csv"
-        - "tsv"
-        - "psv"
-        - "parquet"
-        - "rdd"
-        - "spark.dataframe"
-        - "hive"
-        - "xframe"
-
-    verbose : bool, optional
-        If True, print the progress while reading a file.
-
-    Notes
-    -----
-    The following functionality is currently not implemented.
-        - pack_columns data types except list, array, and dict
-        - groupby quantile
-
-    See Also
-    --------
-    xframes.XFrame.read_csv:
-        Create a new XFrame from a csv file. Preferred for text and CSV formats,
-        because it has a lot more options for controlling the parser.
-
-    xframes.XFrame.read_parquet
-        Read an XFrame from a parquet file.
-
-    xframes.XFrame.from_rdd
-        Create a new XFrame from a Spark RDD or Spark DataFrame.  
-        Column names and types can be specified if a spark RDD is given; otherwise 
-        they are taken from the DataFrame.
-
-    xframes.XFrame.save
-        Save an XFrame in a file for later use within XFrames or Spark.
-
-    xframes.XFrame.load
-        Load an XFrame from a file.  The filename extension is used to determine the
-        file format.
-
-    xframes.XFrame.set_trace
-        Controls entry and exit tracing.
-
-    xframes.XFrame.spark_context
-        Returns the spark context.
-
-    xframes.XFrame.spark_sql_context
-        Returns the spark sql context.
-
-    Examples
-    --------
-    Create an XFrame from a Python dictionary.
-
-    >>> from xframes import XFrame
-    >>> sf = XFrame({'id':[1,2,3], 'val':['A','B','C']})
-    >>> sf
-    Columns:
-        id  int
-        val str
-    Rows: 3
-    Data:
-          id  val
-       0  1   A
-       1  2   B
-       2  3   C
-
-    Create an XFrame from a remote CSV file.
-
-    >>> url = 'http://testdatasets.s3-website-us-west-2.amazonaws.com/users.csv.gz'
-    >>> xf = XFrame.read_csv(url,
-    ...     delimiter=',', header=True, comment_char="#",
-    ...     column_type_hints={'user_id': int})
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(self, data=None, format='auto', impl=None, verbose=False):
         """
-        __init__(data=list(), format='auto')
-
         Construct a new XFrame from a url, a pandas.DataFrame or a Spark RDD or DataFrame.
+
+        An XFrame can be constructed from the following data formats:
+        * csv file (comma separated value)
+        * xframe directory archive (A directory where an XFrame was saved previously)
+        * a spark RDD plus the column names and types
+        * a spark.DataFrame
+        * general text file (with csv parsing options, See :py:meth:`read_csv()`)
+        * parquet file
+        * a Python dictionary
+        * pandas.DataFrame
+        * JSON
+        * Apache Avro
+
+        and from the following sources:
+
+        * your local file system
+        * the XFrame Server's file system
+        * HDFS
+        * Hive
+        * Amazon S3
+        * HTTP(S)
+
+        Only basic examples of construction are covered here. For more information
+        and examples, please see the `User Guide`.
+
+        XFrames are immutable except for assignments to a column.
+
+        Parameters
+        ----------
+        data : array | pandas.DataFrame | spark.rdd | spark.DataFrame | string | dict, optional
+            The actual interpretation of this field is dependent on the `format`
+            parameter. If `data` is an array, Pandas DataFrame or Spark RDD, the contents are
+            stored in the XFrame. If `data` is an object supporting iteritems, then is is handled
+            like a dictionary.  If `data` is an object supporting iteration, then the values
+            are iterated to form the XFrame.  If `data` is a string, it is interpreted as a
+            file. Files can be read from local file system or urls (hdfs://, s3://, or other
+            Hadoop-supported file systems).  To read files from s3, you must set the
+            AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables, even if the
+            file is publicly accessible.
+
+        format : string, optional
+            Format of the data. The default, "auto" will automatically infer the
+            input data format. The inference rules are simple: If the data is an
+            array or a dataframe, it is associated with 'array' and 'dataframe'
+            respectively. If the data is a string, it is interpreted as a file, and
+            the file extension is used to infer the file format. The explicit
+            options are:
+
+            - "auto"
+            - "array"
+            - "dict"
+            - "xarray"
+            - "pandas.dataframe"
+            - "csv"
+            - "tsv"
+            - "psv"
+            - "parquet"
+            - "rdd"
+            - "spark.dataframe"
+            - "hive"
+            - "xframe"
+
+        verbose : bool, optional
+            If True, print the progress while reading a file.
+
+        Notes
+        -----
+        The following functionality is currently not implemented.
+            - pack_columns data types except list, array, and dict
+            - groupby quantile
+
+        See Also
+        --------
+        xframes.XFrame.read_csv():
+            Create a new XFrame from a csv file. Preferred for text and CSV formats,
+            because it has a lot more options for controlling the parser.
+
+        xframes.XFrame.read_parquet
+            Read an XFrame from a parquet file.
+
+        xframes.XFrame.from_rdd
+            Create a new XFrame from a Spark RDD or Spark DataFrame.
+            Column names and types can be specified if a spark RDD is given; otherwise
+            they are taken from the DataFrame.
+
+        xframes.XFrame.save
+            Save an XFrame in a file for later use within XFrames or Spark.
+
+        xframes.XFrame.load
+            Load an XFrame from a file.  The filename extension is used to determine the
+            file format.
+
+        xframes.XFrame.set_trace
+            Controls entry and exit tracing.
+
+        xframes.XFrame.spark_context
+            Returns the spark context.
+
+        xframes.XFrame.spark_sql_context
+            Returns the spark sql context.
+
+        Examples
+        --------
+        Create an XFrame from a Python dictionary.
+
+        >>> from xframes import XFrame
+        >>> sf = XFrame({'id':[1,2,3], 'val':['A','B','C']})
+        >>> sf
+        Columns:
+            id  int
+            val str
+        Rows: 3
+        Data:
+              id  val
+           0  1   A
+           1  2   B
+           2  3   C
+
+        Create an XFrame from a remote CSV file.
+
+        >>> url = 'http://testdatasets.s3-website-us-west-2.amazonaws.com/users.csv.gz'
+        >>> xf = XFrame.read_csv(url,
+        ...     delimiter=',', header=True, comment_char="#",
+        ...     column_type_hints={'user_id': int})
+
         """
         if impl:
             self._impl = impl
@@ -302,7 +292,7 @@ class XFrame(XObject):
             if data is None:
                 raise ValueError('Empty XFrame')
             url = make_internal_url(data)
-            XFrameImpl.check_input_uri(url)
+            check_input_uri(url)
             self._impl = XFrameImpl.load_from_xframe_index(url)
         elif _format == 'spark.dataframe':
             if data is None:
@@ -373,12 +363,12 @@ class XFrame(XObject):
         column_names : list[str]
             The column names.
 
-        colum_types : list[type]
+        column_types : list[type]
             The column types.
 
         Returns
         -------
-        XFrame
+        :class:`.XFrame`
             An empty XFrame with the given column names and types.
         """
         if not isinstance(column_names, list):
@@ -396,7 +386,7 @@ class XFrame(XObject):
             raise TypeError('Column_types must be a list')
         if len(column_names) != len(column_types):
             raise ValueError('Column_names and column_types must be of the same length.')
-        return XFrame(impl=XFrameImpl(col_names=column_names, column_types=column_types))
+        return XFrame(impl=XFrameImpl.empty(column_names, column_types))
 
     @classmethod
     def set_max_row_width(cls, width):
@@ -408,8 +398,7 @@ class XFrame(XObject):
         width : int
             The maximum width of the table when printing.
         """
-        global MAX_ROW_WIDTH
-        MAX_ROW_WIDTH = width
+        object_utils.MAX_ROW_WIDTH = width
 
     @classmethod
     def set_html_max_row_width(cls, width):
@@ -421,8 +410,7 @@ class XFrame(XObject):
         width : int
             The maximum width of the table when printing in html.
         """
-        global HTML_MAX_ROW_WIDTH
-        HTML_MAX_ROW_WIDTH = width
+        object_utils.HTML_MAX_ROW_WIDTH = width
 
     @classmethod
     def set_footer_strs(cls, footer_strs):
@@ -436,10 +424,9 @@ class XFrame(XObject):
             a table.  This footer is used when the length of the table
             is known.  To disable printing the footer, pass an empty list.
         """
-        global FOOTER_STRS
         if not isinstance(footer_strs, list):
             raise TypeError('Footer strs must be a list')
-        FOOTER_STRS = footer_strs
+        object_utils.FOOTER_STRS = footer_strs
 
     @classmethod
     def set_lazy_footer_strs(cls, footer_strs):
@@ -454,10 +441,9 @@ class XFrame(XObject):
             is not known because the XFrame has not been evaluated.
             To disable printing the footer, pass an empty list.
         """
-        global LAZY_FOOTER_STRS
         if not isinstance(footer_strs, list):
             raise TypeError('Footer strs must be a list')
-        LAZY_FOOTER_STRS = footer_strs
+        object_utils.LAZY_FOOTER_STRS = footer_strs
 
     @staticmethod
     def _infer_column_types_from_lines(first_rows, na_values):
@@ -468,13 +454,13 @@ class XFrame(XObject):
             logging.warn('Insufficient number of rows to perform type inference.')
             raise RuntimeError('Insufficient rows.')
 
-        col_names = first_rows.column_names()
+        column_names = first_rows.column_names()
 
         # TODO get this in a way that does not require an iterator
-        def row_as_array(row, col_names):
-            return [row[col] for col in col_names]
+        def row_as_array(row):
+            return [row[col] for col in column_names]
 
-        head = [row_as_array(row, col_names) for row in first_rows]
+        head = [row_as_array(row) for row in first_rows]
 
         def infer_type(col, na_values):
             col = [val for val in col if val not in na_values]
@@ -515,7 +501,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
 
         See Also
         --------
@@ -553,7 +539,7 @@ class XFrame(XObject):
         """
         Constructs an XFrame from a CSV file or a path to multiple CSVs, and
         returns a pair containing the XFrame and optionally
-        (if store_errors=True) a dict of filenames to XArrays
+        (if store_errors=True) a dict of filenames to XArray
         indicating for each file, what are the incorrectly parsed lines
         encountered.
 
@@ -566,7 +552,8 @@ class XFrame(XObject):
 
         Returns
         -------
-        A new XFrame with the contents that were read.
+        :class:`.XFrame`
+            A new XFrame with the contents that were read.
         """
         na_values = na_values or ['']
         parsing_config = dict()
@@ -588,7 +575,7 @@ class XFrame(XObject):
             parsing_config['row_limit'] = nrows
 
         internal_url = make_internal_url(url)
-        XFrameImpl.check_input_uri(internal_url)
+        check_input_uri(internal_url)
 
         # Attempt to automatically detect the column types. Either produce a
         # list of types; otherwise default to all str types.
@@ -667,7 +654,7 @@ class XFrame(XObject):
                              verbose=False):
         """
         Constructs an XFrame from a CSV file or a path to multiple CSVs, and
-        returns a pair containing the XFrame and a dict of error type to XArrays
+        returns a pair containing the XFrame and a dict of error type to XArray
         indicating for each type, what are the incorrectly parsed lines
         encountered.
 
@@ -748,7 +735,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : tuple
+        tuple
             The first element is the XFrame with good data. The second element
             is a dictionary of filenames to XArrays indicating for each file,
             what are the incorrectly parsed lines encountered.
@@ -885,7 +872,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
 
         See Also
         --------
@@ -1062,7 +1049,7 @@ class XFrame(XObject):
 
         Parameters
         ----------
-        arry : XArray
+        arry : :class:`.XArray`
             The XArray that will become an XFrame of one column.
 
         name: str
@@ -1070,7 +1057,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out: XFrame
+        out: :class:`.XFrame`
             Returns an XFrame with one column, containing the values in arry and with the given name.
 
         Examples
@@ -1109,7 +1096,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
 
         Examples
         --------
@@ -1163,7 +1150,7 @@ class XFrame(XObject):
 
 
         """
-        XFrameImpl.check_input_uri(path)
+        check_input_uri(path)
         url = make_internal_url(path)
         return cls(impl=XFrameImpl.read_from_text(url, delimiter=delimiter, nrows=nrows, verbose=verbose))
 
@@ -1179,7 +1166,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
 
         See Also
         --------
@@ -1187,7 +1174,7 @@ class XFrame(XObject):
             The constructor can read parquet files.
 
         """
-        XFrameImpl.check_input_uri(url)
+        check_input_uri(url)
         return cls(impl=XFrameImpl.load_from_parquet(url))
 
     def impl(self):
@@ -1199,7 +1186,7 @@ class XFrame(XObject):
         """
         return self._impl.dump_debug_info()
 
-    def _get_pretty_tables(self, wrap_text=False, max_wrap_rows=2, max_row_width=MAX_ROW_WIDTH,
+    def _get_pretty_tables(self, wrap_text=False, max_wrap_rows=2, max_row_width=None,
                            max_column_width=30, max_columns=20,
                            max_rows_to_display=60):
         """
@@ -1228,10 +1215,11 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : list[PrettyTable]
+        list[PrettyTable]
         """
         # We are going to need a column of values at a time
         # Take should return a list of tuples
+        max_row_width = max_row_width or object_utils.MAX_ROW_WIDTH
         if self._impl.rdd() is None:
             return [PrettyTable()]
         head_rows = self._impl.rdd().take(max_rows_to_display + 1)
@@ -1328,14 +1316,14 @@ class XFrame(XObject):
         if self._is_materialized():
             footer = '[{} rows x {} columns]{}'.format(self.num_rows(), self.num_columns(), sep)
             if self.num_rows() > max_rows_to_display:
-                footer += sep.join(FOOTER_STRS)
+                footer += sep.join(object_utils.FOOTER_STRS)
         else:
             footer = '[? rows x {} columns]\n'.format(self.num_columns(), sep)
-            footer += '\n'.join(LAZY_FOOTER_STRS)
+            footer += '\n'.join(object_utils.LAZY_FOOTER_STRS)
         return footer
 
     def print_rows(self, num_rows=10, num_columns=40,
-                   max_column_width=30, max_row_width=MAX_ROW_WIDTH,
+                   max_column_width=30, max_row_width=None,
                    wrap_text=False, max_wrap_rows=2, footer=True):
         """
         Print the first rows and columns of the XFrame in human readable format.
@@ -1376,6 +1364,7 @@ class XFrame(XObject):
         """
 
         max_rows_to_display = num_rows
+        max_row_width = max_row_width or object_utils.MAX_ROW_WIDTH
         max_row_width = max(max_row_width, max_column_width + 1)
 
         row_of_tables = self._get_pretty_tables(wrap_text=wrap_text,
@@ -1399,7 +1388,7 @@ class XFrame(XObject):
 
         row_of_tables = self._get_pretty_tables(wrap_text=False,
                                                 max_rows_to_display=max_rows_to_display,
-                                                max_row_width=MAX_ROW_WIDTH)
+                                                max_row_width=object_utils.MAX_ROW_WIDTH)
         if not footer:
             return '\n'.join([str(tb) for tb in row_of_tables])
 
@@ -1410,7 +1399,7 @@ class XFrame(XObject):
         max_rows_to_display = 10
 
         row_of_tables = self._get_pretty_tables(wrap_text=True,
-                                                max_row_width=HTML_MAX_ROW_WIDTH,
+                                                max_row_width=object_utils.HTML_MAX_ROW_WIDTH,
                                                 max_columns=40,
                                                 max_column_width=25,
                                                 max_rows_to_display=max_rows_to_display)
@@ -1427,13 +1416,13 @@ class XFrame(XObject):
 
     def __len__(self):
         """
-        Returns the number of rows of the xframe.
+        Returns the number of rows of the XFrame.
         """
         return self.num_rows()
 
     def __copy__(self):
         """
-        Returns a shallow copy of the xframe.
+        Returns a shallow copy of the XFrame.
         """
         return XFrame(impl=self._impl.copy())
 
@@ -1449,7 +1438,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : int
+        int
             Number of rows in the XFrame.
 
         See Also
@@ -1465,7 +1454,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : int
+        int
             Number of columns in the XFrame.
 
         See Also
@@ -1481,7 +1470,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : list[string]
+        list[string]
             Column names of the XFrame.
 
         See Also
@@ -1497,7 +1486,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : list[type]
+        list[type]
             Column types of the XFrame.
 
         See Also
@@ -1513,7 +1502,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : list[type]
+        list[type]
             Column types of the XFrame.
 
         See Also
@@ -1530,10 +1519,10 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : dict
+        dict
             * key 'table': set[filename]
                 The files that were used to build the XArray
-            * key 'column': dict{col_name: set[filename]}
+            * key 'column': dict{column_name: set[filename]}
                 The set of files that were used to build each column
         """
         return self._impl.lineage_as_dict()
@@ -1549,7 +1538,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame which contains the first n rows of the current XFrame
 
         See Also
@@ -1573,8 +1562,8 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
-            A new XFrame which contains the last n rows of the current XFrame
+        :class:`.XFrame`
+            A new XFrame which contains the last n rows of the current XFrame.
 
         See Also
         --------
@@ -1595,8 +1584,8 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : pandas.DataFrame
-            The dataframe which contains all rows of XFrame
+        pandas.DataFrame
+            The dataframe which contains all rows of XFrame.
         """
         if not HAS_PANDAS:
             raise TypeError('Pandas not found in PYTHONPATH.')
@@ -1617,7 +1606,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : DataFramePlus
+        DataFramePlus
             The dataframe which contains all rows of XFrame
         """
         if not HAS_DATAFRAME_PLUS:
@@ -1638,7 +1627,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : spark.RDD
+        spark.RDD
             The spark RDD that is used to represent the XFrame.
 
         See Also
@@ -1668,30 +1657,30 @@ class XFrame(XObject):
         column_type_hints : dict, optional
             Column types must be supplied when creating a DataFrame.  These hints specify these
             types,  If hints are not given,
-            the column types are derived from the XFrame column types.  
+            the column types are derived from the XFrame column types.
             The column types in DataFrames are more restricted in XFrames.
 
             XFrames attempts to supply the correct column types, but
             cannot always determine the correct settings.  The caller can supply hints to 
             ensure the desired settings, but
-            the caller is still responsible for making sure the values in the XFrame are 
+            the caller is still responsible for making sure the values in the XFrame are
             consistent with these settings.
             * Integers: In DataFrames integers must fit in 64 bits.  In python, large
-              integers can be larger.
-              If an XFrame contains such integers, it will fail to store as a DataFrame.
-              The column can be
-              converted to strings in this case.
+            integers can be larger.
+            If an XFrame contains such integers, it will fail to store as a DataFrame.
+            The column can be
+            converted to strings in this case.
 
             * Lists must be of a uniform type in a DataFrame.  The caller must convert 
-              lists to meet this requirement, and
-              must provide a hint specifying the element type.
+            lists to meet this requirement, and
+            must provide a hint specifying the element type.
 
             * Dictionaries must have a uniform key and value type.  
-              The caller must convert dictionaries to meet this
-              requirement and must provide a hint specifying the key and value types.
+            The caller must convert dictionaries to meet this
+            requirement and must provide a hint specifying the key and value types.
 
             Hints are given as a dictionary of column_name: column_hint.  Any column without a hint
-            is handled using the XFrames column type.
+            is handled using the XFrame column type.
             For simple types, hints are just type names (as strings): int, long float, 
             bool, datetime, or str.
             For lists, hints are "list[<type>]" where <type> is one of the simple types.
@@ -1703,7 +1692,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : spark.DataFrame
+        spark.DataFrame
             The converted spark dataframe.
         """
         return self._impl.to_spark_dataframe(table_name, column_names, column_type_hints, number_of_partitions)
@@ -1729,7 +1718,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
 
         See Also
         --------
@@ -1758,13 +1747,14 @@ class XFrame(XObject):
 
         Parameters
         ----------
-        xa : XArray
+        xa : :class:`.XArray`
             Must be the same length as the XFrame. The filter values.
 
         Returns
         -------
-        out : XFrame
-            A new XFrame which contains the rows of the XFrame where the XArray is True.  The truth
+        :class:`.XFrame`
+            A new XFrame which contains the rows of the XFrame where the
+            XArray is True.  The truth
             test is the same as in python, so non-zero values are considered true.
 
         """
@@ -1842,10 +1832,10 @@ class XFrame(XObject):
 
     def apply(self, fn, dtype=None, use_columns=None, seed=None):
         """
-        Transform each row to an :class:`~xframes.XArray` according to a
+        Transform each row to an XArray according to a
         specified function. Returns a new XArray of `dtype` where each element
         in this XArray is transformed by `fn(x)` where `x` is a single row in
-        the xframe represented as a dictionary.  The `fn` should return
+        the XFrame represented as a dictionary.  The `fn` should return
         exactly one value which can be cast into type `dtype`. If `dtype` is
         not specified, the first 100 rows of the XFrame are used to make a guess
         of the target data type.
@@ -1870,7 +1860,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The XArray transformed by fn.  Each element of the XArray is of
             type `dtype`
 
@@ -1886,7 +1876,7 @@ class XFrame(XObject):
         ['134', '235', '361']
         """
         if not inspect.isfunction(fn):
-            raise TypeError('Input must be a function.')
+            raise TypeError('Fn must be a function.')
         if isinstance(use_columns, basestring):
             use_columns = [use_columns]
         rows = self._impl.head_as_list(10)
@@ -1942,7 +1932,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             An XFrame with the given column transformed by the function and cast to the given type.
 
         Examples
@@ -1994,7 +1984,7 @@ class XFrame(XObject):
         The remaining columns are not modified.
         The type of the transformed column types are given by  `dtypes`, with
         the new values being the result of `fn(x)` where `x` is a single row in
-        the xframe represented as a dictionary.  The `fn` should return
+        the XFrame represented as a dictionary.  The `fn` should return
         a value for each element of cols, which can be cast into the corresponding `dtype`.
         If `dtypes` is not specified, the first 100 rows of the XFrame are
         used to make a guess of the target data types.
@@ -2025,7 +2015,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             An XFrame with the given columns transformed by the function and cast to the given types.
 
         Examples
@@ -2088,7 +2078,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : type
+        type
             int or float: The column can be cast to this type.
 
             str: The column cannot be cast to one of the types above.
@@ -2238,15 +2228,15 @@ class XFrame(XObject):
                 raise ValueError('Cast failed: (dict) {}'.format(val))
 
         if new_type is int:
-            return XFrame(impl=self._impl.transform_cols([column_name], cast_int, [int], 0))
+            return XFrame(impl=self._impl.transform_cols([column_name], cast_int, [int], None, 0))
         if new_type is float:
-            return XFrame(impl=self._impl.transform_cols([column_name], cast_float, [float], 0))
+            return XFrame(impl=self._impl.transform_cols([column_name], cast_float, [float], None, 0))
         if new_type is list:
-            return XFrame(impl=self._impl.transform_cols([column_name], cast_list, [list], 0))
+            return XFrame(impl=self._impl.transform_cols([column_name], cast_list, [list], None, 0))
         if new_type is dict:
-            return XFrame(impl=self._impl.transform_cols([column_name], cast_dict, [dict], 0))
+            return XFrame(impl=self._impl.transform_cols([column_name], cast_dict, [dict], None, 0))
         if new_type is datetime.datetime:
-            return XFrame(impl=self._impl.transform_cols([column_name], cast_datetime, [datetime.datetime], 0))
+            return XFrame(impl=self._impl.transform_cols([column_name], cast_datetime, [datetime.datetime], None, 0))
 
         return self
 
@@ -2273,7 +2263,7 @@ class XFrame(XObject):
             The column names for the returned XFrame.
 
         fn : function
-            The function that maps each of the xframe rows into multiple rows,
+            The function that maps each of the XFrame rows into multiple rows,
             returning ``list[list[...]]``.  All output rows must have the same
             length and order of types.  The function is passed a dictionary
             of column name: value for each row.
@@ -2292,7 +2282,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame containing the results of the ``flat_map`` of the
             original XFrame.
 
@@ -2376,7 +2366,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame containing sampled rows of the current XFrame.
 
         Examples
@@ -2405,7 +2395,8 @@ class XFrame(XObject):
 
     def random_split(self, fraction, seed=None):
         """
-        Randomly split the rows of an XFrame into two XFrames. The first XFrame
+        Randomly split the rows of an XFrame into two XFrames.
+        The first XFrame
         contains *M* rows, sampled uniformly (without replacement) from the
         original XFrame. *M* is approximately the fraction times the original
         number of rows. The second XFrame contains the remaining rows of the
@@ -2422,8 +2413,8 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : tuple [XFrame]
-            Two new XFrames.
+        tuple [:class:`.XFrame`]
+            Two new XFrame.
 
         Examples
         --------
@@ -2472,8 +2463,8 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
-            an XFrame containing the top k rows sorted by column_name.
+        :class:`.XFrame`
+            An XFrame containing the top k rows sorted by column_name.
 
         See Also
         --------
@@ -2519,7 +2510,7 @@ class XFrame(XObject):
         filename : string
             The location to save the XFrame. Either a local directory or a
             remote URL. If the format is 'binary', a directory will be created
-            at the location which will contain the xframe.
+            at the location which will contain the XFrame.
 
         format : {'binary', 'csv', 'tsv', 'parquet', json}, optional
             Format in which to save the XFrame. Binary saved XFrames can be
@@ -2575,7 +2566,7 @@ class XFrame(XObject):
 
         # Save the XFrame
         url = make_internal_url(filename)
-        XFrameImpl.check_output_uri(url)
+        check_output_uri(url)
 
         if format == 'binary':
             self._impl.save(url)
@@ -2601,7 +2592,7 @@ class XFrame(XObject):
 
     def save_as_parquet(self, filename, column_names=None, column_type_hints=None):
         url = make_internal_url(filename)
-        XFrameImpl.check_output_uri(url)
+        check_output_uri(url)
         self._impl.save_as_parquet(url,
                                    column_names=column_names,
                                    column_type_hints=column_type_hints,
@@ -2609,7 +2600,7 @@ class XFrame(XObject):
 
     def select_column(self, column_name):
         """
-        Return an  :class:`~xframes.XArray` that corresponds with
+        Return an  XArray that corresponds with
         the given column name. Throws an exception if the column name is something other than a
         string or if the column name is not found.
 
@@ -2622,7 +2613,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The XArray that is referred by `column_name`.
 
         See Also
@@ -2658,7 +2649,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that is made up of the columns referred to in
             `keylist` from the current XFrame.  The order of the columns
             is preserved.
@@ -2708,7 +2699,7 @@ class XFrame(XObject):
 
         Parameters
         ----------
-        col : XArray
+        col : :class:`.XArray`
             The 'column' of data to add.
 
         name : string, optional
@@ -2717,7 +2708,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with the new column.
 
         See Also
@@ -2756,7 +2747,7 @@ class XFrame(XObject):
 
         Parameters
         ----------
-        cols : list of XArray or XFrame
+        cols : list of :class:`.XArray` or XFrame
             The columns to add.  If `cols` is an XFrame, all columns in it are added.
 
         namelist : list of string, optional
@@ -2766,7 +2757,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             The XFrame with additional columns.
 
         See Also
@@ -2819,12 +2810,12 @@ class XFrame(XObject):
         name : string
             The name of the column.
 
-        col : XArray
+        col : :class:`.XArray`
             The 'column' to add.
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with specified column replaced.
 
 
@@ -2864,7 +2855,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with given column removed.
 
         Examples
@@ -2898,7 +2889,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with given columns removed.
 
         Examples
@@ -2937,7 +2928,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with specified columns swapped.
 
         Examples
@@ -2973,7 +2964,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with reordered columns.
 
         See Also
@@ -3022,7 +3013,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with columns renamed.
 
         See Also
@@ -3123,24 +3114,24 @@ class XFrame(XObject):
 
         """
         if isinstance(key, list):
-            col_list = value
+            column_list = value
             if isinstance(value, XFrame):
                 for name in value.column_names():
                     if name in self.column_names():
                         raise ValueError("Column '{}' already exists in current XFrame.".format(name))
                 self._impl.add_columns_frame_in_place(value._impl)
             else:
-                if not hasattr(col_list, '__iter__'):
+                if not hasattr(column_list, '__iter__'):
                     raise TypeError('Column list must be an iterable.')
                 if not hasattr(key, '__iter__'):
                     raise TypeError('Namelist must be an iterable.')
-                if not all([isinstance(x, XArray) for x in col_list]):
+                if not all([isinstance(x, XArray) for x in column_list]):
                     raise TypeError('Must give column as XArray.')
                 if not all([isinstance(x, str) for x in key]):
                     raise TypeError("Invalid column name in list : must all be 'str'.")
-                if len(key) != len(col_list):
+                if len(key) != len(column_list):
                     raise ValueError('Namelist length mismatch.')
-                cols_impl = [col.impl() for col in col_list]
+                cols_impl = [col.impl() for col in column_list]
                 self._impl.add_columns_array_in_place(cols_impl, key)
         elif isinstance(key, str):
             if isinstance(value, XArray):
@@ -3260,8 +3251,9 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : dict or XFrame
-            The specified row of the XFrame or an XFrame containing the specified rows.
+        dict or :class:`.XFrame`
+            The specified row of the XFrame or
+            an XFrame containing the specified rows.
 
         """
         if isinstance(key, int):
@@ -3293,17 +3285,17 @@ class XFrame(XObject):
         """
         Add the rows of an XFrame to the end of this XFrame.
 
-        Both XFrames must have the same set of columns with the same column
+        Both XFrame must have the same set of columns with the same column
         names and column types.
 
         Parameters
         ----------
-        other : XFrame
+        other : :class:`.XFrame`
             Another XFrame whose rows are appended to the current XFrame.
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             The result XFrame from the append operation.
 
         Examples
@@ -3376,8 +3368,8 @@ class XFrame(XObject):
                 raise TypeError('Column name must be a string.')
             if column not in my_column_names:
                 raise KeyError("Column '{}' does not exist in XFrame".format(column))
-            col_type = my_column_types[my_column_names.index(column)]
-            if col_type is dict:
+            column_type = my_column_types[my_column_names.index(column)]
+            if column_type is dict:
                 raise TypeError('Cannot group on a dictionary column.')
             key_columns_array.append(column)
 
@@ -3482,13 +3474,13 @@ class XFrame(XObject):
 
         Returns
         -------
-        out_xf : XFrame
+        out_xf : :class:`.XFrame`
             A new XFrame, with a column for each groupby column and each
             aggregation operation.
 
         See Also
         --------
-        xframes.aggregate
+        :mod:`xframes.aggregate`
 
         Examples
         --------
@@ -3727,7 +3719,7 @@ class XFrame(XObject):
 
         Parameters
         ----------
-        right : XFrame
+        right : :class:`.XFrame`
             The XFrame to join.
 
         on : str | list | dict, optional
@@ -3747,7 +3739,7 @@ class XFrame(XObject):
             * If a dict is given, each dict key is taken as a column name in the
               left XFrame, and each dict value is taken as the column name in
               right XFrame that will be joined together. e.g.
-              {'left_col_name':'right_col_name'}.
+              {'left_column_name':'right_column_name'}.
 
         how : {'inner', 'left', 'right', 'outer', 'full'}, optional
             The type of join to perform.  'inner' is default.
@@ -3774,7 +3766,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             The joined XFrames.
 
         Examples
@@ -3881,7 +3873,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that contains rest of columns from original XFrame with
             the given column replaced with a collection of expanded columns.
 
@@ -3943,12 +3935,12 @@ class XFrame(XObject):
         Filter an XFrame by values inside an iterable object. Result is an
         XFrame that only includes (or excludes) the rows that have a column
         with the given `column_name` which holds one of the values in the
-        given `values` :class:`~xframes.XArray`. If `values` is not an
+        given `values` XArray. If `values` is not an
         XArray, we attempt to convert it to one before filtering.
 
         Parameters
         ----------
-        values : XArray | list |tuple | set | iterable | numpy.ndarray | pandas.Series | str | function
+        values : :class:`.XArray` | list |tuple | set | iterable | numpy.ndarray | pandas.Series | str | function
             The values to use to filter the XFrame.  The resulting XFrame will
             only include rows that have one of these values in the given
             column.
@@ -3966,7 +3958,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             The filtered XFrame.
 
         Examples
@@ -4050,7 +4042,7 @@ class XFrame(XObject):
                 id_name += '1'
             value_xf = value_xf.add_row_number(id_name)
 
-            tmp = XFrame(impl=self._impl.join(value_xf._impl,
+            tmp = XFrame(impl=self._impl.join(value_xf.impl(),
                                               'left',
                                               {column_name: column_name}))
             # DO NOT CHANGE the next line -- it is XArray operator ==
@@ -4058,7 +4050,7 @@ class XFrame(XObject):
             del ret_xf[id_name]
             return ret_xf
         else:
-            return XFrame(impl=self._impl.join(value_xf._impl,
+            return XFrame(impl=self._impl.join(value_xf.impl(),
                                                'inner',
                                                {column_name: column_name}))
 
@@ -4118,7 +4110,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             An XFrame that contains columns that are not packed, plus the newly
             packed column.
 
@@ -4139,7 +4131,7 @@ class XFrame(XObject):
         Examples
         --------
         Suppose 'xf' is an an XFrame that maintains business category
-        information:
+        information.
 
         >>> xf = xframes.XFrame({'business': range(1, 5),
         ...                       'category.retail': [1, None, 1, None],
@@ -4343,7 +4335,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that contains rest of columns from original XFrame with
             the given column replaced with a collection of unpacked columns.
 
@@ -4478,7 +4470,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that contains newly stacked column(s) plus columns in
             original XFrame other than the stacked column.
 
@@ -4643,7 +4635,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame containing the grouped columns as well as the new
             column.
 
@@ -4719,7 +4711,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that contains the unique rows of the current XFrame.
 
         Raises
@@ -4780,7 +4772,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that is sorted according to given sort criteria
 
         See Also
@@ -4923,7 +4915,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             XFrame with missing values removed (according to the given rules).
 
         See Also
@@ -4996,7 +4988,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : (XFrame, XFrame)
+        (:class:`.XFrame`, :class:`.XFrame`)
             (XFrame with missing values removed,
              XFrame with the removed missing values)
 
@@ -5085,7 +5077,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame with the specified value in place of missing values.
 
         See Also
@@ -5108,9 +5100,9 @@ class XFrame(XObject):
         [3 rows x 2 columns]
         """
         # Normal error checking
-        if not isinstance(column, str):
+        if not isinstance(column, basestring):
             raise TypeError("Must give column name as a 'str'. {} {}".format(type(column).__name__, column))
-        ret = self[self.column_names()]
+        ret = self.select_columns(self.column_names())
         ret[column] = ret[column].fillna(value)
         return ret
 
@@ -5132,7 +5124,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             The new XFrame with a column name
 
         Notes
@@ -5187,7 +5179,7 @@ class XFrame(XObject):
 
         Returns
         -------
-        out : XFrame
+        XFrame
             The new XFrame with the results.
 
 

@@ -20,6 +20,8 @@ import pandas
 
 from xframes import XArray
 from xframes import XFrame
+from xframes.spark_context import CommonSparkContext
+from xframes import object_utils
 from xframes.aggregate import SUM, ARGMAX, ARGMIN, MAX, MIN, COUNT, MEAN, \
     VARIANCE, STDV, SELECT_ONE, CONCAT, VALUES, VALUES_COUNT
 
@@ -59,7 +61,7 @@ class TestXFrameVersion(XFrameUnitTestCase):
     """
 
     def test_version(self):
-        ver = XFrame.version()
+        ver = object_utils.version()
         self.assertIs(str, type(ver))
 
 
@@ -354,7 +356,7 @@ class TestXFrameConstructor(XFrameUnitTestCase):
         self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
 
     def test_construct_rdd(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame(rdd)
         self.assertEqualLen(3, res)
@@ -362,11 +364,11 @@ class TestXFrameConstructor(XFrameUnitTestCase):
         self.assertDictEqual({'X.0': 2, 'X.1': 'b'}, res[1])
 
     def test_construct_spark_dataframe(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         fields = [StructField('id', IntegerType(), True), StructField('val', StringType(), True)]
         schema = StructType(fields)
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         s_rdd = sqlc.createDataFrame(rdd, schema)
         res = XFrame(s_rdd)
         self.assertEqualLen(3, res)
@@ -726,7 +728,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t.to_spark_dataframe('tmp_tbl')
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[0]
@@ -736,7 +738,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_bool(self):
         t = XFrame({'id': [1, 2, 3], 'val': [True, False, True]})
         t.to_spark_dataframe('tmp_tbl')
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[0]
@@ -746,7 +748,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
         t.to_spark_dataframe('tmp_tbl')
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[0]
@@ -756,7 +758,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_int(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1, 2, 3]})
         t.to_spark_dataframe('tmp_tbl')
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[0]
@@ -766,7 +768,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[1, 1], [2, 2], [3, 3]]})
         t.to_spark_dataframe('tmp_tbl')
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[0]
@@ -776,7 +778,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_list_hint(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[None, 1], [2, 2], [3, 3]]})
         t.to_spark_dataframe('tmp_tbl', column_type_hints={'val': 'list[int]'})
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[1]
@@ -791,7 +793,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_map(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'x': 1}, {'y': 2}, {'z': 3}]})
         t.to_spark_dataframe('tmp_tbl')
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[0]
@@ -806,7 +808,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_map_hint(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{None: None}, {'y': 2}, {'z': 3}]})
         t.to_spark_dataframe('tmp_tbl', column_type_hints={'val': 'dict{str: int}'})
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[1]
@@ -816,7 +818,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_str_rewrite(self):
         t = XFrame({'id': [1, 2, 3], 'val;1': ['a', 'b', 'c']})
         t.to_spark_dataframe('tmp_tbl')
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
         self.assertEqual(3, results.count())
         row = results.collect()[0]
@@ -826,7 +828,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
     def test_to_spark_dataframe_str_rename(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t.to_spark_dataframe('tmp_tbl', column_names=['id1', 'val1'])
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id1')
         self.assertEqual(3, results.count())
         row = results.collect()[0]
@@ -863,7 +865,7 @@ class TestXFrameFromRdd(XFrameUnitTestCase):
     """
 
     def test_from_rdd(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd)
         self.assertEqualLen(3, res)
@@ -871,7 +873,7 @@ class TestXFrameFromRdd(XFrameUnitTestCase):
         self.assertDictEqual({'X.0': 2, 'X.1': 'b'}, res[1])
 
     def test_from_rdd_names(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_names=['id', 'val'])
         self.assertEqualLen(3, res)
@@ -879,7 +881,7 @@ class TestXFrameFromRdd(XFrameUnitTestCase):
         self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
 
     def test_from_rdd_types(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(None, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_types=[int, str])
         self.assertEqualLen(3, res)
@@ -888,7 +890,7 @@ class TestXFrameFromRdd(XFrameUnitTestCase):
         self.assertDictEqual({'X.0': 2, 'X.1': 'b'}, res[1])
 
     def test_from_rdd_names_types(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(None, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_names=['id', 'val'], column_types=[int, str])
         self.assertEqualLen(3, res)
@@ -897,13 +899,13 @@ class TestXFrameFromRdd(XFrameUnitTestCase):
         self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
 
     def test_from_rdd_names_bad(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         with self.assertRaises(ValueError):
             XFrame.from_rdd(rdd, column_names=('id',))
 
     def test_from_rdd_types_bad(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(None, 'a'), (2, 'b'), (3, 'c')])
         with self.assertRaises(ValueError):
             XFrame.from_rdd(rdd, column_types=(int,))
@@ -915,11 +917,11 @@ class TestXFrameFromSparkDataFrame(XFrameUnitTestCase):
     """
 
     def test_from_rdd(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         fields = [StructField('id', IntegerType(), True), StructField('val', StringType(), True)]
         schema = StructType(fields)
-        sqlc = XFrame.spark_sql_context()
+        sqlc = CommonSparkContext.spark_sql_context()
         s_rdd = sqlc.createDataFrame(rdd, schema)
 
         res = XFrame.from_rdd(s_rdd)
@@ -1050,7 +1052,7 @@ class TestXFrameTableLineage(XFrameUnitTestCase):
         self.assertEqual('test-frame-auto.csv', filename)
 
     def test_lineage_rdd(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd)
         lineage = res.lineage()['table']
@@ -1189,7 +1191,7 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
     # TODO test
 
     def test_from_rdd(self):
-        sc = XFrame.spark_context()
+        sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_names=['id', 'val'])
         lineage = res.lineage()['column']

@@ -6,6 +6,7 @@ XArray acts similarly to pandas.Series but without indexing.
 The data is immutable, homogeneous, and is stored in a Spark RDD.
 """
 
+
 import inspect
 import math
 import time
@@ -15,9 +16,9 @@ import datetime
 
 from xframes.deps import pandas, HAS_PANDAS
 from xframes.deps import HAS_NUMPY
-from xframes.xobject import XObject
 from xframes.xarray_impl import XArrayImpl
 from xframes.utils import make_internal_url
+from xframes.object_utils import check_input_uri, check_output_uri
 from xframes.type_utils import infer_type_of_list, is_numeric_val, classify_auto
 import xframes
 
@@ -50,7 +51,7 @@ def _create_sequential_xarray(size, start=0, reverse=False):
 
 
 # noinspection PyUnresolvedReferences,PyRedeclaration
-class XArray(XObject):
+class XArray(object):
     """
     An immutable, homogeneously typed array object backed by Spark RDD.
 
@@ -58,77 +59,69 @@ class XArray(XObject):
     memory. It fully supports missing values and random access (although random
     access is inefficient). The data backing an XArray is located on the cluster 
     hosting Spark.
-
-    Parameters
-    ----------
-    data : list | numpy.ndarray | pandas.Series | string
-        The input data. If this is a list, numpy.ndarray, or pandas.Series,
-        the data in the list is converted and stored in an XArray.
-        Alternatively if this is a string, it is interpreted as a path (or
-        url) to a text file. Each line of the text file is loaded as a
-        separate row. If `data` is a directory where an XArray was previously
-        saved, this is loaded as an XArray read directly out of that
-        directory.
-
-    dtype : {int, float, str, list, array.array, dict, datetime.datetime}, optional
-        The data type of the XArray. If not specified, we attempt to
-        infer it from the input. If it is a numpy array or a Pandas series, the
-        data type of the array or series is used. If it is a list, the data type is
-        inferred from the inner list. If it is a URL or path to a text file, we
-        default the data type to str.
-
-    ignore_cast_failure : bool, optional
-        If True, ignores casting failures but warns when elements cannot be
-        cast into the specified data type.
-
-    Notes
-    -----
-    - If `data` is pandas.Series, the index will be ignored.
-
-    The following functionality is currently not implemented:
-        - numpy.ndarray as row data
-        - pandas.Series data
-        - count_words, count_ngrams
-        - sketch sub_sketch_keys
-
-    See Also
-    --------
-    xframes.XArray.from_const
-        Constructs an XArray of a given size with a const value.
-
-    xframes.XArray.from_sequence
-        Constructs an XArray by generating a sequence of consecutive numbers.
-
-    xframes.XArray.from_rdd
-        Create a new XArray from a Spark RDD or Spark DataFrame.  
-
-    xframes.XArray.set_trace
-        Controls entry and exit tracing.
-
-    xframes.XArray.spark_context
-        Returns the spark context.
-
-    xframes.XArray.spark_sql_context
-        Returns the spark sql context.
-
-    xframes.XArray.hive_context
-        Returns the spark hive context.
-
-    Examples
-    --------
-    >>> xa = XArray(data=[1,2,3,4,5], dtype=int)
-    >>> xa = XArray('s3://testdatasets/a_to_z.txt.gz')
-    >>> xa = XArray([[1,2,3], [3,4,5]])
-    >>> xa = XArray(data=[{'a':1, 'b': 2}, {'b':2, 'c': 1}])
-    >>> xa = XArray(data=[datetime.datetime(2011, 10, 20, 9, 30, 10)])
     """
 
     def __init__(self, data=None, dtype=None, ignore_cast_failure=False, impl=None):
         """
-        __init__(data=list(), dtype=None, ignore_cast_failure=False)
-
         Construct a new XArray. The source of data includes: list,
         numpy.ndarray, pandas.Series, and urls.
+
+        Parameters
+        ----------
+        data : list | numpy.ndarray | pandas.Series | string
+            The input data. If this is a list, numpy.ndarray, or pandas.Series,
+            the data in the list is converted and stored in an XArray.
+            Alternatively if this is a string, it is interpreted as a path (or
+            url) to a text file. Each line of the text file is loaded as a
+            separate row. If `data` is a directory where an XArray was previously
+            saved, this is loaded as an XArray read directly out of that
+            directory.
+
+        dtype : {int, float, str, list, array.array, dict, datetime.datetime}, optional
+            The data type of the XArray. If not specified, we attempt to
+            infer it from the input. If it is a numpy array or a Pandas series, the
+            data type of the array or series is used. If it is a list, the data type is
+            inferred from the inner list. If it is a URL or path to a text file, we
+            default the data type to str.
+
+        ignore_cast_failure : bool, optional
+            If True, ignores casting failures but warns when elements cannot be
+            cast into the specified data type.
+
+        Notes
+        -----
+        - If `data` is pandas.Series, the index will be ignored.
+
+        The following functionality is currently not implemented:
+            - numpy.ndarray as row data
+            - pandas.Series data
+            - count_words, count_ngrams
+            - sketch sub_sketch_keys
+
+        See Also
+        --------
+        xframes.XArray.from_const : Constructs an XArray of a given size with a const value.
+
+        xframes.XArray.from_sequence : Constructs an XArray by generating a sequence of consecutive numbers.
+
+        xframes.XArray.from_rdd : Create a new XArray from a Spark RDD or Spark DataFrame.
+
+        xframes.XArray.set_trace : Controls entry and exit tracing.
+
+        xframes.XArray.spark_context : Returns the spark context.
+
+        xframes.XArray.spark_sql_context : Returns the spark sql context.
+
+        xframes.XArray.hive_context : Returns the spark hive context.
+
+        Examples
+        --------
+        >>> xa = XArray(data=[1,2,3,4,5], dtype=int)
+        >>> xa = XArray('s3://testdatasets/a_to_z.txt.gz')
+        >>> xa = XArray([[1,2,3], [3,4,5]])
+        >>> xa = XArray(data=[{'a':1, 'b': 2}, {'b':2, 'c': 1}])
+        >>> xa = XArray(data=[datetime.datetime(2011, 10, 20, 9, 30, 10)])
+
         """
         if dtype is not None and not isinstance(dtype, type):
             raise TypeError("Dtype must be a type, e.g. use int rather than 'int'.")
@@ -155,7 +148,7 @@ class XArray(XObject):
             self._impl = XArrayImpl.load_from_iterable(data, dtype, ignore_cast_failure)
         elif isinstance(data, str):
             internal_url = make_internal_url(data)
-            XArrayImpl.check_input_uri(internal_url)
+            check_input_uri(internal_url)
             self._impl = XArrayImpl.load_autodetect(internal_url, dtype)
         else:
             raise TypeError('Unexpected data source: {}. '
@@ -166,7 +159,7 @@ class XArray(XObject):
         """
         Print information about the Spark RDD associated with this XArray.
         """
-        return self._impl._dump_debug_info()
+        return self.impl().dump_debug_info()
 
     @classmethod
     def read_text(cls, path, delimiter=None, nrows=None, verbose=False):
@@ -191,7 +184,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
 
         Examples
         --------
@@ -210,7 +203,7 @@ class XArray(XObject):
         [25904, 25907, 25923, 25924, 25928,  ... ]
 
         """
-        XArrayImpl.check_input_uri(path)
+        check_input_uri(path)
         url = make_internal_url(path)
         return cls(impl=XArrayImpl.read_from_text(url, delimiter=delimiter, nrows=nrows, verbose=verbose))
 
@@ -329,7 +322,7 @@ class XArray(XObject):
                 format = 'binary'
 
         url = make_internal_url(filename)
-        XArrayImpl.check_output_uri(url)
+        check_output_uri(url)
 
         if format == 'binary':
             self._impl.save(url)
@@ -379,7 +372,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        class:`.XArray`
             This incorporates the given RDD.
 
         """
@@ -391,7 +384,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : string
+        str
             A string representation of the XArray.
         """
 
@@ -406,7 +399,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : str
+        str
             Returns a string containing the first 100 elements of the array.
         """
         h = self._impl.head_as_list(100)
@@ -703,7 +696,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : type
+        type
             The type of the XArray.
 
         Examples
@@ -724,10 +717,10 @@ class XArray(XObject):
 
         Returns
         -------
-        out : dict
+        dict
             * key 'table': set[filename]
                 The files that were used to build the XArray
-            * key 'column': dict{col_name: set[filename]}
+            * key 'column': dict{column_name: set[filename]}
                 The set of files that were used to build each column
         """
         return self._impl.lineage_as_dict()
@@ -743,7 +736,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A new XArray which contains the first n rows of the current XArray.
 
         Examples
@@ -773,7 +766,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             Each individual vector sliced according to the arguments.
 
         Examples
@@ -850,7 +843,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The XArray of dictionary type, where each element contains the word
             count for each word that appeared in corresponding input element.
 
@@ -905,7 +898,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             An XArray of dictionary type, where each key is the n-gram string
             and each value is its count.
 
@@ -987,7 +980,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A XArray of dictionary type, with each dictionary element trimmed
             according to the input criteria.
 
@@ -1028,7 +1021,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             An XArray of dictionary type, with each dict element trimmed
             according to the input criteria.
 
@@ -1067,7 +1060,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A XArray of list type, where each element is a list of keys
             from the input XArray element.
 
@@ -1094,7 +1087,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A XArray of list type, where each element is a list of values
             from the input XArray element.
 
@@ -1128,7 +1121,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A XArray of int type, where each element indicates whether the
             input XArray element contains any key in the input list.
 
@@ -1167,8 +1160,8 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
-            A XArray of int type, where each element indicates whether the
+        :class:`.XArray`
+            An XArray of int type, where each element indicates whether the
             input XArray element contains all keys in the input list.
 
         See Also
@@ -1217,7 +1210,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The XArray transformed by `fn`. Each element of the XArray is of
             type `dtype`.
 
@@ -1278,7 +1271,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The XArray transformed by `fn` and flattened. Each element of the XArray is of
             type `dtype`.
 
@@ -1334,7 +1327,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The XArray filtered by fn. Each element of the XArray is of
             type int.
 
@@ -1372,7 +1365,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The new XArray which contains the subsampled rows.
 
         Examples
@@ -1414,7 +1407,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : bool
+        bool
 
         See Also
         --------
@@ -1449,7 +1442,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : bool
+        bool
 
         See Also
         --------
@@ -1484,7 +1477,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : type of XArray
+        type of XArray
             Maximum value of XArray
 
         See Also
@@ -1508,7 +1501,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : type of XArray
+        type of XArray
             Minimum value of XArray
 
         See Also
@@ -1537,7 +1530,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : type of XArray
+        type of XArray
             Sum of all values in XArray
         """
         return self._impl.sum()
@@ -1551,7 +1544,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : float
+        float
             Mean of all values in XArray.
         """
         return self._impl.mean()
@@ -1570,7 +1563,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : float
+        float
             The standard deviation of all the values.
         """
         return self._impl.std(ddof)
@@ -1589,7 +1582,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : float
+        float
             Variance of all values in XArray.
         """
         return self._impl.var(ddof)
@@ -1600,7 +1593,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : int
+        int
             Number of missing values.
         """
         return self._impl.num_missing()
@@ -1611,7 +1604,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : int
+        int
             Number of non-zero elements.
         """
         return self._impl.nnz()
@@ -1628,7 +1621,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray[str]
+        :class:`.XArray` of str
             The XArray converted to the type 'str'.
 
         Examples
@@ -1662,7 +1655,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray[datetime.datetime]
+        :class:`.XArray` of datetime.datetime
             The XArray converted to the type 'datetime'.
 
         Examples
@@ -1704,7 +1697,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray [dtype]
+        :class:`.XArray` of dtype
             The XArray converted to the type `dtype`.
 
         Notes
@@ -1761,7 +1754,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
 
         See Also
         --------
@@ -1792,7 +1785,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
 
         See Also
         --------
@@ -1822,7 +1815,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
 
         See Also
         --------
@@ -1850,7 +1843,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A new XArray which contains the last n rows of the current XArray.
         """
 
@@ -1865,7 +1858,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : int
+        int
             The count of missing values.
         """
 
@@ -1881,7 +1874,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The new XArray with missing values removed.
         """
 
@@ -1904,7 +1897,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A new XArray with all missing values filled.
         """
         return XArray(impl=self._impl.fill_missing_values(value))
@@ -1927,7 +1920,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray (of type int)
+        :class:`.XArray` of int
 
         Notes
         -----
@@ -1942,7 +1935,7 @@ class XArray(XObject):
         """
         Summary statistics that can be calculated with one pass over the XArray.
 
-        Returns a xframes.Sketch object which can be further queried for many
+        Returns a :class:`~xframes.Sketch` object which can be further queried for many
         descriptive statistics over this XArray. Many of the statistics are
         approximate. See the :class:`~xframes.Sketch` documentation for more
         detail.
@@ -1957,7 +1950,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : Sketch
+        :class:`.Sketch`
             Sketch object that contains descriptive statistics for this XArray.
             Many of the statistics are approximate.
 
@@ -1991,19 +1984,19 @@ class XArray(XObject):
 
         Parameters
         ----------
-        other : XArray
+        other : :class:`.XArray`
             Another XArray whose rows are appended to current XArray.
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A new XArray that contains rows from both XArrays, with rows from
             the other XArray coming after all rows from the current XArray.
 
         See Also
         --------
         xframes.XFrame.append
-            Appends XFrames.
+            Appends XFrames
 
         Examples
         --------
@@ -2031,7 +2024,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A new XArray that contains the unique values of the current XArray.
 
         See Also
@@ -2054,7 +2047,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             A new XArray, each element in the XArray is the len of the corresponding
             items in original XArray.
 
@@ -2104,7 +2097,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that contains all expanded columns
 
         Examples
@@ -2167,7 +2160,7 @@ class XArray(XObject):
     # noinspection PyTypeChecker
     def unpack(self, column_name_prefix='X', column_types=None, na_value=None, limit=None):
         """
-        Convert an XArray of list, array, or dict type to an XFrame with
+        Convert an XFrame of list, array, or dict type to an XFrame with
         multiple columns.
 
         `unpack` expands an XArray using the values of each list/array/dict as
@@ -2212,7 +2205,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XFrame
+        :class:`.XFrame`
             A new XFrame that contains all unpacked columns
 
         Examples
@@ -2305,15 +2298,16 @@ class XArray(XObject):
                 return float
             return None
 
+        # noinspection PyShadowingNames
         def make_column_types(head_rows, keys):
-            col_types = {}
+            column_types = {}
             for row in head_rows:
                 for key in row.keys():
                     val = row[key]
-                    if key not in col_types and not is_missing(val):
-                        col_types[key] = type(val)
+                    if key not in column_types and not is_missing(val):
+                        column_types[key] = type(val)
 
-            return [col_types[key] for key in keys]
+            return [column_types[key] for key in keys]
 
         if not issubclass(self.dtype(), (dict, array.array, list, tuple)):
             raise TypeError('Only XArray of dict/list/tuple/array type supports unpack: {}.'.format(
@@ -2389,11 +2383,11 @@ class XArray(XObject):
 
             else:                      # self.dtype() is dict
                 if limit is None:
-                    keys = set()
+                    key_set = set()
                     for row in head_rows:
-                        keys |= set(row.keys())
+                        key_set |= set(row.keys())
                     # translate to indexes
-                    limit = list(keys)
+                    limit = list(key_set)
                 if column_types is None:
                     column_types = make_column_types(head_rows, limit)
 
@@ -2414,7 +2408,7 @@ class XArray(XObject):
 
         Returns
         -------
-        out : XArray
+        :class:`.XArray`
             The sorted XArray.
 
         Examples

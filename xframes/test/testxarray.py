@@ -15,6 +15,7 @@ import shutil
 
 from xframes import XArray
 from xframes import XFrame
+from xframes import object_utils
 
 
 def delete_file_or_dir(path):
@@ -39,7 +40,7 @@ class TestXArrayVersion(XArrayUnitTestCase):
     """
 
     def test_version(self):
-        ver = XArray.version()
+        ver = object_utils.version()
         self.assertIs(str, type(ver))
 
 
