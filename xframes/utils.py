@@ -19,7 +19,7 @@ import logging
 from pyspark import StorageLevel
 
 from xframes.spark_context import CommonSparkContext
-from xframes.xobject import XObject
+from xframes import object_utils
 from xframes import fileio
 
 # Not a number singleton
@@ -262,12 +262,12 @@ def perform_version_check(configfile=(os.path.join(os.path.expanduser("~"), ".xf
     if not skip_version_check:
         try:
             latest_version = get_newest_version(timeout=1, url=url).strip()
-            if parse_version(latest_version) > parse_version(XObject.version()):
+            if parse_version(latest_version) > parse_version(object_utils.version()):
                 msg = ("A newer version of XPatterns XFrames (v{}) is available! "
                        "Your current version is v{}.\n"
                        "You can use pip to upgrade the xframes package. "
                        "For more information see http://chayden.net/xframes/upgrade.").format(
-                           latest_version, XObject.version())
+                           latest_version, object_utils.version())
                 print >>stderr, msg
                 return True
         except:
@@ -431,6 +431,7 @@ def delete_file_or_dir(path):
     elif os.path.isfile(path):
         os.remove(path)
 
+
 # Used to merge dictionaries when combining properties.
 def merge_dicts(x, y):
     z = x.copy()
@@ -457,6 +458,7 @@ def distribute_seed(rdd, seed):
 
 # RDD helpers
 
+
 # noinspection PyUnresolvedReferences
 def cache(rdd):
     rdd.persist(StorageLevel.MEMORY_ONLY)
@@ -473,5 +475,3 @@ def persist(rdd):
 
 def unpersist(rdd):
     rdd.unpersist()
-
-
