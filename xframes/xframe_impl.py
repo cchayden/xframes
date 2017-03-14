@@ -232,7 +232,7 @@ class XFrameImpl(TracedObject):
 
         def row_to_tuple(row):
             return tuple([row[i] for i in range(len(row))])
-        xf_rdd = rdd.map(row_to_tuple)
+        xf_rdd = rdd.rdd.map(row_to_tuple)
         return cls(xf_rdd, xf_names, xf_types, lineage)
 
     # noinspection SqlNoDataSourceInspection
@@ -572,7 +572,7 @@ class XFrameImpl(TracedObject):
         column_types = [to_ptype(col.dataType) for col in schema.fields]
         lineage = Lineage.init_frame_lineage(path, names)
 
-        rdd = s_rdd.map(lambda row: tuple(row))
+        rdd = s_rdd.rdd.map(lambda row: tuple(row))
         return XFrameImpl(rdd, names, column_types, lineage)
 
     # Save

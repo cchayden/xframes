@@ -24,7 +24,6 @@ import pyspark
 
 from xframes.deps import pandas, HAS_PANDAS
 from xframes.prettytable import PrettyTable
-from xframes.deps import dataframeplus, HAS_DATAFRAME_PLUS
 from xframes.xframe_impl import XFrameImpl
 from xframes.xarray_impl import infer_type_of_list
 from xframes.utils import make_internal_url
@@ -1598,28 +1597,6 @@ class XFrame(object):
             if len(df[column_name]) == 0:
                 df[column_name] = df[column_name].astype(self.column_types()[i])
         return df
-
-    def to_dataframeplus(self):
-        """
-        Convert this XFrame to xpatterns DataFramePlus
-
-        This operation will construct a DataFramePlus in memory. Care must
-        be taken when size of the returned object is big.
-
-        Returns
-        -------
-        DataFramePlus
-            The dataframe which contains all rows of XFrame
-        """
-        if not HAS_DATAFRAME_PLUS:
-            raise TypeError('DataFramePlus not found in PYTHONPATH.')
-        df = pandas.DataFrame()
-        for i in range(self.num_columns()):
-            column_name = self.column_names()[i]
-            df[column_name] = list(self[column_name])
-            if len(df[column_name]) == 0:
-                df[column_name] = df[column_name].astype(self.column_types()[i])
-        return dataframeplus.DataFramePlus(df)
 
     def to_rdd(self):
         """

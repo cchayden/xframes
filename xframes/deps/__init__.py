@@ -48,13 +48,3 @@ try:
 except:
     HAS_NUMPY = False
     import numpy_mock as numpy
-
-
-# Detect dataframeplus and use a mock if missing
-try:
-    from xpatterns.analytics import dataframeplus
-    HAS_DATAFRAME_PLUS = True
-
-except:
-    HAS_DATAFRAME_PLUS = False
-    import dataframeplus_mock as dataframeplus

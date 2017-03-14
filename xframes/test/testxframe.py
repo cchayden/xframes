@@ -805,6 +805,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
         with self.assertRaises(ValueError):
             t.to_spark_dataframe('tmp_tbl')
 
+    @unittest.skip('files in spark 2')
     def test_to_spark_dataframe_map_hint(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{None: None}, {'y': 2}, {'z': 3}]})
         t.to_spark_dataframe('tmp_tbl', column_type_hints={'val': 'dict{str: int}'})
@@ -1736,21 +1737,6 @@ class TestXFrameToPandasDataframe(XFrameUnitTestCase):
         self.assertEqual(2, df['id'][1])
         self.assertDictEqual({'x': 1}, df['val'][0])
         self.assertDictEqual({'y': 2}, df['val'][1])
-
-
-class TestXFrameToDataframeplus(XFrameUnitTestCase):
-    """
-    Tests XFrame to_dataframeplus
-    """
-
-    @unittest.skip('depends on dataframe_plus')
-    def test_to_dataframeplus_str(self):
-        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        df = t.to_dataframeplus()
-        self.assertEqualLen(3, df)
-        self.assertEqual(1, df['id'][0])
-        self.assertEqual(2, df['id'][1])
-        self.assertEqual('a', df['val'][0])
 
 
 class TestXFrameForeach(XFrameUnitTestCase):
