@@ -258,45 +258,6 @@ class XStreamImpl(TracedObject):
         res = self._dstream.filter(filter_fun)
         return self._rv(res)
 
-    def update_state(self, fn, column_name, initial_state):
-        names = self.column_names()
-        index = self.col_names.index(column_name)
-
-        def generator(init_state):
-            elems_at_a_time = 200000
-            init_state.impl().begin_iterator()
-            ret = init_state.impl().iterator_get_next(elems_at_a_time)
-            while True:
-                for j in ret:
-                    # Iterator returns tuples
-                    yield j
-
-                if len(ret) == elems_at_a_time:
-                    ret = init_state.impl().iterator_get_next(elems_at_a_time)
-                else:
-                    break
-
-        def make_initial_state_dict(init_state):
-            init_dict = {}
-            for row in generator(init_state):
-                init_dict[row[index]] = row
-            return init_dict
-
-        state_column_names = initial_state.column_names()
-        state_column_types = initial_state.column_types()
-        initial_state_dict = make_initial_state_dict(initial_state)
-
-        def update_fn(events, state):
-            if len(events) == 0:
-                return state
-            key = events[0][column_name]
-            return fn(events, state, initial_state_dict.get(key, None))
-
-        keyed_dstream = self._dstream.map(lambda row: (row[index], build_row(names, row)))
-        res = keyed_dstream.updateStateByKey(update_fn)
-        res = res.map(lambda kv: kv[1])
-        return self._rv(res, state_column_names, state_column_types)
-
     def select_column(self, column_name):
         """
         Get the array RDD that corresponds with

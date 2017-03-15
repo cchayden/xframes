@@ -76,3 +76,16 @@ class XState(object):
             raise ValueError('Column name is not a column in the stream: {} {}.'.
                              format(key_column_name, stream.column_names()))
         return XStream(impl=self._impl.update_state(fn, stream, key_column_name))
+
+    def map_with_state(self, fn, stream, key_column_name, column_names, column_types, num_partitions=None):
+        if not inspect.isfunction(fn):
+            raise TypeError('Fn must be a function.')
+        if not isinstance(stream, XStream):
+            raise TypeError('Stream is not an XStream.')
+        if key_column_name not in stream.column_names():
+            raise ValueError('Column name is not a column in the stream: {} {}.'.
+                             format(key_column_name, stream.column_names()))
+        return XStream(impl=self._impl.map_with_state(fn, stream, key_column_name,
+                                                      column_names, column_types,
+                                                      num_partitions))
+
