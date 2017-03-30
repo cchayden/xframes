@@ -36,7 +36,7 @@ class XStateImpl(TracedObject):
 
     instance_count = 0
 
-    def __init__(self, state, key_column_name, checkpoint_policy, verbose=True):
+    def __init__(self, state, key_column_name, checkpoint_policy, verbose=False):
         """ Instantiate an XState implementation.
 
         The RDD holds the state.
@@ -190,7 +190,7 @@ class XStateImpl(TracedObject):
             if len(events) == 0:
                 raise ValueError('update_fn: no events')
             ws = StateData(state)
-            #print 'old-state: {}'.format(state)
+            if state is not None: print 'old-state: {}'.format(state)
             results = map(lambda event: fn(key, event, ws), events)
             new_state = ws.get()
             #print 'new-state: {}'.format(new_state)
@@ -204,10 +204,25 @@ class XStateImpl(TracedObject):
             checkpoint_counter = globals()['checkpoint_counter']
             batch_counter = globals()['batch_counter']
 
+            def merge_state(old_state, new_state):
+                def combiner(x):
+                    old = list(x[0])
+                    new = list(x[1])
+                    # brand new
+                    if len(old) == 0:
+                        return new[0]
+                    # no update
+                    if len(new) == 0:
+                        return old[0]
+                    # both old and new: return new
+                    return new[0]
+
+                return old_state.cogroup(new_state).mapValues(combiner)
+
             # group new items and state under the key
             # gives (K, (iterator of state, iterator of event))
-            print 'my-state: {}'.format(my_state.count())
-            g = my_state.cogroup(stream_rdd.partitionBy(num_partitions), num_partitions)
+            #print 'my-state: {}'.format(old_state.count())
+            g = old_state.cogroup(stream_rdd.partitionBy(num_partitions), num_partitions)
 
             # filter out groups with no events
             # kv[1] is the value, kv[1][1] is the iterator of event
@@ -235,7 +250,8 @@ class XStateImpl(TracedObject):
 
             # extract the state and remove items where the state is now None
             new_state = result_state.mapValues(lambda x: x[1]).filter(lambda x: x is not None)
-            print 'new_state 1: {}'.format(new_state.count())
+            merged_state = merge_state(old_state, new_state)
+            print 'merged_state 1: {}'.format(merged_state.count())
             # extract the transformed events
             res = result_state.flatMapValues(lambda x: x[0])
 
@@ -244,13 +260,13 @@ class XStateImpl(TracedObject):
             if self.verbose:
                 print 'batch: {}  stream: {}  res {}'.format(batch_counter, stream_rdd.count(), res.count())
             if checkpoint_counter >= checkpoint_interval:
-                if self.verbose:
-                    print 'saving {} {}'.format(checkpoint_counter, checkpoint_path)
+                #if self.verbose:
+                print 'saving {} {}'.format(checkpoint_counter, checkpoint_path)
                 checkpoint_counter = 0
-                XStateImpl.safe_checkpoint(new_state, checkpoint_path)
-                new_state = CommonSparkContext().spark_context().pickleFile(checkpoint_path)
-            print 'new_state 2: {}'.format(new_state.count())
-            globals()[instance_name] = new_state
+                XStateImpl.safe_checkpoint(merged_state, checkpoint_path)
+                merged_state = CommonSparkContext().spark_context().pickleFile(checkpoint_path)
+            #print 'merged_state 2: {}'.format(merged_state.count())
+            globals()[instance_name] = merged_state
             globals()['checkpoint_counter'] = checkpoint_counter
             globals()['batch_counter'] = batch_counter
             return res
