@@ -15,9 +15,9 @@ export SPARK_HOME=~/tools/spark
 
 # Pick one of these
 # spark-1.6
-export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.9-src.zip
+#export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.9-src.zip
 # Spark 2.0
-#export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip
+export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip
 
 # It is a good idea to set the spark conf directory.
 export SPARK_CONF_DIR=$XFRAMES_HOME/xframes/conf
