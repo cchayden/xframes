@@ -261,7 +261,10 @@ class XFrameImpl(TracedObject):
     def load_from_rdd(cls, rdd, names=None, types=None):
         cls._entry(names=names, types=types)
         # TODO handle empty RDDs, which cause take to fail
-        first_row = rdd.take(1)[0]
+        first_rows = rdd.take(1)
+        if len(first_rows) == 0:
+            return cls(rdd, names, types)
+        first_row = first_rows[0]
         if names is not None:
             if len(names) != len(first_row):
                 raise ValueError('Length of names does not match RDD: {} {}.'.format(names, first_row))
