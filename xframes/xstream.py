@@ -616,6 +616,27 @@ class XStream(object):
             raise TypeError('Row_fn must be a function.')
         return XStream(impl=self._impl.transform_row(row_fn, column_names, column_types))
 
+    def select_rows(self, xa):
+        """
+        Selects rows of the XFrame where the XArray evaluates to True.
+
+        Parameters
+        ----------
+        xa : :class:`.XArray`
+            Must be the same length as the XFrame. The filter values.
+
+        Returns
+        -------
+        :class:`.XFrame`
+            A new XFrame which contains the rows of the XFrame where the
+            XArray is True.  The truth
+            test is the same as in python, so non-zero values are considered true.
+
+        """
+        if not isinstance(xa, XArray):
+            raise ValueError('Argument must be an XArray')
+        return XFrame(impl=self._impl.logical_filter(xa.impl()))
+
     def apply(self, fn, dtype):
         """
         Transform each XFrame in an XStream to an XArray according to a
@@ -1133,6 +1154,8 @@ class XStream(object):
             * list
               Calls select_columns on `key`
         """
+        if isinstance(key, XArray):
+            return self.select_rows(key)
         if isinstance(key, list):
             return self.select_columns(key)
         if isinstance(key, str):
@@ -1325,7 +1348,7 @@ class XStream(object):
             raise TypeError('Suffix must be string')
         self._impl.save(prefix, suffix)
 
-    def print_frames(self, num_rows=10, num_columns=40,
+    def print_frames(self, label=None, num_rows=10, num_columns=40,
                      max_column_width=30, max_row_width=None,
                      wrap_text=False, max_wrap_rows=2, footer=False):
         """
@@ -1363,10 +1386,44 @@ class XStream(object):
             Corresponding function on individual frame.
         """
         max_row_width = max_row_width or object_utils.MAX_ROW_WIDTH
-        self._impl.print_frames(num_rows, num_columns, max_column_width, max_row_width,
+        self._impl.print_frames(label, num_rows, num_columns, max_column_width, max_row_width,
                                 wrap_text, max_wrap_rows, footer)
 
-    def print_count(self):
-        self._impl.print_count()
+    def print_count(self, label=None):
+        self._impl.print_count(label)
 
 
+    def update_state(self, fn, col_name, state_column_names, state_column_types):
+        # Take the column names and types from the initial state
+        """
+        Update state for an XStream by using the state key in a given column.
+
+        The state is a key-value store.  The key is made up of the values in the given column.
+        For each XFrame in the XStream, all the rows with a given key are passed to the supplied function,
+        which computes a new state.
+
+        Parameters
+        ----------
+        fn : function
+            The given function is supplied with a list of rows in each XFrame that have the same value in the given
+            column (the key), along with the current state.  It returns the new state for that key.
+            The function is: fn(rows, old_state) and returns new_state.
+
+        col_name : str | None
+            The column of the XStream to match supplies the state key.
+
+        Returns
+        -------
+        An XStream made up of XFrames representing the state.
+        """
+        if not isinstance(col_name, str):
+            raise TypeError('Column_name must be a string.')
+
+        existing_columns = self.column_names()
+        if col_name not in existing_columns:
+            raise KeyError("Column '{}' not in XFrame.".format(col_name))
+
+        if not isinstance(fn, types.FunctionType):
+            raise TypeError('Fn must be a function.')
+
+        return XStream(impl=self._impl.update_state(fn, col_name, state_column_names, state_column_types))

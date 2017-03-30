@@ -192,6 +192,15 @@ class XStreamImpl(TracedObject):
         lineage = self.lineage.flat_map(column_names, names)
         return self._rv(res, column_names, column_types, lineage)
 
+    def logical_filter(self, other):
+        self._entry()
+        # zip restriction: data must match in length and partition structure
+
+        pairs = self._dstream.zip(other.rdd())
+
+        res = pairs.filter(lambda p: p[1]).map(lambda p: p[0])
+        return self._rv(res)
+
     def apply(self, fn, dtype):
         self._entry(dtype=dtype)
         names = self.col_names
@@ -200,7 +209,7 @@ class XStreamImpl(TracedObject):
             result = fn(build_row(names, row))
             if not isinstance(result, dtype):
                 return safe_cast_val(result, dtype)
-            return result
+            return (result,)
         res = self._dstream.map(transformer)
         lineage = self.lineage.apply(names)
         # TODO: this is not right -- we need to distinguish between tuples and simple values
@@ -258,6 +267,27 @@ class XStreamImpl(TracedObject):
         res = self._dstream.filter(filter_fun)
         return self._rv(res)
 
+    def update_state(self, fn, col_name, state_column_names, state_column_types):
+
+#        state_column_names = initial_state.column_names()
+#        state_column_types = initial_state.column_types()
+
+        index = self.col_names.index(col_name)
+
+        names = self.column_names()
+
+        def update_fn(events, state):
+            if len(events) == 0:
+                return state
+            return fn(events, state)
+
+        keyed_dstream = self._dstream.map(lambda row: (row[index], build_row(names, row)))
+        res = keyed_dstream.updateStateByKey(update_fn)
+        #res = res.flatMap(lambda kv: kv[1])
+        res = res.map(lambda kv: kv[1])
+        return self._rv(res, state_column_names, state_column_types)
+
+    # noinspection PyMethodMayBeStatic
     def select_column(self, column_name):
         """
         Get the array RDD that corresponds with
@@ -583,19 +613,22 @@ class XStreamImpl(TracedObject):
         self._entry(prefix=prefix, suffix=suffix)
         self._dstream.saveAsTextFiles(prefix, suffix)
 
-    def print_frames(self, num_rows, num_columns,
+    def print_frames(self, label, num_rows, num_columns,
                      max_column_width, max_row_width,
                      wrap_text, max_wrap_rows, footer):
         column_names = self.column_names()
 
         def print_rdd_rows(rdd):
             xf = XFrame.from_rdd(rdd, column_names=column_names)
+            if label:
+                print label
             xf.print_rows(num_rows, num_columns, max_column_width, max_row_width,
                           wrap_text, max_wrap_rows, footer)
 
         self._dstream.foreachRDD(print_rdd_rows)
 
-    def print_count(self):
+    def print_count(self, label):
+        label = label or ''
         def print_rdd(rdd):
-            print rdd.count()
+            print '{} {}'.format(label, rdd.count())
         self._dstream.foreachRDD(print_rdd)
