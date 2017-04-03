@@ -144,6 +144,13 @@ class XFrameImpl(TracedObject):
         self.materialized = True
         return count
 
+    def _coalesce(self, rdd, num_partitions=None):
+        if num_partitions is None:
+            num_partitions = CommonSparkContext.spark_context().defaultParallelism * 2
+        if self._rdd.getNumPartitions() > num_partitions:
+            return rdd.coalesce(num_partitions)
+        return rdd
+
     def rdd(self):
         return self._rdd
 
@@ -861,8 +868,8 @@ class XFrameImpl(TracedObject):
         """
         self._entry(fraction=fraction, max_partitions=max_partitions, seed=seed)
         res = self._rdd.sample(False, fraction, seed)
-        if max_partitions is not None and max_partitions < res.getNumPartitions():
-            res = res.coalesce(max_partitions)
+        if max_partitions is not None:
+            res = self._coalesce(res, max_partitions)
         return self._rv(res)
 
     def random_split(self, fraction, seed):
@@ -1868,6 +1875,9 @@ class XFrameImpl(TracedObject):
             return old_vals + new_vals
         res = aggregates.map(lambda pair: concatenate(pair[0], pair[1]))
         res = res.map(tuple)
+
+        res = self._coalesce(res)
+
         persist(res)
         lineage = self.lineage.groupby(key_columns_array, group_output_columns, group_columns)
         return self._rv(res, new_column_names, new_column_types, lineage)
