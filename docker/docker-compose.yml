@@ -1,0 +1,16 @@
+version: "3"
+
+# Make sure you run build-xframes-files to build the docker files
+services:
+  xframes:
+    container_name: xframes
+    build:
+      context: /tmp/docker-build
+      dockerfile: Dockerfile
+    environment:
+      USE_HTTP: 1
+    ports:
+      - 7777:8888
+      - 8000:80
+    volumes:
+      - ./notebooks:/notebooks

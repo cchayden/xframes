@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 
-# Build and run the xframes docker container 
-sudo docker stop xframes || true
-sudo docker rm xframes || true
+# Stop and remove the xframes docker container
+docker rm -f xframes
