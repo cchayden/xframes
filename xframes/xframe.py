@@ -3055,8 +3055,6 @@ class XFrame(object):
         --------
         >>> xf = xframes.XFrame({'id': [4, 6, 8], 'val': ['D', 'F', 'H']})
         >>> xf
-#    xxxxx
-
         """
         if isinstance(key, XArray):
             return self.select_rows(key)
