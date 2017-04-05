@@ -146,10 +146,11 @@ If you do not already have Spark, it is easy to set it up in local mode.
 Download spark from http://spark.apache.org/downloads.html
 
 Get the tar.gz, uncompress it, and put it in some convenient directory.
+The path to py4j is dependent on the spark version: this one works with spark 1.2.
 Then set::
 
     export SPARK_HOME=<spark distribution>
-    export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.8.2.1-src.zip
+    export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip
 
 You can test by running this program::
 
@@ -157,7 +158,8 @@ You can test by running this program::
     from xframes import XFrame
     print XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
 
-    Run:
+Run::
+
     $ python test.py
 
 This should print::
@@ -199,7 +201,7 @@ iIPython notebook.
 Running in a Virtual Environment
 --------------------------------
 
-XFrames alwo works well in a virtual environment.
+XFrames works well in a virtual environment.
 
 Create a virtual environment::
 
@@ -210,14 +212,26 @@ And then install into it::
     source venv/bin/activate
     pip install xframes
 
-XFrames depends on numpy, which it installs into the virtual environment.
 XFrames includes support for pandas and matplotlib, which you can
 install if you want to use them.  For exammple::
 
     pip install pandas
     pip install matplotlib
 
-If running in a notebook, you would then run the notebook server::
+After this, make sure Spark is set up.  For example::
+
+    export SPARK_HOME=~/tools/spark
+    export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip
+
+Then test::
+
+    cat <<EOF test.py
+    from xframes import XFrame
+    print XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
+    EOF
+    python test.py
+
+If running in a notebook, you could run the notebook server and run the test program::
 
   ipython notebook
 
