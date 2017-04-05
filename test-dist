@@ -31,11 +31,14 @@ pip install numpy
 # Install xframes
 pip install xframes
 
+Copy requirements.txt and
+pip install -r requirements.txt
+
 # To run xFrames application
 #
 # Set up pyspark -- replace with where you have unpacked spark
-export SPARK_HOME=~/spark
-export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.8.2.1-src.zip
+export SPARK_HOME=~/tools/spark
+export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip
 #
 # You probably want to set up spark config.
 # If you do not, you will see a lot of debug output on stdout.
@@ -78,5 +81,5 @@ numbers, they do not share with the regular server.
 First, make an account with the server at pypitest.
 Second, change "-r pypi" to "-r pypitest" above.
 
-Finally, on pip install, use "-i https://testpypi.pryhon.org/pypi"
+Finally, on pip install, use "-i https://testpypi.python.org/pypi"
 
