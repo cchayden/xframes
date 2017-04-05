@@ -1,4 +1,4 @@
-xFrames 0.2 Library (BETA)
+xFrames 0.3 Library (BETA)
 ==========================
 
 The XFrames Library provides a consistent and scalable data science
@@ -33,6 +33,8 @@ painful setup times and "works on my machine" bugs.
 
 Minimum Requirements
 --------------------
+
+Spark 1.6 or 2.1.
 
 *Linux*:
 
@@ -248,16 +250,3 @@ License
 -------
 
 This SDK is provided under the 3-clause BSD `license <LICENSE>`__.
-
-
-Notes
------
-Error message:
-Exception: MLlib requires NumPy 1.4+
-
-Modify spark/python/pyspark/mllib/__init__.py in the version check to:
-ver = [int(x) for x in numpy.version.version.split('.')[:2]]
-if ver < [1, 4]:
-    raise Exception("MLlib requires NumPy 1.4+")
-This is fixed in spark 1.5.1, which we have not tested with.
-
