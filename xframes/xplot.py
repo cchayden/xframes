@@ -15,7 +15,7 @@ import xframes
 
 class XPlot(object):
     """
-    Plotting library for xFrames.
+    Plotting library for XFrames.
 
     Creates simple data plots.
 

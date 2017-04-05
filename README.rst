@@ -1,4 +1,4 @@
-xFrames 0.3 Library (BETA)
+XFrames 0.3 Library (BETA)
 ==========================
 
 The XFrames Library provides a consistent and scalable data science

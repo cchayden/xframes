@@ -3,7 +3,7 @@ XFrames Documentation
 
 Contents:
 
-The xFrames library provides powerful and convenient abstractions used
+The XFrames library provides powerful and convenient abstractions used
 for operating on large datasets.  It is implemented in python and
 runs on Spark.
 

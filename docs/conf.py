@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# xFrame documentation build configuration file, created by
+# XFrames documentation build configuration file, created by
 # sphinx-quickstart on Tue Feb 10 19:19:10 2015.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -179,7 +179,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'xFramedoc'
+htmlhelp_basename = 'XFramesdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -198,7 +198,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'xFrame.tex', u'xFrame Documentation',
+  ('index', 'XFrames.tex', u'XFrames Documentation',
    u'Charles Hayden', 'manual'),
 ]
 
@@ -228,7 +228,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'xframe', u'xFrame Documentation',
+    ('index', 'Xframes', u'XFrames Documentation',
      [u'Charles Hayden'], 1)
 ]
 
@@ -242,8 +242,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'xFrame', u'xFrame Documentation',
-   u'Charles Hayden', 'xFrame', 'One line description of project.',
+  ('index', 'XFrames', u'XFrames Documentation',
+   u'Charles Hayden', 'XFrames', 'One line description of project.',
    'Miscellaneous'),
 ]
 

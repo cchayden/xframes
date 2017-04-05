@@ -8,7 +8,7 @@ WORKDIR /base
 EXPOSE 8888
 EXPOSE 80
 
-#xFrames Pre-reqs
+#XFrames Pre-reqs
 RUN apt-get update --fix-missing
 RUN apt-get install -y wget default-jdk emacs24 nginx
 

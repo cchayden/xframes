@@ -34,7 +34,7 @@ pip install xframes
 Copy requirements.txt and
 pip install -r requirements.txt
 
-# To run xFrames application
+# To run xframes application
 #
 # Set up pyspark -- replace with where you have unpacked spark
 export SPARK_HOME=~/tools/spark

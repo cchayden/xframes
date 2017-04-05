@@ -978,7 +978,7 @@ class XFrameImpl(TracedObject):
 
     def add_column(self, col, name):
         """
-        Create a new xFrame with one additional column (an XArray).
+        Create a new xframe with one additional column (an XArray).
 
         The number of elements in the data given
         must match the length of every other column of the XFrame. If no

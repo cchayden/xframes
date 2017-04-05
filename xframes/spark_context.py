@@ -86,7 +86,7 @@ def create_spark_config(env):
     from xframes.utils import merge_dicts
 
     default_context = {'spark.master': 'local[*]',
-                       'spark.app.name': 'xFrames'}
+                       'spark.app.name': 'XFrames'}
     # get values from [spark] section
     config_context = env.get_config_items('spark')
     context = merge_dicts(default_context, config_context)

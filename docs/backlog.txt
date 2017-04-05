@@ -1,4 +1,4 @@
-xFrames backlog
+XFrames backlog
 ---------------
 
 Core feature backlog
