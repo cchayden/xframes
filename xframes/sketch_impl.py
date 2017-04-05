@@ -8,7 +8,6 @@ from collections import Counter
 import copy
 import logging
 
-import py4j
 
 from xframes.traced_object import TracedObject
 from xframes.dsq import QuantileAccumulator
@@ -99,6 +98,7 @@ class SketchImpl(TracedObject):
         if self.stats is None:
             if is_date_type(self.dtype):
                 if HAS_PY4J:
+                    import py4j
                     try:
                         self.min_val = normalize_number(self.defined.min())
                         self.max_val = normalize_number(self.defined.max())
