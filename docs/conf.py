@@ -53,8 +53,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'xFrame'
-copyright = u'2015, Charles Hayden'
+project = u'XFrames'
+copyright = u'2017, Charles Hayden'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
