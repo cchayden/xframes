@@ -1,9 +1,9 @@
 xFrames 0.2 Library (BETA)
 ==========================
 
-The xFrames Library provides a consistent and scalable data science
+The XFrames Library provides a consistent and scalable data science
 library that is built on top of industry-standard open source
-technologies. xFrames provides the following advantages compared to other
+technologies. XFrames provides the following advantages compared to other
 DataFrame implementations:
 
 -  A simple and well-tested Data Science library and Python based
@@ -15,14 +15,14 @@ DataFrame implementations:
 -  The library is extensible, allowing developers to add their own
    useful features and functionality.
 
-How xFrames Benefits You
+How XFrames Benefits You
 ------------------------
 
-If you're a data scientist, xFrames will isolate framework dependencies
+If you're a data scientist, XFrames will isolate framework dependencies
 and their configuration within a single disposable, containerized
 environment, without compromising on any of the tools you're used to
 working with (notebooks, dataframes, machine learning and big data
-frameworks, etc.). Once you or someone else creates a single xFrames
+frameworks, etc.). Once you or someone else creates a single XFrames
 container, you just need to run the container and everything is
 installed and configured for you to work. Other members of your team
 create their development environments from the same configuration, so
@@ -50,14 +50,14 @@ Minimum Requirements
 Getting Started
 ---------------
 
-The easiest way to get started is to download the xframes library, build a
+The easiest way to get started is to download the XFrames library, build a
 Docker container that has everything you need, and run using an ipython notebook
 within Docker.
 
 Download Library
 ----------------
 
-Clone xFrames this way::
+Clone XFrames this way::
 
     git clone https://github.com/chayden/xframes.git
 
@@ -72,7 +72,7 @@ Review Introductory Presentation
 
 After starting docker container, browse to http://localhost:7777/tree.
 Then open info/Presentation.ipynb.  If you execute the cells in this
-notebook, then xFrames is up and running.
+notebook, then XFrames is up and running.
 
 Documentation
 -------------
@@ -101,7 +101,7 @@ You can also install with pip::
 
     pip install xframes
 
-Using xframes Directory
+Using XFrames Directory
 -----------------------
 
 If you want to run using the source distribution, the most direct way
@@ -112,7 +112,7 @@ is to include its xframes directory in PYTHONPATH::
 Building the Library
 --------------------
 
-If you want to make a zip file that you can use to install xframes on a
+If you want to make a zip file that you can use to install XFrames on a
 different machine, go to the source main directory and run::
 
   python setup.py sdist --formats=zip
@@ -127,9 +127,9 @@ Install by::
     python setup.py install
 
 
-Running xFrames
+Running XFrames
 ---------------
-xFrames uses pySpark, so you have to have Spark set up.
+XFrames uses pySpark, so you have to have Spark set up.
 
 You might have an existing Spark installation running in Cluster Mode,
 managed by the the Standalone, YARN, or Mesos cluster manager.
@@ -231,15 +231,15 @@ One of these is to supply a file spark-defaults.conf, in the directory pointed
 to by SPARK_CONF_DIR described above.  There is a template to guide you.
 This works when you start a local spark instance.
 
-To affect only the spark context used by a single xFrames program, you can
-either provide xFrames-specific defaults, application-speficic configuration,
+To affect only the spark context used by a single XFrames program, you can
+either provide XFrames-specific defaults, application-speficic configuration,
 or you can supply configurations at run time.
 
-For xFrames-specific defaults, edit the file "defaults.ini" found in the xframes
+For XFrames-specific defaults, edit the file "defaults.ini" found in the xframes
 directory in the xframe installation.
 
 For application-specific defaults, use a file "config.ini" in the current directory where you run
-your xFrames application.  It is structured similarly to "defaults.ini".
+your XFrames application.  It is structured similarly to "defaults.ini".
 
 To provide run-time configuration, use XFrame.init_context to set configuration parameters before
 running any Spark operations.
