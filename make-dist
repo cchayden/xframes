@@ -6,12 +6,11 @@ here=`pwd`
 
 # Make documentation
 cd docs
-./make-readme
+./make-docs
 
 # Make zip file
 cd $here
 python setup.py sdist --formats=zip
-
 
 exit
 
