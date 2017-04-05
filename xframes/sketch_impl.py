@@ -13,9 +13,9 @@ import py4j
 from xframes.traced_object import TracedObject
 from xframes.dsq import QuantileAccumulator
 from xframes.frequent import FreqSketch
-from xframes import utils
 from xframes.type_utils import is_numeric_type, is_date_type
 from xframes import xarray_impl
+from xframes.deps import HAS_PY4J
 
 __all__ = ['Sketch']
 
@@ -98,14 +98,19 @@ class SketchImpl(TracedObject):
         # calculate some basic statistics
         if self.stats is None:
             if is_date_type(self.dtype):
-                try:
+                if HAS_PY4J:
+                    try:
+                        self.min_val = normalize_number(self.defined.min())
+                        self.max_val = normalize_number(self.defined.max())
+                    except py4j.protocol.Py4JJavaError as e:
+                        self.min_val = None
+                        self.max_val = None
+                        logging.warn('Datetime max or min did not compute.  ' +
+                                     'Possible mixture of offset-native and offset-aware times.')
+                else:
                     self.min_val = normalize_number(self.defined.min())
                     self.max_val = normalize_number(self.defined.max())
-                except py4j.protocol.Py4JJavaError as e:
-                    self.min_val = None
-                    self.max_val = None
-                    logging.warn('Datetime max or min did not compute.  ' +
-                                 'Possible mixture of offset-native and offset-aware times.')
+
             else:
                 stats = self.defined.stats()
                 self.min_val = normalize_number(stats.min())

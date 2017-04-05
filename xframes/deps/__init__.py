@@ -48,3 +48,13 @@ try:
 except:
     HAS_NUMPY = False
     import numpy_mock as numpy
+
+# Detect matplotlib and use a mock if missing
+try:
+    import py4j
+
+    HAS_PY4J = True
+
+except:
+    HAS_PY4J = False
+    import py4j_mock as py4j
