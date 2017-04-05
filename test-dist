@@ -76,7 +76,7 @@ use the test server.  Although it enforces the same rules about version
 numbers, they do not share with the regular server.
 
 First, make an account with the server at pypitest.
-Second, change "-r pypi" to "-r py[pitest" above.
+Second, change "-r pypi" to "-r pypitest" above.
 
 Finally, on pip install, use "-i https://testpypi.pryhon.org/pypi"
 
