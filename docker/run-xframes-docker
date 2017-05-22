@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
 
 # Build and run the xframes docker container
-# Use 7777 to connect to the notebook
-# Use 8000 to connect to the documentation.
-#docker run -p 7777:8888 -p 8000:80 -e "USE_HTTP=1" --name xframes xframes
-docker run -p 7777:8888 -p 8000:80 -e "USE_HTTP=1" -v `pwd`/notebooks:/notebooks --name xframes xframes
+docker run --rm --name xframes -p 8888:8888 -p 4040-4048:4040-4048 -v $PWD/notebooks:/home/jovyan/work xframes

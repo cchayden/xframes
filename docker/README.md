@@ -1,34 +1,46 @@
 Build and Run XFrames Docker
 ============================
 
-Build
------
+These commands run Spark and XFrames in a docker,
+which you can access with Jupyter.
+
 From the xframes main directory:
 
     cd docker
-    ./build-xframes-docker
+
+Build
+-----
+    docker-compose buld
 
 Run
 ---
-    ./run-xframes-docker
+    docker-compose up
 
 Stop Docker
 -----------
-    ./stop-xframes-docker
+    docker-compose stop
 
 Enter Docker
 ------------
-    enter-xframes-docker
+    docker-compose exec xframes /bin/bash
     
 Using XFrames Docker
 ====================
 
 Run notebook
 ------------
-Browse to localhost:8000
+Browse to localhost:8888.
 
-View Documentation
+You can test by creatng a (python2) notebook, and then
+entering the test program in the first call.
+
+    from xframes import XFrame
+
+    xf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
+    print xf
+
+View spark console
 ------------------
-Browse to localhost:7777
+Browse to localhost:4040.
 
-
+This shows the Spark console

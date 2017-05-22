@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
 
-# prepare
-./build-xframes-files
-
 # build
-cd ${BUILD_DIR}
 docker build -t xframes .
