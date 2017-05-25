@@ -26,16 +26,8 @@ def delete_file_or_dir(path):
         os.remove(path)
 
 
-class XArrayUnitTestCase(unittest.TestCase):
-
-    def assertEqualLen(self, expect, obj):
-        return self.assertEqual(expect, len(obj))
-
-    def assertColumnEqual(self, expect, obj):
-        return self.assertListEqual(expect, list(obj))
-
-
-class TestXArrayVersion():
+# noinspection PyClassHasNoInit
+class TestXArrayVersion:
     """
     Tests XArray version
     """
@@ -45,7 +37,8 @@ class TestXArrayVersion():
         assert type(ver) == str
 
 
-class TestXArrayConstructorLocal():
+# noinspection PyClassHasNoInit
+class TestXArrayConstructorLocal:
     """
     Tests XArray constructors that create data from local sources.
     """
@@ -89,13 +82,13 @@ class TestXArrayConstructorLocal():
     def test_construct_list_bool_infer(self):
         t = XArray([True, False])
         assert len(t) == 2
-        assert t[0] == True
+        assert t[0] is True
         assert t.dtype() is bool
 
     def test_construct_list_bool(self):
         t = XArray([True, False], dtype=bool)
         assert len(t) == 2
-        assert t[0] == True
+        assert t[0] is True
         assert t.dtype() is bool
 
     def test_construct_list_list_infer(self):
@@ -147,8 +140,8 @@ class TestXArrayConstructorLocal():
         assert t.dtype() is int
 
 
-
-class TestXArrayConstructorRange():
+# noinspection PyClassHasNoInit
+class TestXArrayConstructorRange:
     """
     Tests XArray constructors for sequential ranges.
     """
@@ -181,7 +174,8 @@ class TestXArrayConstructorRange():
         assert t.dtype() is int
 
 
-class TestXArrayConstructFromRdd():
+# noinspection PyClassHasNoInit
+class TestXArrayConstructFromRdd:
     """
     Tests XArray from_rdd class method
     """
@@ -191,7 +185,8 @@ class TestXArrayConstructFromRdd():
         pass
 
 
-class TestXArrayConstructorLoad():
+# noinspection PyClassHasNoInit
+class TestXArrayConstructorLoad:
     """
     Tests XArray constructors that loads from file.
     """
@@ -239,7 +234,8 @@ class TestXArrayConstructorLoad():
             _ = XArray('files/does-not-exist')
 
 
-class TestXArrayReadText():
+# noinspection PyClassHasNoInit
+class TestXArrayReadText:
     """
     Tests XArray read_text class method
     """
@@ -250,7 +246,8 @@ class TestXArrayReadText():
         assert list(t) == ['1', '2', '3', '4']
 
 
-class TestXArrayFromConst():
+# noinspection PyClassHasNoInit
+class TestXArrayFromConst:
     """
     Tests XArray constructed from const.
     """
@@ -305,7 +302,8 @@ class TestXArrayFromConst():
             XArray.from_const((1, 1), 10)
 
 
-class TestXArraySaveBinary():
+# noinspection PyClassHasNoInit
+class TestXArraySaveBinary:
     """
     Tests XArray save binary format
     """
@@ -330,7 +328,8 @@ class TestXArraySaveBinary():
         assert os.path.isdir(path)
 
 
-class TestXArraySaveText():
+# noinspection PyClassHasNoInit
+class TestXArraySaveText:
     """
     Tests XArray save text format
     """
@@ -349,7 +348,8 @@ class TestXArraySaveText():
         assert os.path.isfile(success_path)
 
 
-class TestXArraySaveCsv():
+# noinspection PyClassHasNoInit
+class TestXArraySaveCsv:
     """
     Tests XArray save csv format
     """
@@ -372,7 +372,8 @@ class TestXArraySaveCsv():
             assert f.readline().strip() == '3'
 
 
-class TestXArrayRepr():
+# noinspection PyClassHasNoInit
+class TestXArrayRepr:
     """
     Tests XArray __repr__ function.
     """
@@ -384,7 +385,8 @@ Rows: 3
 [1, 2, 3]"""
 
 
-class TestXArrayStr():
+# noinspection PyClassHasNoInit
+class TestXArrayStr:
     """
     Tests XArray __str__ function.
     """
@@ -392,28 +394,30 @@ class TestXArrayStr():
         t = XArray(range(200))
         s = t.__repr__()
         assert s == "dtype: int\nRows: 200\n[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11," + \
-                         " 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25," + \
-                         " 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41," + \
-                         " 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57," + \
-                         " 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73," + \
-                         " 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90," + \
-                         " 91, 92, 93, 94, 95, 96, 97, 98, 99, ... ]"
+                    " 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25," + \
+                    " 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41," + \
+                    " 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57," + \
+                    " 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73," + \
+                    " 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90," + \
+                    " 91, 92, 93, 94, 95, 96, 97, 98, 99, ... ]"
 
 
-class TestXArrayNonzero():
+# noinspection PyClassHasNoInit
+class TestXArrayNonzero:
     """
     Tests XArray __nonzero__ function
     """
     def test_nonzero_nonzero(self):
         t = XArray([0])
-        assert bool(t) == True
+        assert bool(t) is True
 
     def test_nonzero_zero(self):
         t = XArray([])
-        assert bool(t) == False
+        assert bool(t) is False
 
 
-class TestXArrayLen(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayLen:
     """
     Tests XArray __len__ function
     """
@@ -426,14 +430,15 @@ class TestXArrayLen(XArrayUnitTestCase):
         assert len(t) == 0
 
 
-class TestXArrayIterator(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayIterator:
     """
     Tests XArray iteration function
     """
     def test_iter_empty(self):
         t = XArray([])
         for _ in t:
-            assert False # should not iterate
+            assert False  # should not iterate
 
     def test_iter_1(self):
         t = XArray([0])
@@ -446,12 +451,12 @@ class TestXArrayIterator(XArrayUnitTestCase):
             assert elem == expect
 
 
-class TestXArrayAddScalar(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayAddScalar:
     """
     Tests XArray Scalar Addition
     """
-    # noinspection PyAugmentAssignment
-    # noinspection PyTypeChecker
+    # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_add_scalar(self):
         t = XArray([1, 2, 3])
         assert len(t) == 3
@@ -463,7 +468,8 @@ class TestXArrayAddScalar(XArrayUnitTestCase):
         assert t[2] == 5
 
 
-class TestXArrayAddVector():
+# noinspection PyClassHasNoInit
+class TestXArrayAddVector:
     """
     Tests XArray Vector Addition
     """
@@ -487,7 +493,8 @@ class TestXArrayAddVector():
         assert t[2] == 6
 
         
-class TestXArrayOpScalar():
+# noinspection PyClassHasNoInit
+class TestXArrayOpScalar:
     """
     Tests XArray Scalar operations other than addition
     """
@@ -507,7 +514,7 @@ class TestXArrayOpScalar():
         assert res[1] == 4
         assert res[2] == 6
 
-    # noinspection PyTypeChecker
+    # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_div_scalar(self):
         t = XArray([1, 2, 3])
         res = t / 2
@@ -527,35 +534,35 @@ class TestXArrayOpScalar():
     def test_lt_scalar(self):
         t = XArray([1, 2, 3])
         res = t < 3
-        assert res[0] == True
-        assert res[1] == True
-        assert res[2] == False
+        assert res[0] is True
+        assert res[1] is True
+        assert res[2] is False
 
     # noinspection PyUnresolvedReferences
     def test_le_scalar(self):
         t = XArray([1, 2, 3])
         res = t <= 2
-        assert res[0] == True
-        assert res[1] == True
-        assert res[2] == False
+        assert res[0] is True
+        assert res[1] is True
+        assert res[2] is False
 
     # noinspection PyUnresolvedReferences
     def test_gt_scalar(self):
         t = XArray([1, 2, 3])
         res = t > 2
-        assert res[0] == False
-        assert res[1] == False
-        assert res[2] == True
+        assert res[0] is False
+        assert res[1] is False
+        assert res[2] is True
 
     # noinspection PyUnresolvedReferences
     def test_ge_scalar(self):
         t = XArray([1, 2, 3])
         res = t >= 3
-        assert res[0] == False
-        assert res[1] == False
-        assert res[2] == True
+        assert res[0] is False
+        assert res[1] is False
+        assert res[2] is True
 
-    # noinspection PyTypeChecker
+    # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_radd_scalar(self):
         t = XArray([1, 2, 3])
         res = 1 + t
@@ -579,7 +586,7 @@ class TestXArrayOpScalar():
         assert res[1] == 4
         assert res[2] == 6
 
-    # noinspection PyTypeChecker
+    # noinspection PyUnresolvedReferences
     def test_rdiv_scalar(self):
         t = XArray([1, 2, 3])
         res = 12 / t
@@ -591,17 +598,17 @@ class TestXArrayOpScalar():
     def test_eq_scalar(self):
         t = XArray([1, 2, 3])
         res = t == 2
-        assert res[0] == False
-        assert res[1] == True
-        assert res[2] == False
+        assert res[0] is False
+        assert res[1] is True
+        assert res[2] is False
 
     # noinspection PyUnresolvedReferences
     def test_ne_scalar(self):
         t = XArray([1, 2, 3])
         res = t != 2
-        assert res[0] == True
-        assert res[1] == False
-        assert res[2] == True
+        assert res[0] is True
+        assert res[1] is False
+        assert res[2] is True
 
     def test_and_scalar(self):
         t = XArray([1, 2, 3])
@@ -615,7 +622,8 @@ class TestXArrayOpScalar():
 
 
 # noinspection PyUnresolvedReferences
-class TestXArrayOpVector(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayOpVector:
     """
     Tests XArray Vector operations other than addition
     """
@@ -647,70 +655,71 @@ class TestXArrayOpVector(XArrayUnitTestCase):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 < t2
-        assert res[0] == True
-        assert res[1] == False
-        assert res[2] == False
+        assert res[0] is True
+        assert res[1] is False
+        assert res[2] is False
 
     def test_le_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 <= t2
-        assert res[0] == True
-        assert res[1] == True
-        assert res[2] == False
+        assert res[0] is True
+        assert res[1] is True
+        assert res[2] is False
 
     def test_gt_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 > t2
-        assert res[0] == False
-        assert res[1] == False
-        assert res[2] == True
+        assert res[0] is False
+        assert res[1] is False
+        assert res[2] is True
 
     def test_ge_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 >= t2
-        assert res[0] == False
-        assert res[1] == True
-        assert res[2] == True
+        assert res[0] is False
+        assert res[1] is True
+        assert res[2] is True
 
     def test_eq_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 == t2
-        assert res[0] == False
-        assert res[1] == True
-        assert res[2] == False
+        assert res[0] is False
+        assert res[1] is True
+        assert res[2] is False
 
     def test_ne_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 != t2
-        assert res[0] == True
-        assert res[1] == False
-        assert res[2] == True
+        assert res[0] is True
+        assert res[1] is False
+        assert res[2] is True
 
     def test_and_vector(self):
         t1 = XArray([False, False, True, True])
         t2 = XArray([False, True, False, True])
         res = t1 & t2
-        assert res[0] == False
-        assert res[1] == False
-        assert res[2] == False
-        assert res[3] == True
+        assert res[0] is False
+        assert res[1] is False
+        assert res[2] is False
+        assert res[3] is True
 
     def test_or_vector(self):
         t1 = XArray([False, False, True, True])
         t2 = XArray([False, True, False, True])
         res = t1 | t2
-        assert res[0] == False
-        assert res[1] == True
-        assert res[2] == True
-        assert res[3] == True
+        assert res[0] is False
+        assert res[1] is True
+        assert res[2] is True
+        assert res[3] is True
 
 
-class TestXArrayOpUnary():
+# noinspection PyClassHasNoInit
+class TestXArrayOpUnary:
     """
     Tests XArray Unary operations
     """
@@ -728,6 +737,7 @@ class TestXArrayOpUnary():
         assert res[1] == -2
         assert res[2] == 3
 
+    # noinspection PyTypeChecker
     def test_abs_unary(self):
         t = XArray([1, -2, 3])
         res = abs(t)
@@ -736,7 +746,8 @@ class TestXArrayOpUnary():
         assert res[2] == 3
 
 
-class TestXArrayLogicalFilter():
+# noinspection PyClassHasNoInit
+class TestXArrayLogicalFilter:
     """
     Tests XArray logical filter (XArray indexed by XArray)
     """
@@ -762,7 +773,8 @@ class TestXArrayLogicalFilter():
             _ = t1[t2]
 
 
-class TestXArrayCopyRange():
+# noinspection PyClassHasNoInit
+class TestXArrayCopyRange:
     """
     Tests XArray integer and range indexing
     """
@@ -813,7 +825,8 @@ class TestXArrayCopyRange():
             _ = t[{1, 2, 3}]
 
 
-class TestXArraySize():
+# noinspection PyClassHasNoInit
+class TestXArraySize:
     """
     Tests XArray size operation
     """
@@ -822,7 +835,8 @@ class TestXArraySize():
         assert t.size() == 3
 
 
-class TestXArrayDtype():
+# noinspection PyClassHasNoInit
+class TestXArrayDtype:
     """
     Tests XArray dtype operation
     """
@@ -831,7 +845,8 @@ class TestXArrayDtype():
         assert t.dtype() is int
 
 
-class TestXArrayTableLineage():
+# noinspection PyClassHasNoInit
+class TestXArrayTableLineage:
     """
     Tests XArray ltable lineage operation
     """
@@ -956,13 +971,16 @@ class TestXArrayTableLineage():
         assert 'test-array-int' in basenames
 
 
-class TestXArrayColumnLineage():
+# noinspection PyClassHasNoInit
+class TestXArrayColumnLineage:
     """
     Tests XArray column lineage operation
     """
 
     # helper function
+    # noinspection PyMethodMayBeStatic
     def get_column_lineage(self, xa, keys=None):
+        # noinspection PyUnusedLocal
         __tracebackhide__ = True
         lineage = xa.lineage()['column']
         keys = keys or ['_XARRAY']
@@ -977,6 +995,7 @@ class TestXArrayColumnLineage():
         lineage = self.get_column_lineage(t)
         assert lineage['_XARRAY'] == {('EMPTY', '_XARRAY')}
 
+    # noinspection PyTypeChecker
     def test_construct_from_xarrayt(self):
         t = XArray([1, 2, 3])
         res = XArray(t)
@@ -1192,7 +1211,8 @@ class TestXArrayColumnLineage():
         assert lineage['X.1'] == {('RDD', 'X.1')}
 
 
-class TestXArrayHead():
+# noinspection PyClassHasNoInit
+class TestXArrayHead:
     """
     Tests XArray head operation
     """
@@ -1209,7 +1229,8 @@ class TestXArrayHead():
         assert len(t.head(5)) == 5
 
 
-class TestXArrayVectorSlice():
+# noinspection PyClassHasNoInit
+class TestXArrayVectorSlice:
     """
     Tests XArray vector_slice operation
     """
@@ -1238,20 +1259,21 @@ class TestXArrayVectorSlice():
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.vector_slice(2)
         assert len(res) == 3
-        assert res[0] == None
-        assert res[1] == None
+        assert res[0] is None
+        assert res[1] is None
         assert res[2] == 3
 
     def test_vector_slice_start_end_none(self):
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.vector_slice(0, 2)
         assert len(res) == 3
-        assert res[0] == None
+        assert res[0] is None
         assert res[1] == [1, 2]
         assert res[2] == [1, 2]
 
 
-class TestXArrayCountWords():
+# noinspection PyClassHasNoInit
+class TestXArrayCountWords:
     """
     Tests XArray count_words
     """
@@ -1259,7 +1281,8 @@ class TestXArrayCountWords():
         pass
 
 
-class TestXArrayCountNgrams():
+# noinspection PyClassHasNoInit
+class TestXArrayCountNgrams:
     """
     Tests XArray count_ngrams
     """
@@ -1267,7 +1290,8 @@ class TestXArrayCountNgrams():
         pass
 
 
-class TestXArrayApply():
+# noinspection PyClassHasNoInit
+class TestXArrayApply:
     """
     Tests XArray apply
     """
@@ -1307,10 +1331,12 @@ class TestXArrayApply():
     def test_apply_fun_err(self):
         t = XArray([1, 2, 3, None])
         with pytest.raises(TypeError):
+            # noinspection PyTypeChecker
             t.apply(1)
 
 
-class TestXArrayFlatMap():
+# noinspection PyClassHasNoInit
+class TestXArrayFlatMap:
     """
     Tests XArray flat_map
     """
@@ -1392,7 +1418,8 @@ class TestXArrayFlatMap():
             t.flat_map(lambda x: x * 2, skip_undefined=False)
 
 
-class TestXArrayFilter():
+# noinspection PyClassHasNoInit
+class TestXArrayFilter:
     """
     Tests XArray filter
     """
@@ -1407,7 +1434,8 @@ class TestXArrayFilter():
         assert len(res) == 0
 
 
-class TestXArraySample():
+# noinspection PyClassHasNoInit
+class TestXArraySample:
     """
     Tests XArray sample
     """
@@ -1441,217 +1469,220 @@ class TestXArraySample():
             t.sample(-0.5, seed=1)
 
 
-class TestXArrayAll():
+# noinspection PyClassHasNoInit
+class TestXArrayAll:
     """
     Tests XArray all
     """
     # int
     def test_all_int_none(self):
         t = XArray([1, None])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_int_zero(self):
         t = XArray([1, 0])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_int_true(self):
         t = XArray([1, 2])
-        assert t.all() == True
+        assert t.all() is True
 
     # float
     def test_all_float_nan(self):
         t = XArray([1.0, float('nan')])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_float_none(self):
         t = XArray([1.0, None])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_float_zero(self):
         t = XArray([1.0, 0.0])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_float_true(self):
         t = XArray([1.0, 2.0])
-        assert t.all() == True
+        assert t.all() is True
 
     # str
     def test_all_str_empty(self):
         t = XArray(['hello', ''])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_str_none(self):
         t = XArray(['hello', None])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_str_true(self):
         t = XArray(['hello', 'world'])
-        assert t.all() == True
+        assert t.all() is True
 
     # list
     def test_all_list_empty(self):
         t = XArray([[1, 2], []])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_list_none(self):
         t = XArray([[1, 2], None])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_list_true(self):
         t = XArray([[1, 2], [2, 3]])
-        assert t.all() == True
+        assert t.all() is True
 
     # dict
     def test_all_dict_empty(self):
         t = XArray([{1: 'a'}, {}])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_dict_none(self):
         t = XArray([{1: 'a'}, None])
-        assert t.all() == False
+        assert t.all() is False
 
     def test_all_dict_true(self):
         t = XArray([{1: 'a'}, {2: 'b'}])
-        assert t.all() == True
+        assert t.all() is True
 
     # empty
     def test_all_empty(self):
         t = XArray([])
-        assert t.all() == True
+        assert t.all() is True
 
 
-class TestXArrayAny():
+# noinspection PyClassHasNoInit
+class TestXArrayAny:
     """
     Tests XArray any
     """
     # int
     def test_any_int(self):
         t = XArray([1, 2])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_int_true(self):
         t = XArray([0, 1])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_int_false(self):
         t = XArray([0, 0])
-        assert t.any() == False
+        assert t.any() is False
 
     def test_any_int_missing_true(self):
         t = XArray([1, None])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_int_missing_false(self):
         t = XArray([None, 0])
-        assert t.any() == False
+        assert t.any() is False
 
     # float
     def test_any_float(self):
         t = XArray([1., 2.])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_float_true(self):
         t = XArray([0.0, 1.0])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_float_false(self):
         t = XArray([0.0, 0.0])
-        assert t.any() == False
+        assert t.any() is False
 
     def test_any_float_missing_true(self):
         t = XArray([1.0, None])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_float_missing_true_nan(self):
         t = XArray([1.0, float('nan')])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_float_missing_true_none(self):
         t = XArray([1.0, None])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_float_missing_false(self):
         t = XArray([None, 0.0])
-        assert t.any() == False
+        assert t.any() is False
 
     def test_any_float_missing_false_nan(self):
         t = XArray([float('nan'), 0.0])
-        assert t.any() == False
+        assert t.any() is False
 
     def test_any_float_missing_false_none(self):
         t = XArray([None, 0.0])
-        assert t.any() == False
+        assert t.any() is False
 
     # str
     def test_any_str(self):
         t = XArray(['a', 'b'])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_str_true(self):
         t = XArray(['', 'a'])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_str_false(self):
         t = XArray(['', ''])
-        assert t.any() == False
+        assert t.any() is False
 
     def test_any_str_missing_true(self):
         t = XArray(['a', None])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_str_missing_false(self):
         t = XArray([None, ''])
-        assert t.any() == False
+        assert t.any() is False
 
     # list
     def test_any_list(self):
         t = XArray([[1], [2]])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_list_true(self):
         t = XArray([[], ['a']])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_list_false(self):
         t = XArray([[], []])
-        assert t.any() == False
+        assert t.any() is False
 
     def test_any_list_missing_true(self):
         t = XArray([['a'], None])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_list_missing_false(self):
         t = XArray([None, []])
-        assert t.any() == False
+        assert t.any() is False
 
     # dict
     def test_any_dict(self):
         t = XArray([{'a': 1, 'b': 2}])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_dict_true(self):
         t = XArray([{}, {'a': 1}])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_dict_false(self):
         t = XArray([{}, {}])
-        assert t.any() == False
+        assert t.any() is False
 
     def test_any_dict_missing_true(self):
         t = XArray([{'a': 1}, None])
-        assert t.any() == True
+        assert t.any() is True
 
     def test_any_dict_missing_false(self):
         t = XArray([None, {}])
-        assert t.any() == False
+        assert t.any() is False
 
     # empty
     def test_any_empty(self):
         t = XArray([])
-        assert t.any() == False
+        assert t.any() is False
 
 
-class TestXArrayMax():
+# noinspection PyClassHasNoInit
+class TestXArrayMax:
     """
     Tests XArray max
     """
@@ -1673,7 +1704,8 @@ class TestXArrayMax():
         assert t.max() == 3.0
 
 
-class TestXArrayMin():
+# noinspection PyClassHasNoInit
+class TestXArrayMin:
     """
     Tests XArray min
     """
@@ -1695,7 +1727,8 @@ class TestXArrayMin():
         assert t.min() == 1.0
 
 
-class TestXArraySum():
+# noinspection PyClassHasNoInit
+class TestXArraySum:
     """
     Tests XArray sum
     """
@@ -1729,7 +1762,8 @@ class TestXArraySum():
         assert t.sum() == {'x': 4, 'y': 6}
 
 
-class TestXArrayMean():
+# noinspection PyClassHasNoInit
+class TestXArrayMean:
     """
     Tests XArray mean
     """
@@ -1751,7 +1785,8 @@ class TestXArrayMean():
         assert t.mean() == 2.0
 
 
-class TestXArrayStd():
+# noinspection PyClassHasNoInit
+class TestXArrayStd:
     """
     Tests XArray std
     """
@@ -1775,7 +1810,8 @@ class TestXArrayStd():
         assert t.std() == expect
 
 
-class TestXArrayVar():
+# noinspection PyClassHasNoInit
+class TestXArrayVar:
     """
     Tests XArray var
     """
@@ -1799,7 +1835,8 @@ class TestXArrayVar():
         assert t.var() == expect
 
 
-class TestXArrayNumMissing():
+# noinspection PyClassHasNoInit
+class TestXArrayNumMissing:
     """
     Tests XArray num_missing
     """
@@ -1828,7 +1865,8 @@ class TestXArrayNumMissing():
         assert t.num_missing() == 1
 
 
-class TestXArrayNumNonzero():
+# noinspection PyClassHasNoInit
+class TestXArrayNumNonzero:
     """
     Tests XArray nnz
     """
@@ -1861,7 +1899,8 @@ class TestXArrayNumNonzero():
         assert t.nnz() == 2
 
 
-class TestXArrayDatetimeToStr():
+# noinspection PyClassHasNoInit
+class TestXArrayDatetimeToStr:
     """
     Tests XArray datetime_to_str
     """
@@ -1881,7 +1920,8 @@ class TestXArrayDatetimeToStr():
             t.datetime_to_str('%Y %M %d')
 
 
-class TestXArrayStrToDatetime():
+# noinspection PyClassHasNoInit
+class TestXArrayStrToDatetime:
     """
     Tests XArray str_to_datetime
     """
@@ -1908,7 +1948,8 @@ class TestXArrayStrToDatetime():
             t.str_to_datetime()
 
 
-class TestXArrayAstype():
+# noinspection PyClassHasNoInit
+class TestXArrayAstype:
     """
     Tests XArray astype
     """
@@ -1974,7 +2015,8 @@ class TestXArrayAstype():
         assert res[1] == datetime.datetime(2015, 8, 24)
 
 
-class TestXArrayClip():
+# noinspection PyClassHasNoInit
+class TestXArrayClip:
     """
     Tests XArray clip
     """
@@ -2062,7 +2104,8 @@ class TestXArrayClip():
         assert list(res) == [[2, 2, 2]]
 
 
-class TestXArrayClipLower():
+# noinspection PyClassHasNoInit
+class TestXArrayClipLower:
     """
     Tests XArray clip_lower
     """
@@ -2087,7 +2130,8 @@ class TestXArrayClipLower():
         assert list(res) == [[2, 2, 3]]
 
 
-class TestXArrayClipUpper():
+# noinspection PyClassHasNoInit
+class TestXArrayClipUpper:
     """
     Tests XArray clip_upper
     """
@@ -2112,7 +2156,8 @@ class TestXArrayClipUpper():
         assert list(res) == [[1, 2, 2]]
 
 
-class TestXArrayTail():
+# noinspection PyClassHasNoInit
+class TestXArrayTail:
     """
     Tests XArray tail
     """
@@ -2127,7 +2172,8 @@ class TestXArrayTail():
         assert res == range(1, 100)
 
 
-class TestXArrayCountna():
+# noinspection PyClassHasNoInit
+class TestXArrayCountna:
     """
     Tests XArray countna
     """
@@ -2152,7 +2198,8 @@ class TestXArrayCountna():
         assert res == 1
 
 
-class TestXArrayDropna():
+# noinspection PyClassHasNoInit
+class TestXArrayDropna:
     """
     Tests XArray dropna
     """
@@ -2177,7 +2224,8 @@ class TestXArrayDropna():
         assert list(res) == [1.0, 2.0]
 
 
-class TestXArrayFillna():
+# noinspection PyClassHasNoInit
+class TestXArrayFillna:
     """
     Tests XArray fillna
     """
@@ -2217,7 +2265,8 @@ class TestXArrayFillna():
         assert list(res) == [1.0, 2.0, 10.0]
 
 
-class TestXArrayTopkIndex():
+# noinspection PyClassHasNoInit
+class TestXArrayTopkIndex:
     """
     Tests XArray topk_index
     """
@@ -2282,7 +2331,8 @@ class TestXArrayTopkIndex():
         assert list(res) == [1, 0, 0]
 
 
-class TestXArraySketchSummary():
+# noinspection PyClassHasNoInit
+class TestXArraySketchSummary:
     """
     Tests XArray sketch_summary
     """
@@ -2346,7 +2396,8 @@ class TestXArraySketchSummary():
         assert ss.frequency_count(5) == 1
 
 
-class TestXArrayAppend(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayAppend:
     """
     Tests XArray append
     """
@@ -2354,19 +2405,19 @@ class TestXArrayAppend(XArrayUnitTestCase):
         t = XArray([1, 2, 3])
         u = XArray([10, 20, 30])
         res = t.append(u)
-        self.assertColumnEqual([1, 2, 3, 10, 20, 30], res)
+        assert list(res) == [1, 2, 3, 10, 20, 30]
 
     def test_append_empty_t(self):
         t = XArray([], dtype=int)
         u = XArray([10, 20, 30])
         res = t.append(u)
-        self.assertColumnEqual([10, 20, 30], res)
+        assert list(res) == [10, 20, 30]
 
     def test_append_empty_u(self):
         t = XArray([1, 2, 3])
         u = XArray([], dtype=int)
         res = t.append(u)
-        self.assertColumnEqual([1, 2, 3], res)
+        assert list(res) == [1, 2, 3]
 
     def test_append_int_float_err(self):
         t = XArray([1, 2, 3])
@@ -2381,7 +2432,8 @@ class TestXArrayAppend(XArrayUnitTestCase):
             t.append(u)
 
 
-class TestXArrayUnique(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayUnique:
     """
     Tests XArray unique
     """
@@ -2393,41 +2445,42 @@ class TestXArrayUnique(XArrayUnitTestCase):
     def test_unique_int_noop(self):
         t = XArray([1, 2, 3])
         res = t.unique()
-        self.assertEqualLen(3, res)
-        self.assertListEqual([1, 2, 3], sorted(list(res)))
+        assert len(res) == 3
+        assert sorted(list(res)) == [1, 2, 3]
 
     def test_unique_float_noop(self):
         t = XArray([1.0, 2.0, 3.0])
         res = t.unique()
-        self.assertEqualLen(3, res)
-        self.assertListEqual([1.0, 2.0, 3.0], sorted(list(res)))
+        assert len(res) == 3
+        assert sorted(list(res)) == [1.0, 2.0, 3.0]
 
     def test_unique_str_noop(self):
         t = XArray(['1', '2', '3'])
         res = t.unique()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['1', '2', '3'], sorted(list(res)))
+        assert len(res) == 3
+        assert sorted(list(res)) == ['1', '2', '3']
 
     def test_unique_int(self):
         t = XArray([1, 2, 3, 1, 2])
         res = t.unique()
-        self.assertEqualLen(3, res)
-        self.assertListEqual([1, 2, 3], sorted(list(res)))
+        assert len(res) == 3
+        assert sorted(list(res)) == [1, 2, 3]
 
     def test_unique_float(self):
         t = XArray([1.0, 2.0, 3.0, 1.0, 2.0])
         res = t.unique()
-        self.assertEqualLen(3, res)
-        self.assertListEqual([1.0, 2.0, 3.0], sorted(list(res)))
+        assert len(res) == 3
+        assert sorted(list(res)) == [1.0, 2.0, 3.0]
 
     def test_unique_str(self):
         t = XArray(['1', '2', '3', '1', '2'])
         res = t.unique()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['1', '2', '3'], sorted(list(res)))
+        assert len(res) == 3
+        assert sorted(list(res)) == ['1', '2', '3']
 
 
-class TestXArrayItemLength(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayItemLength:
     """
     Tests XArray item_length
     """
@@ -2444,23 +2497,24 @@ class TestXArrayItemLength(XArrayUnitTestCase):
     def test_item_length_str(self):
         t = XArray(['a', 'bb', 'ccc'])
         res = t.item_length()
-        self.assertColumnEqual([1, 2, 3], res)
-        self.assertIs(int, res.dtype())
+        assert list(res) == [1, 2, 3]
+        assert res.dtype() is int
 
     def test_item_length_list(self):
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.item_length()
-        self.assertColumnEqual([1, 2, 3], res)
-        self.assertIs(int, res.dtype())
+        assert list(res) == [1, 2, 3]
+        assert res.dtype() is int
 
     def test_item_length_dict(self):
         t = XArray([{1: 'a'}, {1: 'a', 2: 'b'}, {1: 'a', 2: 'b', 3: '3'}])
         res = t.item_length()
-        self.assertColumnEqual([1, 2, 3], res)
-        self.assertIs(int, res.dtype())
+        assert list(res) == [1, 2, 3]
+        assert res.dtype() is int
 
 
-class TestXArraySplitDatetime(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArraySplitDatetime:
     """
     Tests XArray split_datetime
     """
@@ -2470,62 +2524,62 @@ class TestXArraySplitDatetime(XArrayUnitTestCase):
                     datetime.datetime(2012, 2, 2),
                     datetime.datetime(2013, 3, 3)])
         res = t.split_datetime('date', limit='year')
-        self.assertTrue(isinstance(res, XFrame))
-        self.assertListEqual(['date.year'], res.column_names())
-        self.assertListEqual([int], res.column_types())
-        self.assertEqualLen(3, res)
-        self.assertColumnEqual([2011, 2012, 2013], res['date.year'])
+        assert isinstance(res, XFrame)
+        assert res.column_names() == ['date.year']
+        assert res.column_types() == [int]
+        assert len(res) == 3
+        assert list(res['date.year']) == [2011, 2012, 2013]
 
     def test_split_datetime_year_mo(self):
         t = XArray([datetime.datetime(2011, 1, 1),
                     datetime.datetime(2012, 2, 2),
                     datetime.datetime(2013, 3, 3)])
         res = t.split_datetime('date', limit=['year', 'month'])
-        self.assertTrue(isinstance(res, XFrame))
-        self.assertListEqual(['date.year', 'date.month'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertEqualLen(3, res)
-        self.assertColumnEqual([2011, 2012, 2013], res['date.year'])
-        self.assertColumnEqual([1, 2, 3], res['date.month'])
+        assert isinstance(res, XFrame)
+        assert res.column_names() == ['date.year', 'date.month']
+        assert res.column_types() == [int, int]
+        assert len(res) == 3
+        assert list(res['date.year']) == [2011, 2012, 2013]
+        assert list(res['date.month']) == [1, 2, 3]
 
     def test_split_datetime_all(self):
         t = XArray([datetime.datetime(2011, 1, 1, 1, 1, 1),
                     datetime.datetime(2012, 2, 2, 2, 2, 2),
                     datetime.datetime(2013, 3, 3, 3, 3, 3)])
         res = t.split_datetime('date')
-        self.assertTrue(isinstance(res, XFrame))
-        self.assertListEqual(['date.year', 'date.month', 'date.day',
-                              'date.hour', 'date.minute', 'date.second'], res.column_names())
-        self.assertListEqual([int, int, int, int, int, int], res.column_types())
-        self.assertEqualLen(3, res)
-        self.assertColumnEqual([2011, 2012, 2013], res['date.year'])
-        self.assertColumnEqual([1, 2, 3], res['date.month'])
-        self.assertColumnEqual([1, 2, 3], res['date.day'])
-        self.assertColumnEqual([1, 2, 3], res['date.hour'])
-        self.assertColumnEqual([1, 2, 3], res['date.minute'])
-        self.assertColumnEqual([1, 2, 3], res['date.second'])
+        assert isinstance(res, XFrame)
+        assert res.column_names() == ['date.year', 'date.month', 'date.day',
+                                      'date.hour', 'date.minute', 'date.second']
+        assert res.column_types() == [int, int, int, int, int, int]
+        assert len(res) == 3
+        assert list(res['date.year']) == [2011, 2012, 2013]
+        assert list(res['date.month']) == [1, 2, 3]
+        assert list(res['date.day']) == [1, 2, 3]
+        assert list(res['date.hour']) == [1, 2, 3]
+        assert list(res['date.minute']) == [1, 2, 3]
+        assert list(res['date.second']) == [1, 2, 3]
 
     def test_split_datetime_year_no_prefix(self):
         t = XArray([datetime.datetime(2011, 1, 1),
                     datetime.datetime(2012, 2, 2),
                     datetime.datetime(2013, 3, 3)])
         res = t.split_datetime(limit='year')
-        self.assertTrue(isinstance(res, XFrame))
-        self.assertListEqual(['X.year'], res.column_names())
-        self.assertListEqual([int], res.column_types())
-        self.assertEqualLen(3, res)
-        self.assertColumnEqual([2011, 2012, 2013], res['X.year'])
+        assert isinstance(res, XFrame)
+        assert res.column_names() == ['X.year']
+        assert res.column_types() == [int]
+        assert len(res) == 3
+        assert list(res['X.year']) == [2011, 2012, 2013]
 
     def test_split_datetime_year_null_prefix(self):
         t = XArray([datetime.datetime(2011, 1, 1),
                     datetime.datetime(2012, 2, 2),
                     datetime.datetime(2013, 3, 3)])
         res = t.split_datetime(column_name_prefix=None, limit='year')
-        self.assertTrue(isinstance(res, XFrame))
-        self.assertListEqual(['year'], res.column_names())
-        self.assertListEqual([int], res.column_types())
-        self.assertEqualLen(3, res)
-        self.assertColumnEqual([2011, 2012, 2013], res['year'])
+        assert isinstance(res, XFrame)
+        assert res.column_names() == ['year']
+        assert res.column_types() == [int]
+        assert len(res) == 3
+        assert list(res['year']) == [2011, 2012, 2013]
 
     def test_split_datetime_bad_col_type(self):
         t = XArray([1, 2, 3])
@@ -2563,7 +2617,8 @@ class TestXArraySplitDatetime(XArrayUnitTestCase):
             t.split_datetime('date', limit=datetime.datetime(2011, 1, 1))
 
 
-class TestXArrayUnpackErrors(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayUnpackErrors:
     """
     Tests XArray unpack errors
     """
@@ -2627,7 +2682,8 @@ class TestXArrayUnpackErrors(XArrayUnitTestCase):
             t.unpack()
 
 
-class TestXArrayUnpack(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayUnpack:
     """
     Tests XArray unpack list
     """
@@ -2636,60 +2692,60 @@ class TestXArrayUnpack(XArrayUnitTestCase):
                     [1, 1, 1],
                     [0, 1]])
         res = t.unpack()
-        self.assertListEqual(['X.0', 'X.1', 'X.2'], res.column_names())
-        self.assertDictEqual({'X.0': 1, 'X.1': 0, 'X.2': 1}, res[0])
-        self.assertDictEqual({'X.0': 1, 'X.1': 1, 'X.2': 1}, res[1])
-        self.assertDictEqual({'X.0': 0, 'X.1': 1, 'X.2': None}, res[2])
+        assert res.column_names() == ['X.0', 'X.1', 'X.2']
+        assert res[0] == {'X.0': 1, 'X.1': 0, 'X.2': 1}
+        assert res[1] == {'X.0': 1, 'X.1': 1, 'X.2': 1}
+        assert res[2] == {'X.0': 0, 'X.1': 1, 'X.2': None}
 
     def test_unpack_list_limit(self):
         t = XArray([[1, 0, 1],
                     [1, 1, 1],
                     [0, 1]])
         res = t.unpack(limit=[1])
-        self.assertListEqual(['X.1'], res.column_names())
-        self.assertDictEqual({'X.1': 0}, res[0])
-        self.assertDictEqual({'X.1': 1}, res[1])
-        self.assertDictEqual({'X.1': 1}, res[2])
+        assert res.column_names() == ['X.1']
+        assert res[0] == {'X.1': 0}
+        assert res[1] == {'X.1': 1}
+        assert res[2] == {'X.1': 1}
 
     def test_unpack_list_na_values(self):
         t = XArray([[1, 0, 1],
                     [1, 1, 1],
                     [0, 1]])
         res = t.unpack(na_value=0)
-        self.assertListEqual(['X.0', 'X.1', 'X.2'], res.column_names())
-        self.assertDictEqual({'X.0': 1, 'X.1': 0, 'X.2': 1}, res[0])
-        self.assertDictEqual({'X.0': 1, 'X.1': 1, 'X.2': 1}, res[1])
-        self.assertDictEqual({'X.0': 0, 'X.1': 1, 'X.2': 0}, res[2])
+        assert res.column_names() == ['X.0', 'X.1', 'X.2']
+        assert res[0] == {'X.0': 1, 'X.1': 0, 'X.2': 1}
+        assert res[1] == {'X.0': 1, 'X.1': 1, 'X.2': 1}
+        assert res[2] == {'X.0': 0, 'X.1': 1, 'X.2': 0}
 
     def test_unpack_list_na_values_col_types(self):
         t = XArray([[1, 0, 1],
                     [1, 1, 1],
                     [0, 1]])
         res = t.unpack(column_types=[int, int, int], na_value=0)
-        self.assertListEqual(['X.0', 'X.1', 'X.2'], res.column_names())
-        self.assertDictEqual({'X.0': 1, 'X.1': 0, 'X.2': 1}, res[0])
-        self.assertDictEqual({'X.0': 1, 'X.1': 1, 'X.2': 1}, res[1])
-        self.assertDictEqual({'X.0': 0, 'X.1': 1, 'X.2': 0}, res[2])
+        assert res.column_names() == ['X.0', 'X.1', 'X.2']
+        assert res[0] == {'X.0': 1, 'X.1': 0, 'X.2': 1}
+        assert res[1] == {'X.0': 1, 'X.1': 1, 'X.2': 1}
+        assert res[2] == {'X.0': 0, 'X.1': 1, 'X.2': 0}
 
     def test_unpack_list_cast_str(self):
         t = XArray([[1, 0, 1],
                     [1, 1, 1],
                     [0, 1]])
         res = t.unpack(column_types=[str, str, str])
-        self.assertListEqual(['X.0', 'X.1', 'X.2'], res.column_names())
-        self.assertDictEqual({'X.0': '1', 'X.1': '0', 'X.2': '1'}, res[0])
-        self.assertDictEqual({'X.0': '1', 'X.1': '1', 'X.2': '1'}, res[1])
-        self.assertDictEqual({'X.0': '0', 'X.1': '1', 'X.2': None}, res[2])
+        assert res.column_names() == ['X.0', 'X.1', 'X.2']
+        assert res[0] == {'X.0': '1', 'X.1': '0', 'X.2': '1'}
+        assert res[1] == {'X.0': '1', 'X.1': '1', 'X.2': '1'}
+        assert res[2] == {'X.0': '0', 'X.1': '1', 'X.2': None}
 
     def test_unpack_list_no_prefix(self):
         t = XArray([[1, 0, 1],
                     [1, 1, 1],
                     [0, 1]])
         res = t.unpack(column_name_prefix='')
-        self.assertListEqual(['0', '1', '2'], res.column_names())
-        self.assertDictEqual({'0': 1, '1': 0, '2': 1}, res[0])
-        self.assertDictEqual({'0': 1, '1': 1, '2': 1}, res[1])
-        self.assertDictEqual({'0': 0, '1': 1, '2': None}, res[2])
+        assert res.column_names() == ['0', '1', '2']
+        assert res[0] == {'0': 1, '1': 0, '2': 1}
+        assert res[1] == {'0': 1, '1': 1, '2': 1}
+        assert res[2] == {'0': 0, '1': 1, '2': None}
 
     def test_unpack_dict_limit(self):
         t = XArray([{'word': 'a', 'count': 1},
@@ -2697,11 +2753,11 @@ class TestXArrayUnpack(XArrayUnitTestCase):
                     {'word': 'is', 'count': 3},
                     {'word': 'coming', 'count': 4}])
         res = t.unpack(limit=['word', 'count'], column_types=[str, int])
-        self.assertListEqual(['X.word', 'X.count'], res.column_names())
-        self.assertDictEqual({'X.word': 'a', 'X.count': 1}, res[0])
-        self.assertDictEqual({'X.word': 'cat', 'X.count': 2}, res[1])
-        self.assertDictEqual({'X.word': 'is', 'X.count': 3}, res[2])
-        self.assertDictEqual({'X.word': 'coming', 'X.count': 4}, res[3])
+        assert res.column_names() == ['X.word', 'X.count']
+        assert res[0] == {'X.word': 'a', 'X.count': 1}
+        assert res[1] == {'X.word': 'cat', 'X.count': 2}
+        assert res[2] == {'X.word': 'is', 'X.count': 3}
+        assert res[3] == {'X.word': 'coming', 'X.count': 4}
 
     def test_unpack_dict_limit_word(self):
         t = XArray([{'word': 'a', 'count': 1},
@@ -2709,11 +2765,11 @@ class TestXArrayUnpack(XArrayUnitTestCase):
                     {'word': 'is', 'count': 3},
                     {'word': 'coming', 'count': 4}])
         res = t.unpack(limit=['word'])
-        self.assertListEqual(['X.word'], res.column_names())
-        self.assertDictEqual({'X.word': 'a'}, res[0])
-        self.assertDictEqual({'X.word': 'cat'}, res[1])
-        self.assertDictEqual({'X.word': 'is'}, res[2])
-        self.assertDictEqual({'X.word': 'coming'}, res[3])
+        assert res.column_names() == ['X.word']
+        assert res[0] == {'X.word': 'a'}
+        assert res[1] == {'X.word': 'cat'}
+        assert res[2] == {'X.word': 'is'}
+        assert res[3] == {'X.word': 'coming'}
 
     def test_unpack_dict_limit_count(self):
         t = XArray([{'word': 'a', 'count': 1},
@@ -2721,11 +2777,11 @@ class TestXArrayUnpack(XArrayUnitTestCase):
                     {'word': 'is', 'count': 3},
                     {'word': 'coming', 'count': 4}])
         res = t.unpack(limit=['count'])
-        self.assertListEqual(['X.count'], res.column_names())
-        self.assertDictEqual({'X.count': 1}, res[0])
-        self.assertDictEqual({'X.count': 2}, res[1])
-        self.assertDictEqual({'X.count': 3}, res[2])
-        self.assertDictEqual({'X.count': 4}, res[3])
+        assert res.column_names() == ['X.count']
+        assert res[0] == {'X.count': 1}
+        assert res[1] == {'X.count': 2}
+        assert res[2] == {'X.count': 3}
+        assert res[3] == {'X.count': 4}
 
     def test_unpack_dict_incomplete(self):
         t = XArray([{'word': 'a', 'count': 1},
@@ -2733,11 +2789,11 @@ class TestXArrayUnpack(XArrayUnitTestCase):
                     {'word': 'is'},
                     {'word': 'coming', 'count': 4}])
         res = t.unpack(limit=['word', 'count'], column_types=[str, int])
-        self.assertListEqual(['X.word', 'X.count'], res.column_names())
-        self.assertDictEqual({'X.count': 1, 'X.word': 'a'}, res[0])
-        self.assertDictEqual({'X.count': 2, 'X.word': 'cat'}, res[1])
-        self.assertDictEqual({'X.count': None, 'X.word': 'is'}, res[2])
-        self.assertDictEqual({'X.count': 4, 'X.word': 'coming'}, res[3])
+        assert res.column_names() == ['X.word', 'X.count']
+        assert res[0] == {'X.count': 1, 'X.word': 'a'}
+        assert res[1] == {'X.count': 2, 'X.word': 'cat'}
+        assert res[2] == {'X.count': None, 'X.word': 'is'}
+        assert res[3] == {'X.count': 4, 'X.word': 'coming'}
 
     def test_unpack_dict(self):
         t = XArray([{'word': 'a', 'count': 1},
@@ -2745,11 +2801,11 @@ class TestXArrayUnpack(XArrayUnitTestCase):
                     {'word': 'is', 'count': 3},
                     {'word': 'coming', 'count': 4}])
         res = t.unpack()
-        self.assertListEqual(['X.count', 'X.word'], res.column_names())
-        self.assertDictEqual({'X.count': 1, 'X.word': 'a'}, res[0])
-        self.assertDictEqual({'X.count': 2, 'X.word': 'cat'}, res[1])
-        self.assertDictEqual({'X.count': 3, 'X.word': 'is'}, res[2])
-        self.assertDictEqual({'X.count': 4, 'X.word': 'coming'}, res[3])
+        assert res.column_names() == ['X.count', 'X.word']
+        assert res[0] == {'X.count': 1, 'X.word': 'a'}
+        assert res[1] == {'X.count': 2, 'X.word': 'cat'}
+        assert res[2] == {'X.count': 3, 'X.word': 'is'}
+        assert res[3] == {'X.count': 4, 'X.word': 'coming'}
 
     def test_unpack_dict_no_prefix(self):
         t = XArray([{'word': 'a', 'count': 1},
@@ -2757,31 +2813,32 @@ class TestXArrayUnpack(XArrayUnitTestCase):
                     {'word': 'is', 'count': 3},
                     {'word': 'coming', 'count': 4}])
         res = t.unpack(column_name_prefix=None)
-        self.assertListEqual(['count', 'word'], res.column_names())
-        self.assertDictEqual({'count': 1, 'word': 'a'}, res[0])
-        self.assertDictEqual({'count': 2, 'word': 'cat'}, res[1])
-        self.assertDictEqual({'count': 3, 'word': 'is'}, res[2])
-        self.assertDictEqual({'count': 4, 'word': 'coming'}, res[3])
+        assert res.column_names() == ['count', 'word']
+        assert res[0] == {'count': 1, 'word': 'a'}
+        assert res[1] == {'count': 2, 'word': 'cat'}
+        assert res[2] == {'count': 3, 'word': 'is'}
+        assert res[3] == {'count': 4, 'word': 'coming'}
 
 
-class TestXArraySort(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArraySort:
     """
     Tests XArray sort
     """
     def test_sort_int(self):
         t = XArray([3, 2, 1])
         res = t.sort()
-        self.assertColumnEqual([1, 2, 3], res)
+        assert list(res) == [1, 2, 3]
 
     def test_sort_float(self):
         t = XArray([3, 2, 1])
         res = t.sort()
-        self.assertColumnEqual([1.0, 2.0, 3.0], res)
+        assert list(res) == [1.0, 2.0, 3.0]
 
     def test_sort_str(self):
         t = XArray(['c', 'b', 'a'])
         res = t.sort()
-        self.assertColumnEqual(['a', 'b', 'c'], res)
+        assert list(res) == ['a', 'b', 'c']
 
     def test_sort_list(self):
         t = XArray([[3, 4], [2, 3], [1, 2]])
@@ -2796,20 +2853,21 @@ class TestXArraySort(XArrayUnitTestCase):
     def test_sort_int_desc(self):
         t = XArray([1, 2, 3])
         res = t.sort(ascending=False)
-        self.assertColumnEqual([3, 2, 1], res)
+        assert list(res) == [3, 2, 1]
 
     def test_sort_float_desc(self):
         t = XArray([1.0, 2.0, 3.0])
         res = t.sort(ascending=False)
-        self.assertColumnEqual([3.0, 2.0, 1.0], res)
+        assert list(res) == [3.0, 2.0, 1.0]
 
     def test_sort_str_desc(self):
         t = XArray(['a', 'b', 'c'])
         res = t.sort(ascending=False)
-        self.assertColumnEqual(['c', 'b', 'a'], res)
+        assert list(res) == ['c', 'b', 'a']
 
 
-class TestXArrayDictTrimByKeys(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayDictTrimByKeys:
     """
     Tests XArray dict_trim_by_keys
     """
@@ -2821,15 +2879,16 @@ class TestXArrayDictTrimByKeys(XArrayUnitTestCase):
     def test_dict_trim_by_keys_include(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'x': 1}])
         res = t.dict_trim_by_keys(['a'], exclude=False)
-        self.assertColumnEqual([{'a': 0}, {}], res)
+        assert list(res) == [{'a': 0}, {}]
 
     def test_dict_trim_by_keys_exclude(self):
         t = XArray([{'a': 0, 'b': 1, 'c': 2}, {'x': 1}])
         res = t.dict_trim_by_keys(['a'])
-        self.assertColumnEqual([{'b': 1, 'c': 2}, {'x': 1}], res)
+        assert list(res) == [{'b': 1, 'c': 2}, {'x': 1}]
 
 
-class TestXArrayDictTrimByValues(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayDictTrimByValues:
     """
     Tests XArray dict_trim_by_values
     """
@@ -2841,10 +2900,11 @@ class TestXArrayDictTrimByValues(XArrayUnitTestCase):
     def test_dict_trim_by_values(self):
         t = XArray([{'a': 0, 'b': 1, 'c': 2, 'd': 3}, {'x': 1}])
         res = t.dict_trim_by_values(1, 2)
-        self.assertColumnEqual([{'b': 1, 'c': 2}, {'x': 1}], res)
+        assert list(res) == [{'b': 1, 'c': 2}, {'x': 1}]
 
 
-class TestXArrayDictKeys(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayDictKeys:
     """
     Tests XArray dict_keys
     """
@@ -2862,12 +2922,13 @@ class TestXArrayDictKeys(XArrayUnitTestCase):
     def test_dict_keys(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'x': 1, 'y': 2, 'z': 3}])
         res = t.dict_keys()
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'X.0': 'a', 'X.1': 'c', 'X.2': 'b'}, res[0])
-        self.assertDictEqual({'X.0': 'y', 'X.1': 'x', 'X.2': 'z'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'X.0': 'a', 'X.1': 'c', 'X.2': 'b'}
+        assert res[1] == {'X.0': 'y', 'X.1': 'x', 'X.2': 'z'}
 
 
-class TestXArrayDictValues(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayDictValues:
     """
     Tests XArray dict_values
     """
@@ -2885,12 +2946,13 @@ class TestXArrayDictValues(XArrayUnitTestCase):
     def test_values(self):
         t = XArray([{'a': 0, 'b': 1, 'c': 2}, {'x': 10, 'y': 20, 'z': 30}])
         res = t.dict_values()
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'X.0': 0, 'X.1': 2, 'X.2': 1}, res[0])
-        self.assertDictEqual({'X.0': 20, 'X.1': 10, 'X.2': 30}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'X.0': 0, 'X.1': 2, 'X.2': 1}
+        assert res[1] == {'X.0': 20, 'X.1': 10, 'X.2': 30}
 
 
-class TestXArrayDictHasAnyKeys(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayDictHasAnyKeys:
     """
     Tests XArray dict_has_any_keys
     """
@@ -2902,10 +2964,11 @@ class TestXArrayDictHasAnyKeys(XArrayUnitTestCase):
     def test_dict_has_any_keys(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'x': 1}])
         res = t.dict_has_any_keys(['a'])
-        self.assertColumnEqual([True, False], res)
+        assert list(res) == [True, False]
 
 
-class TestXArrayDictHasAllKeys(XArrayUnitTestCase):
+# noinspection PyClassHasNoInit
+class TestXArrayDictHasAllKeys:
     """
     Tests XArray dict_has_all_keys
     """
@@ -2917,7 +2980,7 @@ class TestXArrayDictHasAllKeys(XArrayUnitTestCase):
     def test_dict_has_all_keys(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'a': 1, 'b': 1}])
         res = t.dict_has_all_keys(['a', 'b', 'c'])
-        self.assertColumnEqual([True, False], res)
+        assert list(res) == [True, False]
 
 if __name__ == '__main__':
     unittest.main()
