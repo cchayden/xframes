@@ -438,7 +438,7 @@ class TestXFrameReadCsvWithErrors:
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameReadCsv(XFrameUnitTestCase):
+class TestXFrameReadCsv:
     """
     Tests XFrame read_csv
     """
@@ -446,133 +446,133 @@ class TestXFrameReadCsv(XFrameUnitTestCase):
     def test_read_csv(self):
         path = 'files/test-frame.csv'
         res = XFrame.read_csv(path)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_read_csv_verbose(self):
         path = 'files/test-frame.csv'
         res = XFrame.read_csv(path)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_read_csv_delim(self):
         path = 'files/test-frame.psv'
         res = XFrame.read_csv(path, delimiter='|')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_read_csv_no_header(self):
         path = 'files/test-frame-no-header.csv'
         res = XFrame.read_csv(path, header=False)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['X.0', 'X.1'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'X.0': 1, 'X.1': 'a'}, res[0])
-        self.assertDictEqual({'X.0': 2, 'X.1': 'b'}, res[1])
-        self.assertDictEqual({'X.0': 3, 'X.1': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['X.0', 'X.1']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'X.0': 1, 'X.1': 'a'}
+        assert res[1] == {'X.0': 2, 'X.1': 'b'}
+        assert res[2] == {'X.0': 3, 'X.1': 'c'}
 
     def test_read_csv_comment(self):
         path = 'files/test-frame-comment.csv'
         res = XFrame.read_csv(path, comment_char='#')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_read_csv_escape(self):
         path = 'files/test-frame-escape.csv'
         res = XFrame.read_csv(path)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a,a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b,b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c,c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a,a'}
+        assert res[1] == {'id': 2, 'val': 'b,b'}
+        assert res[2] == {'id': 3, 'val': 'c,c'}
 
     def test_read_csv_escape_custom(self):
         path = 'files/test-frame-escape-custom.csv'
         res = XFrame.read_csv(path, escape_char='$')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a,a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b,b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c,c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a,a'}
+        assert res[1] == {'id': 2, 'val': 'b,b'}
+        assert res[2] == {'id': 3, 'val': 'c,c'}
 
     def test_read_csv_initial_space(self):
         path = 'files/test-frame-initial_space.csv'
         res = XFrame.read_csv(path, skip_initial_space=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_read_csv_hints_type(self):
         path = 'files/test-frame.csv'
         res = XFrame.read_csv(path, column_type_hints=str)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([str, str], res.column_types())
-        self.assertDictEqual({'id': '1', 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': '2', 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': '3', 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [str, str]
+        assert res[0] == {'id': '1', 'val': 'a'}
+        assert res[1] == {'id': '2', 'val': 'b'}
+        assert res[2] == {'id': '3', 'val': 'c'}
 
     def test_read_csv_hints_list(self):
         path = 'files/test-frame-extra.csv'
         res = XFrame.read_csv(path, column_type_hints=[str, str, int])
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val1', 'val2'], res.column_names())
-        self.assertListEqual([str, str, int], res.column_types())
-        self.assertDictEqual({'id': '1', 'val1': 'a', 'val2': 10}, res[0])
-        self.assertDictEqual({'id': '2', 'val1': 'b', 'val2': 20}, res[1])
-        self.assertDictEqual({'id': '3', 'val1': 'c', 'val2': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val1', 'val2']
+        assert res.column_types() == [str, str, int]
+        assert res[0] == {'id': '1', 'val1': 'a', 'val2': 10}
+        assert res[1] == {'id': '2', 'val1': 'b', 'val2': 20}
+        assert res[2] == {'id': '3', 'val1': 'c', 'val2': 30}
 
     # noinspection PyTypeChecker
     def test_read_csv_hints_dict(self):
         path = 'files/test-frame-extra.csv'
         res = XFrame.read_csv(path, column_type_hints={'val2': int})
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val1', 'val2'], res.column_names())
-        self.assertListEqual([str, str, int], res.column_types())
-        self.assertDictEqual({'id': '1', 'val1': 'a', 'val2': 10}, res[0])
-        self.assertDictEqual({'id': '2', 'val1': 'b', 'val2': 20}, res[1])
-        self.assertDictEqual({'id': '3', 'val1': 'c', 'val2': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val1', 'val2']
+        assert res.column_types() == [str, str, int]
+        assert res[0] == {'id': '1', 'val1': 'a', 'val2': 10}
+        assert res[1] == {'id': '2', 'val1': 'b', 'val2': 20}
+        assert res[2] == {'id': '3', 'val1': 'c', 'val2': 30}
 
     def test_read_csv_na(self):
         path = 'files/test-frame-na.csv'
         res = XFrame.read_csv(path, na_values='None')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'NA'}, res[0])
-        self.assertDictEqual({'id': None, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'NA'}
+        assert res[1] == {'id': None, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_read_csv_na_mult(self):
         path = 'files/test-frame-na.csv'
         res = XFrame.read_csv(path, na_values=['NA', 'None'])
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': None}, res[0])
-        self.assertDictEqual({'id': None, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': None}
+        assert res[1] == {'id': None, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_read_csv_file_not_exist(self):
         path = 'files/does-not-exist.csv'
@@ -581,7 +581,7 @@ class TestXFrameReadCsv(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameReadText(XFrameUnitTestCase):
+class TestXFrameReadText:
     """
     Tests XFrame read_text
     """
@@ -589,22 +589,22 @@ class TestXFrameReadText(XFrameUnitTestCase):
     def test_read_text(self):
         path = 'files/test-frame-text.txt'
         res = XFrame.read_text(path)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['text', ], res.column_names())
-        self.assertListEqual([str], res.column_types())
-        self.assertDictEqual({'text': 'This is a test'}, res[0])
-        self.assertDictEqual({'text': 'of read_text.'}, res[1])
-        self.assertDictEqual({'text': 'Here is another sentence.'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['text']
+        assert res.column_types() == [str]
+        assert res[0] == {'text': 'This is a test'}
+        assert res[1] == {'text': 'of read_text.'}
+        assert res[2] == {'text': 'Here is another sentence.'}
 
     def test_read_text_delimited(self):
         path = 'files/test-frame-text.txt'
         res = XFrame.read_text(path, delimiter='.')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['text', ], res.column_names())
-        self.assertListEqual([str], res.column_types())
-        self.assertDictEqual({'text': 'This is a test of read_text'}, res[0])
-        self.assertDictEqual({'text': 'Here is another sentence'}, res[1])
-        self.assertDictEqual({'text': ''}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['text']
+        assert res.column_types() == [str]
+        assert res[0] == {'text': 'This is a test of read_text'}
+        assert res[1] == {'text': 'Here is another sentence'}
+        assert res[2] == {'text': ''}
 
     def test_read_text_file_not_exist(self):
         path = 'files/does-not-exist.txt'
@@ -613,7 +613,7 @@ class TestXFrameReadText(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameReadParquet(XFrameUnitTestCase):
+class TestXFrameReadParquet:
     """
     Tests XFrame read_parquet
     """
@@ -626,12 +626,12 @@ class TestXFrameReadParquet(XFrameUnitTestCase):
         res = XFrame('tmp/frame-parquet.parquet')
         # results may not come back in the same order
         res = res.sort('id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_read_parquet_bool(self):
         t = XFrame({'id': [1, 2, 3], 'val': [True, False, True]})
@@ -640,12 +640,12 @@ class TestXFrameReadParquet(XFrameUnitTestCase):
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, bool], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': True}, res[0])
-        self.assertDictEqual({'id': 2, 'val': False}, res[1])
-        self.assertDictEqual({'id': 3, 'val': True}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, bool]
+        assert res[0] == {'id': 1, 'val': True}
+        assert res[1] == {'id': 2, 'val': False}
+        assert res[2] == {'id': 3, 'val': True}
 
     def test_read_parquet_int(self):
         t = XFrame({'id': [1, 2, 3], 'val': [10, 20, 30]})
@@ -654,12 +654,12 @@ class TestXFrameReadParquet(XFrameUnitTestCase):
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 10}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'val': 10}
+        assert res[1] == {'id': 2, 'val': 20}
+        assert res[2] == {'id': 3, 'val': 30}
 
     def test_read_parquet_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
@@ -668,12 +668,12 @@ class TestXFrameReadParquet(XFrameUnitTestCase):
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 1.0}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 2.0}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 3.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'val': 1.0}
+        assert res[1] == {'id': 2, 'val': 2.0}
+        assert res[2] == {'id': 3, 'val': 3.0}
 
     def test_read_parquet_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[1, 1], [2, 2], [3, 3]]})
@@ -682,12 +682,12 @@ class TestXFrameReadParquet(XFrameUnitTestCase):
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, list], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': [1, 1]}, res[0])
-        self.assertDictEqual({'id': 2, 'val': [2, 2]}, res[1])
-        self.assertDictEqual({'id': 3, 'val': [3, 3]}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'id': 1, 'val': [1, 1]}
+        assert res[1] == {'id': 2, 'val': [2, 2]}
+        assert res[2] == {'id': 3, 'val': [3, 3]}
 
     def test_read_parquet_dict(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{1: 1}, {2: 2}, {3: 3}]})
@@ -696,12 +696,12 @@ class TestXFrameReadParquet(XFrameUnitTestCase):
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, dict], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': {1: 1}}, res[0])
-        self.assertDictEqual({'id': 2, 'val': {2: 2}}, res[1])
-        self.assertDictEqual({'id': 3, 'val': {3: 3}}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, dict]
+        assert res[0] == {'id': 1, 'val': {1: 1}}
+        assert res[1] == {'id': 2, 'val': {2: 2}}
+        assert res[2] == {'id': 3, 'val': {3: 3}}
 
     def test_read_parquet_not_exist(self):
         path = 'files/does-not-exist.parquet'
@@ -1042,7 +1042,7 @@ class TestXFrameDtype:
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameTableLineage(XFrameUnitTestCase):
+class TestXFrameTableLineage:
     """
     Tests XFrame table lineage
     """
@@ -1050,35 +1050,35 @@ class TestXFrameTableLineage(XFrameUnitTestCase):
     def test_lineage(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         lineage = t.lineage()['table']
-        self.assertEqualLen(1, lineage)
+        assert len(lineage) == 1
         item = list(lineage)[0]
-        self.assertEqual('PROGRAM', item)
+        assert item == 'PROGRAM'
 
     def test_lineage_csv(self):
         path = 'files/test-frame-auto.csv'
         res = XFrame(path)
         lineage = res.lineage()['table']
-        self.assertEqualLen(1, lineage)
+        assert len(lineage) == 1
         item = list(lineage)[0]
         filename = os.path.basename(item)
-        self.assertEqual('test-frame-auto.csv', filename)
+        assert filename == 'test-frame-auto.csv'
 
     def test_lineage_transform(self):
         path = 'files/test-frame-auto.csv'
         res = XFrame(path).transform_col('val_int', lambda row: row['val_int'] * 2)
         lineage = res.lineage()['table']
-        self.assertEqualLen(1, lineage)
+        assert len(lineage) == 1
         filename = os.path.basename(list(lineage)[0])
-        self.assertEqual('test-frame-auto.csv', filename)
+        assert filename == 'test-frame-auto.csv'
 
     def test_lineage_rdd(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd)
         lineage = res.lineage()['table']
-        self.assertEqualLen(1, lineage)
+        assert len(lineage) == 1
         item = list(lineage)[0]
-        self.assertEqual('RDD', item)
+        assert item == 'RDD'
 
     def test_lineage_hive(self):
         pass
@@ -1087,9 +1087,9 @@ class TestXFrameTableLineage(XFrameUnitTestCase):
         df = pandas.DataFrame({'id': [1, 2, 3], 'val': [10.0, 20.0, 30.0]})
         res = XFrame(df)
         lineage = res.lineage()['table']
-        self.assertEqualLen(1, lineage)
+        assert len(lineage) == 1
         item = list(lineage)[0]
-        self.assertEqual('PANDAS', item)
+        assert item == 'PANDAS'
 
     def test_lineage_spark_dataframe(self):
         pass
@@ -1097,39 +1097,39 @@ class TestXFrameTableLineage(XFrameUnitTestCase):
     def test_lineage_program_data(self):
         res = XFrame({'id': [1, 2, 3], 'val': [10.0, 20.0, 30.0]})
         lineage = res.lineage()['table']
-        self.assertEqualLen(1, lineage)
+        assert len(lineage) == 1
         item = list(lineage)[0]
-        self.assertEqual('PROGRAM', item)
+        assert item == 'PROGRAM'
 
     def test_lineage_append(self):
         res1 = XFrame('files/test-frame.csv')
         res2 = XFrame('files/test-frame.psv')
         res = res1.append(res2)
         lineage = res.lineage()['table']
-        self.assertEqualLen(2, lineage)
+        assert len(lineage) == 2
         basenames = set([os.path.basename(item) for item in lineage])
-        self.assertTrue('test-frame.csv' in basenames)
-        self.assertTrue('test-frame.psv' in basenames)
+        assert 'test-frame.csv' in basenames
+        assert 'test-frame.psv' in basenames
 
     def test_lineage_join(self):
         res1 = XFrame('files/test-frame.csv')
         res2 = XFrame('files/test-frame.psv').transform_col('val', lambda row: row['val'] + 'xxx')
         res = res1.join(res2, on='id').sort('id').head()
         lineage = res.lineage()['table']
-        self.assertEqualLen(2, lineage)
+        assert len(lineage) == 2
         basenames = set([os.path.basename(item) for item in lineage])
-        self.assertTrue('test-frame.csv' in basenames)
-        self.assertTrue('test-frame.psv' in basenames)
+        assert 'test-frame.csv' in basenames
+        assert 'test-frame.psv' in basenames
 
     def test_lineage_add_column(self):
         res1 = XFrame('files/test-frame.csv')
         res2 = XArray('files/test-array-int')
         res = res1.add_column(res2, 'new-col')
         lineage = res.lineage()['table']
-        self.assertEqualLen(2, lineage)
+        assert len(lineage) == 2
         basenames = set([os.path.basename(item) for item in lineage])
-        self.assertTrue('test-frame.csv' in basenames)
-        self.assertTrue('test-array-int' in basenames)
+        assert 'test-frame.csv' in basenames
+        assert 'test-array-int' in basenames
 
     def test_lineage_save(self):
         res = XFrame('files/test-frame.csv')
@@ -1137,13 +1137,13 @@ class TestXFrameTableLineage(XFrameUnitTestCase):
         res.save(path, format='binary')
         with open(os.path.join(path, '_metadata')) as f:
             metadata = pickle.load(f)
-        self.assertListEqual([['id', 'val'], [int, str]], metadata)
+            assert metadata == [['id', 'val'], [int, str]]
         with open(os.path.join(path, '_lineage')) as f:
             lineage = pickle.load(f)
             table_lineage = lineage[0]
-            self.assertEqualLen(1, table_lineage)
+            assert len(table_lineage) == 1
             basenames = set([os.path.basename(item) for item in table_lineage])
-            self.assertTrue('test-frame.csv' in basenames)
+            assert 'test-frame.csv' in basenames
 
     def test_lineage_load(self):
         res = XFrame('files/test-frame.csv')
@@ -1151,13 +1151,13 @@ class TestXFrameTableLineage(XFrameUnitTestCase):
         res.save(path, format='binary')
         res = XFrame(path)
         lineage = res.lineage()['table']
-        self.assertEqualLen(1, lineage)
+        assert len(lineage) == 1
         basenames = set([os.path.basename(item) for item in lineage])
-        self.assertTrue('test-frame.csv' in basenames)
+        assert 'test-frame.csv' in basenames
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameColumnLineage(XFrameUnitTestCase):
+class TestXFrameColumnLineage:
     """
     Tests XFrame column lineage
     """
@@ -1165,24 +1165,24 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
     def test_lineage(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         lineage = t.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys())== ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_construct_empty(self):
         t = XFrame()
         lineage = t.lineage()['column']
-        self.assertEqual(0, len(lineage))
+        assert len(lineage) == 0
 
     def test_construct_auto_pandas_dataframe(self):
         df = pandas.DataFrame({'id': [1, 2, 3], 'val': [10.0, 20.0, 30.0]})
         res = XFrame(df)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PANDAS', 'id')}, lineage['id'])
-        self.assertSetEqual({('PANDAS', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys())== ['id', 'val']
+        assert lineage['id'] == {('PANDAS', 'id')}
+        assert lineage['val'] == {('PANDAS', 'val')}
 
     def test_lineage_load(self):
         inpath = 'files/test-frame.csv'
@@ -1192,21 +1192,21 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         res.save(path, format='binary')
         res = XFrame(path)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({(real_inpath, 'id')}, lineage['id'])
-        self.assertSetEqual({(real_inpath, 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys())== ['id', 'val']
+        assert lineage['id'] == {(real_inpath, 'id')}
+        assert lineage['val'] == {(real_inpath, 'val')}
 
     def test_construct_auto_dataframe(self):
         path = 'files/test-frame-auto.csv'
         real_path = os.path.realpath(path)
         res = XFrame(path)
         lineage = res.lineage()['column']
-        self.assertEqual(7, len(lineage))
-        self.assertIn('val_int', lineage)
-        self.assertIn('val_str', lineage)
-        self.assertSetEqual({(real_path, 'val_int')}, lineage['val_int'])
-        self.assertSetEqual({(real_path, 'val_str')}, lineage['val_str'])
+        assert len(lineage) == 7
+        assert 'val_int' in lineage
+        assert 'val_str' in lineage
+        assert lineage['val_int'] == {(real_path, 'val_int')}
+        assert lineage['val_str'] == {(real_path, 'val_str')}
 
     # hive
     # TODO test
@@ -1216,29 +1216,29 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_names=['id', 'val'])
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('RDD', 'id')}, lineage['id'])
-        self.assertSetEqual({('RDD', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('RDD', 'id')}
+        assert lineage['val'] == {('RDD', 'val')}
 
     def test_construct_auto_str_csv(self):
         path = 'files/test-frame.csv'
         real_path = os.path.realpath(path)
         res = XFrame(path)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({(real_path, 'id')}, lineage['id'])
-        self.assertSetEqual({(real_path, 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {(real_path, 'id')}
+        assert lineage['val'] == {(real_path, 'val')}
 
     def test_read_text(self):
         path = 'files/test-frame-text.txt'
         real_path = os.path.realpath(path)
         res = XFrame.read_text(path)
         lineage = res.lineage()['column']
-        self.assertEqual(1, len(lineage))
-        self.assertListEqual(['text'], lineage.keys())
-        self.assertSetEqual({(real_path, 'text')}, lineage['text'])
+        assert len(lineage) == 1
+        assert sorted(lineage.keys()) == ['text']
+        assert lineage['text'] == {(real_path, 'text')}
 
     def test_read_parquet_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -1248,74 +1248,74 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         real_path = os.path.realpath(inpath)
         res = XFrame(inpath)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({(real_path, 'id')}, lineage['id'])
-        self.assertSetEqual({(real_path, 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {(real_path, 'id')}
+        assert lineage['val'] == {(real_path, 'val')}
 
     def test_save(self):
         t = XFrame({'id': [30, 20, 10], 'val': ['a', 'b', 'c']})
         path = 'tmp/frame'
         t.save(path, format='binary')
         lineage = t.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_sample(self):
         t = XFrame({'id': [1, 2, 3, 4, 5], 'val': ['a', 'b', 'c', 'd', 'e']})
         res = t.sample(0.2, 2)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_select_column(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.select_column('id')
         lineage = res.lineage()['column']
-        self.assertEqual(1, len(lineage))
-        self.assertListEqual(['_XARRAY'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['_XARRAY'])
+        assert len(lineage) == 1
+        assert sorted(lineage.keys()) == ['_XARRAY']
+        assert lineage['_XARRAY'] == {('PROGRAM', 'id')}
 
     def test_select_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         res = t.select_columns(['id', 'val'])
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_copy(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = copy.copy(t)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     # noinspection PyUnresolvedReferences
     def test_from_xarray(self):
         a = XArray([1, 2, 3])
         res = XFrame.from_xarray(a, 'id')
         lineage = res.lineage()['column']
-        self.assertEqual(1, len(lineage))
-        self.assertSetEqual({('PROGRAM', '_XARRAY')}, lineage['id'])
+        assert len(lineage) == 1
+        assert lineage['id'] == {('PROGRAM', '_XARRAY')}
 
     def test_add_column(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_column(ta, name='another')
         lineage = res.lineage()['column']
-        self.assertEqual(3, len(lineage))
-        self.assertListEqual(['another', 'id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
-        self.assertSetEqual({('PROGRAM', '_XARRAY')}, lineage['another'])
+        assert len(lineage) == 3
+        assert sorted(lineage.keys()) == ['another', 'id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
+        assert lineage['another'] == {('PROGRAM', '_XARRAY')}
 
     # add_column_in_place
     # TODO test
@@ -1326,12 +1326,12 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         ta2 = XArray([30.0, 20.0, 10.0])
         res = tf.add_columns([ta1, ta2], namelist=['new1', 'new2'])
         lineage = res.lineage()['column']
-        self.assertEqual(4, len(lineage))
-        self.assertListEqual(['id', 'new1', 'new2', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
-        self.assertSetEqual({('PROGRAM', '_XARRAY')}, lineage['new1'])
-        self.assertSetEqual({('PROGRAM', '_XARRAY')}, lineage['new2'])
+        assert len(lineage) == 4
+        assert sorted(lineage.keys()) == ['id', 'new1', 'new2', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
+        assert lineage['new1'] == {('PROGRAM', '_XARRAY')}
+        assert lineage['new2'] == {('PROGRAM', '_XARRAY')}
 
     # add_columns_array_in_place
     # TODO test
@@ -1341,12 +1341,12 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         tf2 = XFrame({'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
         res = tf1.add_columns(tf2)
         lineage = res.lineage()['column']
-        self.assertEqual(4, len(lineage))
-        self.assertListEqual(['id', 'new1', 'new2', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
-        self.assertSetEqual({('PROGRAM', 'new1')}, lineage['new1'])
-        self.assertSetEqual({('PROGRAM', 'new2')}, lineage['new2'])
+        assert len(lineage) == 4
+        assert sorted(lineage.keys()) == ['id', 'new1', 'new2', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
+        assert lineage['new1'] == {('PROGRAM', 'new1')}
+        assert lineage['new2'] == {('PROGRAM', 'new2')}
 
     # add_columns_frame_in_place
     # TODO test
@@ -1355,10 +1355,10 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         res = t.remove_column('another')
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     # remove_column_in_place
     # TODO test
@@ -1367,30 +1367,30 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
         res = t.remove_columns(['new1', 'new2'])
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_swap_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         res = t.swap_columns('val', 'x')
         lineage = res.lineage()['column']
-        self.assertEqual(3, len(lineage))
-        self.assertListEqual(['id', 'val', 'x'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
-        self.assertSetEqual({('PROGRAM', 'x')}, lineage['x'])
+        assert len(lineage) == 3
+        assert sorted(lineage.keys()) == ['id', 'val', 'x']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
+        assert lineage['x'] == {('PROGRAM', 'x')}
 
     def test_reorder_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         res = t.reorder_columns(['val', 'x', 'id'])
         lineage = res.lineage()['column']
-        self.assertEqual(3, len(lineage))
-        self.assertListEqual(['id', 'val', 'x'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
-        self.assertSetEqual({('PROGRAM', 'x')}, lineage['x'])
+        assert len(lineage) == 3
+        assert sorted(lineage.keys()) == ['id', 'val', 'x']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
+        assert lineage['x'] == {('PROGRAM', 'x')}
 
     # add_column_const_in_place
     # TODO test
@@ -1404,10 +1404,10 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         a = XArray(['x', 'y', 'z'])
         res = t.replace_column('val', a)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', '_XARRAY')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', '_XARRAY')}
 
     # replace_selected_column_in_place
     # TODO test
@@ -1418,10 +1418,10 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
                          lambda row: [list(row.itervalues()) for _ in range(0, row['id'])],
                          column_types=[int, str])
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['letter', 'number'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['number'])
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['letter'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['letter', 'number']
+        assert lineage['number'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
+        assert lineage['letter'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
 
     def test_flat_map_use_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [10, 20, 30]})
@@ -1429,85 +1429,85 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
                          lambda row: [list(row.itervalues()) for _ in range(0, row['id'])],
                          column_types=[int, str], use_columns=['id', 'val'])
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['letter', 'number'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['number'])
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['letter'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['letter', 'number']
+        assert lineage['number'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
+        assert lineage['letter'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
 
     def test_filterby_xarray(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         a = XArray([1, 3])
         res = t.filterby(a, 'id').sort('id')
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', '_XARRAY')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id'), ('PROGRAM', '_XARRAY')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_stack_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
         res = t.stack('val', 'new-val')
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'new-val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['new-val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'new-val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['new-val'] == {('PROGRAM', 'val')}
 
     def test_stack_dict(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
         res = t.stack('val', ['stack-key', 'stack-val'])
         lineage = res.lineage()['column']
-        self.assertEqual(3, len(lineage))
-        self.assertListEqual(['id', 'stack-key', 'stack-val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['stack-key'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['stack-val'])
+        assert len(lineage) == 3
+        assert sorted(lineage.keys()) == ['id', 'stack-key', 'stack-val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['stack-key'] == {('PROGRAM', 'val')}
+        assert lineage['stack-val'] == {('PROGRAM', 'val')}
 
     def test_append(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [10, 20, 30], 'val': ['aa', 'bb', 'cc']})
         res = t1.append(t2)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_range_slice(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.range(slice(0, 2))
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_dropna(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.dropna()
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_add_row_number(self):
         t = XFrame({'ident': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.add_row_number()
         lineage = res.lineage()['column']
-        self.assertEqual(3, len(lineage))
-        self.assertListEqual(['id', 'ident', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'ident')}, lineage['ident'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
-        self.assertSetEqual({('INDEX', 'id')}, lineage['id'])
+        assert len(lineage) == 3
+        assert sorted(lineage.keys()) == ['id', 'ident', 'val']
+        assert lineage['id'] == {('INDEX', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
+        assert lineage['ident'] == {('PROGRAM', 'ident')}
 
     def test_pack_columns(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new')
         lineage = res.lineage()['column']
-        self.assertEqual(1, len(lineage))
-        self.assertListEqual(['new'], lineage.keys())
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['new'])
+        assert len(lineage) == 1
+        assert sorted(lineage.keys()) == ['new']
+        assert lineage['new'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
 
     def test_foreach(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -1517,62 +1517,63 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.apply(lambda row: row['id'] * 2)
         lineage = res.lineage()['column']
-        self.assertEqual(1, len(lineage))
-        self.assertListEqual(['_XARRAY'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['_XARRAY'])
+        assert len(lineage) == 1
+        assert sorted(lineage.keys()) == ['_XARRAY']
+        assert lineage['_XARRAY'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
 
     def test_apply_with_use_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [10, 20, 30]})
         res = t.apply(lambda row: row['id'] * 2, use_columns=['id', 'val'])
         lineage = res.lineage()['column']
-        self.assertEqual(1, len(lineage))
-        self.assertListEqual(['_XARRAY'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['_XARRAY'])
+        assert len(lineage) == 1
+        assert sorted(lineage.keys()) == ['_XARRAY']
+        assert lineage['_XARRAY'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
 
     def test_transform_col(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id', lambda row: row['id'] * 2)
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_transform_col_with_use_cols(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [10, 20, 30]})
         res = t.transform_col('id', lambda row: row['id'] * 2, use_columns=['id', 'val'])
         lineage = res.lineage()['column']
-        self.assertEqual(3, len(lineage))
-        self.assertListEqual(['another', 'id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 3
+        assert sorted(lineage.keys()) == ['another', 'id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_transform_cols(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_cols(['id', 'val'], lambda row: [row['id'] * 2, row['val'] + 'x'])
         lineage = res.lineage()['column']
-        self.assertEqual(3, len(lineage))
-        self.assertListEqual(['id', 'other', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val'), ('PROGRAM', 'other')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val'), ('PROGRAM', 'other')}, lineage['val'])
+        assert len(lineage) == 3
+        assert sorted(lineage.keys()) == ['id', 'other', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id'), ('PROGRAM', 'val'), ('PROGRAM', 'other')}
+        assert lineage['val'] == {('PROGRAM', 'id'), ('PROGRAM', 'val'), ('PROGRAM', 'other')}
 
     def test_transform_cols_with_use_cols(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_cols(['id', 'val'], lambda row: [row['id'] * 2, row['val'] + 'x'], use_columns=['id', 'val'])
         lineage = res.lineage()['column']
-        self.assertEqual(3, len(lineage))
-        self.assertListEqual(['id', 'other', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'id'), ('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 3
+        assert sorted(lineage.keys()) == ['id', 'other', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
+        assert lineage['val'] == {('PROGRAM', 'id'), ('PROGRAM', 'val')}
 
     def test_filterby_int_id(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.filterby(1, 'id').sort('id')
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
     def test_groupby_count(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -1580,10 +1581,10 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {'count': COUNT})
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['count', 'id'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('COUNT', '')}, lineage['count'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['count', 'id']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['count'] == {('COUNT', '')}
 
     def test_groupby_sum(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -1591,10 +1592,10 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {'sum': SUM('another')})
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'sum'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'another')}, lineage['sum'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'sum']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['sum'] == {('PROGRAM', 'another')}
 
     def test_join(self):
         path = 'files/test-frame.csv'
@@ -1603,19 +1604,19 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
         t2 = XFrame({'id': [1, 2, 3], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2).sort('id').head()
         lineage = res.lineage()['column']
-        self.assertListEqual(['doubled', 'id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id'), (real_path, 'id')}, lineage['id'])
-        self.assertSetEqual({(real_path, 'val')}, lineage['val'])
-        self.assertSetEqual({('PROGRAM', 'doubled')}, lineage['doubled'])
+        assert sorted(lineage.keys()) == ['doubled', 'id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id'), (real_path, 'id')}
+        assert lineage['val'] == {(real_path, 'val')}
+        assert lineage['doubled'] == {('PROGRAM', 'doubled')}
 
     def test_sort(self):
         t = XFrame({'id': [3, 2, 1], 'val': ['c', 'b', 'a']})
         res = t.sort('id')
         lineage = res.lineage()['column']
-        self.assertEqual(2, len(lineage))
-        self.assertListEqual(['id', 'val'], sorted(lineage.keys()))
-        self.assertSetEqual({('PROGRAM', 'id')}, lineage['id'])
-        self.assertSetEqual({('PROGRAM', 'val')}, lineage['val'])
+        assert len(lineage) == 2
+        assert sorted(lineage.keys()) == ['id', 'val']
+        assert lineage['id'] == {('PROGRAM', 'id')}
+        assert lineage['val'] == {('PROGRAM', 'val')}
 
 
 # noinspection PyClassHasNoInit
@@ -1708,7 +1709,7 @@ class TestXFrameTail:
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameToPandasDataframe(XFrameUnitTestCase):
+class TestXFrameToPandasDataframe:
     """
     Tests XFrame to_pandas_dataframe
     """
@@ -1716,59 +1717,59 @@ class TestXFrameToPandasDataframe(XFrameUnitTestCase):
     def test_to_pandas_dataframe_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         df = t.to_pandas_dataframe()
-        self.assertEqualLen(3, df)
-        self.assertEqual(1, df['id'][0])
-        self.assertEqual(2, df['id'][1])
-        self.assertEqual('a', df['val'][0])
+        assert len(df) == 3
+        assert df['id'][0] == 1
+        assert df['id'][1] == 2
+        assert df['val'][0] == 'a'
 
     def test_to_pandas_dataframe_bool(self):
         t = XFrame({'id': [1, 2, 3], 'val': [True, False, True]})
         df = t.to_pandas_dataframe()
-        self.assertEqualLen(3, df)
-        self.assertEqual(1, df['id'][0])
-        self.assertEqual(2, df['id'][1])
-        self.assertEqual(True, df['val'][0])
-        self.assertEqual(False, df['val'][1])
+        assert len(df) == 3
+        assert df['id'][0] == 1
+        assert df['id'][1] == 2
+        assert df['val'][0] == True
+        assert df['val'][1] == False
 
     def test_to_pandas_dataframe_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
         df = t.to_pandas_dataframe()
-        self.assertEqualLen(3, df)
-        self.assertEqual(1, df['id'][0])
-        self.assertEqual(2, df['id'][1])
-        self.assertEqual(1.0, df['val'][0])
-        self.assertEqual(2.0, df['val'][1])
+        assert len(df) == 3
+        assert df['id'][0] == 1
+        assert df['id'][1] == 2
+        assert df['val'][0] == 1.0
+        assert df['val'][1] == 2.0
 
     def test_to_pandas_dataframe_int(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1, 2, 3]})
         df = t.to_pandas_dataframe()
-        self.assertEqualLen(3, df)
-        self.assertEqual(1, df['id'][0])
-        self.assertEqual(2, df['id'][1])
-        self.assertEqual(1, df['val'][0])
-        self.assertEqual(2, df['val'][1])
+        assert len(df) == 3
+        assert df['id'][0] == 1
+        assert df['id'][1] == 2
+        assert df['val'][0] == 1
+        assert df['val'][1] == 2
 
     def test_to_pandas_dataframe_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[1, 1], [2, 2], [3, 3]]})
         df = t.to_pandas_dataframe()
-        self.assertEqualLen(3, df)
-        self.assertEqual(1, df['id'][0])
-        self.assertEqual(2, df['id'][1])
-        self.assertListEqual([1, 1], df['val'][0])
-        self.assertListEqual([2, 2], df['val'][1])
+        assert len(df) == 3
+        assert df['id'][0] == 1
+        assert df['id'][1] == 2
+        assert df['val'][0] == [1, 1]
+        assert df['val'][1] == [2, 2]
 
     def test_to_pandas_dataframe_map(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'x': 1}, {'y': 2}, {'z': 3}]})
         df = t.to_pandas_dataframe()
-        self.assertEqualLen(3, df)
-        self.assertEqual(1, df['id'][0])
-        self.assertEqual(2, df['id'][1])
-        self.assertDictEqual({'x': 1}, df['val'][0])
-        self.assertDictEqual({'y': 2}, df['val'][1])
+        assert len(df) == 3
+        assert df['id'][0] == 1
+        assert df['id'][1] == 2
+        assert df['val'][0] == {'x': 1}
+        assert df['val'][1] == {'y': 2}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameForeach(XFrameUnitTestCase):
+class TestXFrameForeach:
     """
     Tests XFrame foreach
     """
@@ -1787,10 +1788,10 @@ class TestXFrameForeach(XFrameUnitTestCase):
         # Read back as an XFrame
         res = XFrame.read_csv(path, header=False)
         res = res.rename(['id', 'val']).sort('id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str], res.dtype())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
     def test_foreach_init(self):
         path = 'tmp/foreach.csv'
@@ -1810,14 +1811,14 @@ class TestXFrameForeach(XFrameUnitTestCase):
         res = XFrame.read_csv(path, header=False)
         res = res.rename(['id', 'val', 'ini']).sort('id')
         res = res.filterby([1, 2, 3], 'id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str, int], res.dtype())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'ini': 99}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'ini': 99}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [int, str, int]
+        assert res[0] == {'id': 1, 'val': 'a', 'ini': 99}
+        assert res[1] == {'id': 2, 'val': 'b', 'ini': 99}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameApply(XFrameUnitTestCase):
+class TestXFrameApply:
     """
     Tests XFrame apply
     """
@@ -1825,27 +1826,27 @@ class TestXFrameApply(XFrameUnitTestCase):
     def test_apply(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.apply(lambda row: row['id'] * 2)
-        self.assertEqualLen(3, res)
-        self.assertIs(int, res.dtype())
-        self.assertColumnEqual([2, 4, 6], res)
+        assert len(res) == 3
+        assert res.dtype() is int
+        assert list(res) == [2, 4, 6]
 
     def test_apply_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.apply(lambda row: row['id'] * 2, dtype=float)
-        self.assertEqualLen(3, res)
-        self.assertIs(float, res.dtype())
-        self.assertColumnEqual([2.0, 4.0, 6.0], res)
+        assert len(res) == 3
+        assert res.dtype() is float
+        assert list(res) == [2.0, 4.0, 6.0]
 
     def test_apply_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.apply(lambda row: row['id'] * 2, dtype=str)
-        self.assertEqualLen(3, res)
-        self.assertIs(str, res.dtype())
-        self.assertColumnEqual(['2', '4', '6'], res)
+        assert len(res) == 3
+        assert res.dtype() is str
+        assert list(res) == ['2', '4', '6']
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameTransformCol(XFrameUnitTestCase):
+class TestXFrameTransformCol:
     """
     Tests XFrame transform_col
     """
@@ -1853,38 +1854,38 @@ class TestXFrameTransformCol(XFrameUnitTestCase):
     def test_transform_col_identity(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str], res.dtype())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
     def test_transform_col_lambda(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id', lambda row: row['id'] * 2)
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str], res.dtype())
-        self.assertDictEqual({'id': 2, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 4, 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [int, str]
+        assert res[0] == {'id': 2, 'val': 'a'}
+        assert res[1] == {'id': 4, 'val': 'b'}
 
     def test_transform_col_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id', lambda row: 'x' * row['id'])
-        self.assertEqualLen(3, res)
-        self.assertListEqual([str, str], res.dtype())
-        self.assertDictEqual({'id': 'x', 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 'xx', 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [str, str]
+        assert res[0] == {'id': 'x', 'val': 'a'}
+        assert res[1] == {'id': 'xx', 'val': 'b'}
 
     def test_transform_col_cast(self):
         t = XFrame({'id': ['1', '2', '3'], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id', dtype=int)
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str], res.dtype())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameTransformCols(XFrameUnitTestCase):
+class TestXFrameTransformCols:
     """
     Tests XFrame transform_cols
     """
@@ -1892,34 +1893,34 @@ class TestXFrameTransformCols(XFrameUnitTestCase):
     def test_transform_cols_identity(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_cols(['id', 'val'])
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str, str], res.dtype())
-        self.assertDictEqual({'other': 'x', 'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'other': 'y', 'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [int, str, str]
+        assert res[0] == {'other': 'x', 'id': 1, 'val': 'a'}
+        assert res[1] == {'other': 'y', 'id': 2, 'val': 'b'}
 
     def test_transform_cols_lambda(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_cols(['id', 'val'], lambda row: [row['id'] * 2, row['val'] + 'x'])
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str, str], res.dtype())
-        self.assertDictEqual({'other': 'x', 'id': 2, 'val': 'ax'}, res[0])
-        self.assertDictEqual({'other': 'y', 'id': 4, 'val': 'bx'}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [int, str, str]
+        assert res[0] == {'other': 'x', 'id': 2, 'val': 'ax'}
+        assert res[1] == {'other': 'y', 'id': 4, 'val': 'bx'}
 
     def test_transform_cols_type(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_cols(['id', 'val'], lambda row: ['x' * row['id'], ord(row['val'][0])])
-        self.assertEqualLen(3, res)
-        self.assertListEqual([str, str, int], res.dtype())
-        self.assertDictEqual({'other': 'x', 'id': 'x', 'val': 97}, res[0])
-        self.assertDictEqual({'other': 'y', 'id': 'xx', 'val': 98}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [str, str, int]
+        assert res[0] == {'other': 'x', 'id': 'x', 'val': 97}
+        assert res[1] == {'other': 'y', 'id': 'xx', 'val': 98}
 
     def test_transform_cols_cast(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': ['1', '2', '3'], 'val': [10, 20, 30]})
         res = t.transform_cols(['id', 'val'], dtypes=[int, str])
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str, str], res.dtype())
-        self.assertDictEqual({'other': 'x', 'id': 1, 'val': '10'}, res[0])
-        self.assertDictEqual({'other': 'y', 'id': 2, 'val': '20'}, res[1])
+        assert len(res) == 3
+        assert res.dtype() == [int, str, str]
+        assert res[0] == {'other': 'x', 'id': 1, 'val': '10'}
+        assert res[1] == {'other': 'y', 'id': 2, 'val': '20'}
 
 
 # noinspection PyClassHasNoInit
