@@ -1,29 +1,19 @@
 from __future__ import absolute_import
 
-import unittest
 import pytest
 import math
 import os
 import array
 import datetime
 import pickle
-import shutil
 
-# python testxarray.py
-# python -m unittest testxarray
-# python -m unittest testxarray.TestXArrayVersion
-# python -m unittest testxarray.TestXArrayVersion.test_version
+# pytest testxarray.py
+# pytest testxarray.py::TestXArrayVersion
+# pytest testxarray.py::TestXArrayVersion::test_version
 
 from xframes import XArray
 from xframes import XFrame
 from xframes import object_utils
-
-
-def delete_file_or_dir(path):
-    if os.path.isdir(path):
-        shutil.rmtree(path, ignore_errors=True)
-    elif os.path.isfile(path):
-        os.remove(path)
 
 
 # noinspection PyClassHasNoInit
@@ -498,7 +488,7 @@ class TestXArrayOpScalar:
     """
     Tests XArray Scalar operations other than addition
     """
-    # noinspection PyTypeChecker
+    # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_sub_scalar(self):
         t = XArray([1, 2, 3])
         res = t - 1
@@ -506,7 +496,7 @@ class TestXArrayOpScalar:
         assert res[1] == 1
         assert res[2] == 2
 
-    # noinspection PyTypeChecker
+    # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_mul_scalar(self):
         t = XArray([1, 2, 3])
         res = t * 2
@@ -932,9 +922,9 @@ class TestXArrayTableLineage:
         assert 'test-array-int' in basenames
         assert 'test-array-float' in basenames
 
-    def test_lineage_save(self):
+    def test_lineage_save(self, tmpdir):
         res = XArray('files/test-array-int')
-        path = '/tmp/xarray'
+        path = os.path.join(str(tmpdir), 'xarray')
         res.save(path, format='binary')
         with open(os.path.join(path, '_metadata')) as f:
             metadata = pickle.load(f)
@@ -946,9 +936,9 @@ class TestXArrayTableLineage:
             basenames = set([os.path.basename(item) for item in table_lineage])
             assert 'test-array-int' in basenames
 
-    def test_lineage_save_text(self):
+    def test_lineage_save_text(self, tmpdir):
         res = XArray('files/test-array-str')
-        path = '/tmp/xarray'
+        path = os.path.join(str(tmpdir), 'xarray')
         res.save(path, format='text')
         with open(os.path.join(path, '_metadata')) as f:
             metadata = pickle.load(f)
@@ -960,9 +950,9 @@ class TestXArrayTableLineage:
             basenames = set([os.path.basename(item) for item in table_lineage])
             assert 'test-array-str' in basenames
 
-    def test_lineage_load(self):
+    def test_lineage_load(self, tmpdir):
         res = XArray('files/test-array-int')
-        path = 'tmp/array'
+        path = os.path.join(str(tmpdir), 'array')
         res.save(path, format='binary')
         res = XArray(path)
         lineage = res.lineage()['table']
@@ -1444,7 +1434,7 @@ class TestXArraySample:
         res = t.sample(0.3)
         assert len(res) < 10
 
-    @unittest.skip('depends on number of partitions')
+    @pytest.mark.skip(reason='depends on number of partitions')
     def test_sample_seed(self):
         t = XArray(range(10))
         res = t.sample(0.3, seed=1)
@@ -2982,5 +2972,3 @@ class TestXArrayDictHasAllKeys:
         res = t.dict_has_all_keys(['a', 'b', 'c'])
         assert list(res) == [True, False]
 
-if __name__ == '__main__':
-    unittest.main()
