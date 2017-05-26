@@ -710,7 +710,7 @@ class TestXFrameReadParquet(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameFromXArray(XFrameUnitTestCase):
+class TestXFrameFromXArray:
     """
     Tests XFrame from_xarray
     """
@@ -719,12 +719,12 @@ class TestXFrameFromXArray(XFrameUnitTestCase):
     def test_from_xarray(self):
         a = XArray([1, 2, 3])
         res = XFrame.from_xarray(a, 'id')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id'], res.column_names())
-        self.assertListEqual([int], res.column_types())
-        self.assertDictEqual({'id': 1}, res[0])
-        self.assertDictEqual({'id': 2}, res[1])
-        self.assertDictEqual({'id': 3}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id']
+        assert res.column_types() == [int]
+        assert res[0] == {'id': 1}
+        assert res[1] == {'id': 2}
+        assert res[2] == {'id': 3}
 
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
@@ -857,7 +857,7 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameToRdd(XFrameUnitTestCase):
+class TestXFrameToRdd:
     """
     Tests XFrame to_rdd
     """
@@ -865,9 +865,9 @@ class TestXFrameToRdd(XFrameUnitTestCase):
     def test_to_rdd(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         rdd_val = t.to_rdd().collect()
-        self.assertTupleEqual((1, 'a'), rdd_val[0])
-        self.assertTupleEqual((2, 'b'), rdd_val[1])
-        self.assertTupleEqual((3, 'c'), rdd_val[2])
+        assert rdd_val[0] == (1, 'a')
+        assert rdd_val[1] == (2, 'b')
+        assert rdd_val[2] == (3, 'c')
 
 
 # noinspection PyClassHasNoInit
@@ -924,7 +924,7 @@ class TestXFrameFromRdd(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameFromSparkDataFrame(XFrameUnitTestCase):
+class TestXFrameFromSparkDataFrame:
     """
     Tests XFrame from_rdd with spark dataframe
     """
@@ -938,10 +938,10 @@ class TestXFrameFromSparkDataFrame(XFrameUnitTestCase):
         s_rdd = sqlc.createDataFrame(rdd, schema)
 
         res = XFrame.from_rdd(s_rdd)
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
 
 # noinspection PyClassHasNoInit
@@ -955,7 +955,7 @@ class TestXFramePrintRows:
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameToStr(XFrameUnitTestCase):
+class TestXFrameToStr:
     """
     Tests XFrame __str__
     """
@@ -963,17 +963,17 @@ class TestXFrameToStr(XFrameUnitTestCase):
     def test_to_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         s = str(t).split('\n')
-        self.assertEqual('+----+-----+', s[0])
-        self.assertEqual('| id | val |', s[1])
-        self.assertEqual('+----+-----+', s[2])
-        self.assertEqual('| 1  |  a  |', s[3])
-        self.assertEqual('| 2  |  b  |', s[4])
-        self.assertEqual('| 3  |  c  |', s[5])
-        self.assertEqual('+----+-----+', s[6])
+        assert s[0] == '+----+-----+'
+        assert s[1] == '| id | val |'
+        assert s[2] == '+----+-----+'
+        assert s[3] == '| 1  |  a  |'
+        assert s[4] == '| 2  |  b  |'
+        assert s[5] == '| 3  |  c  |'
+        assert s[6] == '+----+-----+'
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameNonzero(XFrameUnitTestCase):
+class TestXFrameNonzero:
     """
     Tests XFrame __nonzero__
     """
@@ -981,40 +981,40 @@ class TestXFrameNonzero(XFrameUnitTestCase):
     def test_nonzero_true(self):
         # not empty, nonzero data
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        self.assertTrue(t)
+        assert not t is False
 
     def test_nonzero_false(self):
         # empty
         t = XFrame()
-        self.assertFalse(t)
+        assert not t is True
 
     def test_empty_false(self):
         # empty, but previously not empty
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t = t.filterby([99], 'id')
-        self.assertFalse(t)
+        assert not t is True
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameLen(XFrameUnitTestCase):
+class TestXFrameLen:
     """
     Tests XFrame __len__
     """
 
     def test_len_nonzero(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        self.assertEqualLen(3, t)
+        assert len(t) == 3
 
     def test_len_zero(self):
         t = XFrame()
-        self.assertEqualLen(0, t)
+        assert len(t) == 0
 
         # TODO make an XFrame and then somehow delete all its rows, so the RDD
         # exists but is empty
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameCopy(XFrameUnitTestCase):
+class TestXFrameCopy:
     """
     Tests XFrame __copy__
     """
@@ -1022,14 +1022,14 @@ class TestXFrameCopy(XFrameUnitTestCase):
     def test_copy(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         x = copy.copy(t)
-        self.assertEqualLen(3, x)
-        self.assertColumnEqual([1, 2, 3], x['id'])
-        self.assertListEqual([int, str], x.column_types())
-        self.assertListEqual(['id', 'val'], x.column_names())
+        assert len(x) == 3
+        assert list(x['id']) == [1, 2, 3]
+        assert x.column_names() == ['id', 'val']
+        assert x.column_types() == [int, str]
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameDtype(XFrameUnitTestCase):
+class TestXFrameDtype:
     """
     Tests XFrame dtype
     """
@@ -1037,8 +1037,8 @@ class TestXFrameDtype(XFrameUnitTestCase):
     def test_dtype(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         dt = t.dtype()
-        self.assertIs(int, dt[0])
-        self.assertIs(str, dt[1])
+        assert dt[0] is int
+        assert dt[1] is str
 
 
 # noinspection PyClassHasNoInit
@@ -1619,29 +1619,29 @@ class TestXFrameColumnLineage(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameNumRows(XFrameUnitTestCase):
+class TestXFrameNumRows:
     """
     Tests XFrame num_rows
     """
 
     def test_num_rows(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        self.assertEqual(3, t.num_rows())
+        assert t.num_rows() == 3
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameNumColumns(XFrameUnitTestCase):
+class TestXFrameNumColumns:
     """
     Tests XFrame num_columns
     """
 
     def test_num_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        self.assertEqual(2, t.num_columns())
+        assert t.num_columns() == 2
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameColumnNames(XFrameUnitTestCase):
+class TestXFrameColumnNames:
     """
     Tests XFrame column_names
     """
@@ -1649,11 +1649,11 @@ class TestXFrameColumnNames(XFrameUnitTestCase):
     def test_column_names(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         names = t.column_names()
-        self.assertListEqual(['id', 'val'], names)
+        assert names == ['id', 'val']
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameColumnTypes(XFrameUnitTestCase):
+class TestXFrameColumnTypes:
     """
     Tests XFrame column_types
     """
@@ -1661,11 +1661,11 @@ class TestXFrameColumnTypes(XFrameUnitTestCase):
     def test_column_types(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         types = t.column_types()
-        self.assertListEqual([int, str], types)
+        assert types == [int, str]
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSelectRows(XFrameUnitTestCase):
+class TestXFrameSelectRows:
     """
     Tests XFrame select_rows
     """
@@ -1674,13 +1674,13 @@ class TestXFrameSelectRows(XFrameUnitTestCase):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         a = XArray([1, 0, 1])
         res = t.select_rows(a)
-        self.assertEqualLen(2, res)
-        self.assertColumnEqual([1, 3], res['id'])
-        self.assertColumnEqual(['a', 'c'], res['val'])
+        assert len(res) == 2
+        assert list(res['id']) == [1, 3]
+        assert list(res['val']) == ['a', 'c']
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameHead(XFrameUnitTestCase):
+class TestXFrameHead:
     """
     Tests XFrame head
     """
@@ -1688,13 +1688,13 @@ class TestXFrameHead(XFrameUnitTestCase):
     def test_head(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         hd = t.head(2)
-        self.assertEqualLen(2, hd)
-        self.assertColumnEqual([1, 2], hd['id'])
-        self.assertColumnEqual(['a', 'b'], hd['val'])
+        assert len(hd) == 2
+        assert list(hd['id']) == [1, 2]
+        assert list(hd['val']) == ['a', 'b']
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameTail(XFrameUnitTestCase):
+class TestXFrameTail:
     """
     Tests XFrame tail
     """
@@ -1702,9 +1702,9 @@ class TestXFrameTail(XFrameUnitTestCase):
     def test_tail(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         tl = t.tail(2)
-        self.assertEqualLen(2, tl)
-        self.assertColumnEqual([2, 3], tl['id'])
-        self.assertColumnEqual(['b', 'c'], tl['val'])
+        assert len(tl) == 2
+        assert list(tl['id']) == [2, 3]
+        assert list(tl['val']) == ['b', 'c']
 
 
 # noinspection PyClassHasNoInit
