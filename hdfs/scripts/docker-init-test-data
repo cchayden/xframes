@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# This creates xframes directory in hdfs and populates it with test data.
+#
+# Give xframes-hdfs docker a minute after starting to let it get initialized.
+# If you see errors such as:
+#   mkdir: `/user/xframes': No such file or directory
+# then wait a little longer and try again.
+
+docker exec -it xframes-hdfs /opt/xframes/scripts/hdfs-setup

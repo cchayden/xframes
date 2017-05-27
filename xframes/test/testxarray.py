@@ -16,6 +16,19 @@ from xframes import XFrame
 from xframes import object_utils
 
 
+def almost_equal(a, b, places=None, delta=None):
+    if a == b:
+        return True
+    if delta is not None:
+        if abs(a - b) <= delta:
+            return True
+    if places is None:
+        places = 7
+    if round(abs(b - a), places) == 0:
+        return True
+    return False
+
+
 # noinspection PyClassHasNoInit
 class TestXArrayVersion:
     """
@@ -2359,7 +2372,7 @@ class TestXArraySketchSummary:
     def test_sketch_summary_std(self):
         t = XArray([1, 2, 3, 4, 5])
         ss = t.sketch_summary()
-        assert abs(ss.std() - math.sqrt(2.0)) < 0.00001
+        assert almost_equal(ss.std(), math.sqrt(2.0))
 
     def test_sketch_summary_num_undefined(self):
         t = XArray([1, None, 3, None, 5])
@@ -2971,4 +2984,3 @@ class TestXArrayDictHasAllKeys:
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'a': 1, 'b': 1}])
         res = t.dict_has_all_keys(['a', 'b', 'c'])
         assert list(res) == [True, False]
-

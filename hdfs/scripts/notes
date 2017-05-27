@@ -16,43 +16,41 @@ The management scripts are:
 
 $ docker-setup
 Runs the HDFS docker and initializes an empty HDFS.
-The hdfs filesystem is mapped to $XFRAMES_HOME/cache, so that it is persistent
+The hdfs filesystem is mapped to /tmp/cache, so that it is persistent
 across different runs of the docker.
 $XPATTERNS_HOME/dockdir is also exposed within the docker via /opt/xpatterns.
 
 $ docker-run
-Runs a docker without reinitializing hdfs.
+Runs the HDFS docker without reinitializing hdfs.
 
-$ docker-stop docker-ID
-Stops the HDFS docker.
-Both docker-setup and docker-run create a docker-ID which they display.  This
-ID is given to docker-stop to identify the docker to stop.
+$ docker-stop
+Stops and removes the HDFS docker.
 
 $ docker-ps
-Lists the running dockers.  This can be used to get the docker-ID of the
-HDFS docker.
+Lists the running dockers.
 
-$ docker-connect docker-ID
+$ docker-connect
 Connects to an interactive shell within the HDFS docker.
-This can be used, for instance, to go into /opt/xframes/scripts
-and run hdfs-setup to copy initial content into HDFS.
+
+$ docker-init-test-data
+Initializes the test data in the HDFS docker.
+You need to wait a minute after starting the docker to let it get fully started.
 
 
 Hosts
 -----
 The docker returns URLs with its hostname (xpatterns-hadoop) embedded.
-To resolve this properly, add the following line to /etc/hosts:
+To resolve these properly, add the following line to /etc/hosts:
 127.0.0.1 xpatterns-hadoop
-A different hostname can be chosen, if desired, by modifying
-docker-run and docker-setup.
+If you do not do this, several of the test_save tests will fail.
 
 Unit Tests
 ----------
-Tests of HDFS capabilities are in xframes/test/hdfstests.py.
+Tests of HDFS capabilities are in xframes/test/testhdfs.py.
 These depend on configuration settings in default.ini.
 These tests assume the presence of preexisting files, which
 are created using the script in dockdir/scripts/hdfs-setup.
-So before running hdfstests:
+Before running testhdfs:
 1) Run docker-setup.
-2) Using docker-connect, copy files to hdfs by running hdfs-setup.
-3) Make sure /etc/hosts has been updated, as described above.
+2) Make sure /etc/hosts has been updated, as described above.
+3) Run docker-init-test-data to copy files to hdfs.

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
+import six
 
-import unittest
 import pytest
 import os
 import math
@@ -8,7 +8,6 @@ import copy
 from datetime import datetime
 import array
 import pickle
-import shutil
 
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 
@@ -26,33 +25,24 @@ from xframes.aggregate import SUM, ARGMAX, ARGMIN, MAX, MIN, COUNT, MEAN, \
     VARIANCE, STDV, SELECT_ONE, CONCAT, VALUES, VALUES_COUNT
 
 
-def delete_file_or_dir(path):
-    if os.path.isdir(path):
-        shutil.rmtree(path, ignore_errors=True)
-    elif os.path.isfile(path):
-        os.remove(path)
+def almost_equal(a, b, places=None, delta=None):
+    if a == b:
+        return True
+    if delta is not None:
+        if abs(a - b) <= delta:
+            return True
+    if places is None:
+        places = 7
+    if round(abs(b - a), places) == 0:
+        return True
+    return False
 
-class XFrameUnitTestCase(unittest.TestCase):
 
-    def assertEqualLen(self, expect, obj):
-        return self.assertEqual(expect, len(obj))
 
-    def assertColumnEqual(self, expect, obj):
-        return self.assertListEqual(expect, list(obj))
-
-    def assertDictKeysEqual(self, expected, actual):
-        expected_keys = sorted(expected.keys())
-        actual_keys = sorted(actual.keys())
-        self.assertListEqual(expected_keys, actual_keys)
-
-    def assertDictValsEqual(self, expected, actual):
-        for key in expected.keys():
-            expected_val = expected[key]
-            actual_val = actual[key]
-            if type(expected_val) is list and type(actual_val) is list:
-                self.assertListEqual(sorted(expected_val), sorted(actual_val))
-            else:
-                self.assertEqual(expected_val, actual_val)
+def dict_keys_equal(expected, actual):
+    expected_keys = sorted(expected.keys())
+    actual_keys = sorted(actual.keys())
+    return expected_keys == actual_keys
 
 
 # noinspection PyClassHasNoInit
@@ -77,14 +67,14 @@ class TestXFrameConstructor:
         res = XFrame(path)
         assert len(res) == 3
         assert res.column_names() == ['val_int', 'val_int_signed', 'val_float', 'val_float_signed',
-                              'val_str', 'val_list', 'val_dict']
+                                      'val_str', 'val_list', 'val_dict']
         assert res.column_types() == [int, int, float, float, str, list, dict]
         assert res[0] == {'val_int': 1, 'val_int_signed': -1, 'val_float': 1.0, 'val_float_signed': -1.0,
-                              'val_str': 'a', 'val_list': ['a'], 'val_dict': {1: 'a'}}
+                          'val_str': 'a', 'val_list': ['a'], 'val_dict': {1: 'a'}}
         assert res[1] == {'val_int': 2, 'val_int_signed': -2, 'val_float': 2.0, 'val_float_signed': -2.0,
-                              'val_str': 'b', 'val_list': ['b'], 'val_dict': {2: 'b'}}
+                          'val_str': 'b', 'val_list': ['b'], 'val_dict': {2: 'b'}}
         assert res[2] == {'val_int': 3, 'val_int_signed': -3, 'val_float': 3.0, 'val_float_signed': -3.0,
-                              'val_str': 'c', 'val_list': ['c'], 'val_dict': {3: 'c'}}
+                          'val_str': 'c', 'val_list': ['c'], 'val_dict': {3: 'c'}}
 
     def test_construct_auto_str_csv(self):
         path = 'files/test-frame.csv'
@@ -187,7 +177,8 @@ class TestXFrameConstructor:
     def test_construct_iteritems(self):
         # construct an XFrame from an object that has iteritems
         class MyIterItem(object):
-            def iteritems(self):
+            @staticmethod
+            def iteritems():
                 return iter([('id', [1, 2, 3]), ('val', ['a', 'b', 'c'])])
 
         t = XFrame(MyIterItem())
@@ -201,7 +192,8 @@ class TestXFrameConstructor:
     def test_construct_iteritems_bad(self):
         # construct an XFrame from an object that has iteritems
         class MyIterItem(object):
-            def iteritems(self):
+            @staticmethod
+            def iteritems():
                 return iter([('id', 1), ('val', 'a')])
 
         with pytest.raises(TypeError):
@@ -395,7 +387,6 @@ class TestXFrameReadCsvWithErrors:
         res, errs = XFrame.read_csv_with_errors(path)
         assert len(res) == 3
         assert errs == {}
-#        self.assertDictEqual({}, errs)
 
     def test_read_csv_width_error(self):
         path = 'files/test-frame-width-err.csv'
@@ -729,7 +720,7 @@ class TestXFrameFromXArray:
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
 # noinspection PyClassHasNoInit
-class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
+class TestXFrameToSparkDataFrame:
     """
     Tests XFrame to_spark_dataframe
     """
@@ -739,60 +730,60 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[0]
-        self.assertEqual(1, row.id)
-        self.assertEqual('a', row.val)
+        assert row.id == 1
+        assert row.val == 'a'
 
     def test_to_spark_dataframe_bool(self):
         t = XFrame({'id': [1, 2, 3], 'val': [True, False, True]})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[0]
-        self.assertEqual(1, row.id)
-        self.assertEqual(True, row.val)
+        assert row.id == 1
+        assert row.val is True
 
     def test_to_spark_dataframe_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[0]
-        self.assertEqual(1, row.id)
-        self.assertEqual(1.0, row.val)
+        assert row.id == 1
+        assert row.val == 1.0
 
     def test_to_spark_dataframe_int(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1, 2, 3]})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[0]
-        self.assertEqual(1, row.id)
-        self.assertEqual(1, row.val)
+        assert row.id == 1
+        assert row.val == 1
 
     def test_to_spark_dataframe_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[1, 1], [2, 2], [3, 3]]})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[0]
-        self.assertEqual(1, row.id)
-        self.assertListEqual([1, 1], row.val)
+        assert row.id == 1
+        assert row.val == [1, 1]
 
     def test_to_spark_dataframe_list_hint(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[None, 1], [2, 2], [3, 3]]})
         t.to_spark_dataframe('tmp_tbl', column_type_hints={'val': 'list[int]'})
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[1]
-        self.assertEqual(2, row.id)
-        self.assertListEqual([2, 2], row.val)
+        assert row.id == 2
+        assert row.val == [2, 2]
 
     def test_to_spark_dataframe_list_bad(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[None, 1], [2, 2], [3, 3]]})
@@ -804,46 +795,46 @@ class TestXFrameToSparkDataFrame(XFrameUnitTestCase):
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[0]
-        self.assertEqual(1, row.id)
-        self.assertDictEqual({'x': 1}, row.val)
+        assert row.id == 1
+        assert row.val == {'x': 1}
 
     def test_to_spark_dataframe_map_bad(self):
         t = XFrame({'id': [1, 2, 3], 'val': [None, {'y': 2}, {'z': 3}]})
         with pytest.raises(ValueError):
             t.to_spark_dataframe('tmp_tbl')
 
-    @unittest.skip('files in spark 2')
+    @pytest.mark.skip(reason='files in spark 2')
     def test_to_spark_dataframe_map_hint(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{None: None}, {'y': 2}, {'z': 3}]})
         t.to_spark_dataframe('tmp_tbl', column_type_hints={'val': 'dict{str: int}'})
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[1]
-        self.assertEqual(2, row.id)
-        self.assertDictEqual({'y': 2}, row.val)
+        assert row.id == 1
+        assert row.val == {'y': 2}
 
     def test_to_spark_dataframe_str_rewrite(self):
         t = XFrame({'id': [1, 2, 3], 'val;1': ['a', 'b', 'c']})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[0]
-        self.assertEqual(1, row.id)
-        self.assertEqual('a', row.val_1)
+        assert row.id == 1
+        assert row.val_1 == 'a'
 
     def test_to_spark_dataframe_str_rename(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t.to_spark_dataframe('tmp_tbl', column_names=['id1', 'val1'])
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id1')
-        self.assertEqual(3, results.count())
+        assert results.count() == 3
         row = results.collect()[0]
-        self.assertEqual(1, row.id1)
-        self.assertEqual('a', row.val1)
+        assert row.id1 == 1
+        assert row.val1 == 'a'
 
     def test_to_spark_dataframe_str_rename_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -871,7 +862,7 @@ class TestXFrameToRdd:
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameFromRdd(XFrameUnitTestCase):
+class TestXFrameFromRdd:
     """
     Tests XFrame from_rdd with regular rdd
     """
@@ -880,35 +871,35 @@ class TestXFrameFromRdd(XFrameUnitTestCase):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd)
-        self.assertEqualLen(3, res)
-        self.assertDictEqual({'X.0': 1, 'X.1': 'a'}, res[0])
-        self.assertDictEqual({'X.0': 2, 'X.1': 'b'}, res[1])
+        assert len(res) == 3
+        assert res[0] == {'X.0': 1, 'X.1': 'a'}
+        assert res[1] == {'X.0': 2, 'X.1': 'b'}
 
     def test_from_rdd_names(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_names=['id', 'val'])
-        self.assertEqualLen(3, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
     def test_from_rdd_types(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(None, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_types=[int, str])
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'X.0': None, 'X.1': 'a'}, res[0])
-        self.assertDictEqual({'X.0': 2, 'X.1': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.column_types() == [int, str]
+        assert res[0] == {'X.0': None, 'X.1': 'a'}
+        assert res[1] == {'X.0': 2, 'X.1': 'b'}
 
     def test_from_rdd_names_types(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(None, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_names=['id', 'val'], column_types=[int, str])
-        self.assertEqualLen(3, res)
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': None, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 3
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': None, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
     def test_from_rdd_names_bad(self):
         sc = CommonSparkContext.spark_context()
@@ -981,18 +972,18 @@ class TestXFrameNonzero:
     def test_nonzero_true(self):
         # not empty, nonzero data
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        assert not t is False
+        assert t is not False
 
     def test_nonzero_false(self):
         # empty
         t = XFrame()
-        assert not t is True
+        assert t is not True
 
     def test_empty_false(self):
         # empty, but previously not empty
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t = t.filterby([99], 'id')
-        assert not t is True
+        assert t is not True
 
 
 # noinspection PyClassHasNoInit
@@ -1166,7 +1157,7 @@ class TestXFrameColumnLineage:
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         lineage = t.lineage()['column']
         assert len(lineage) == 2
-        assert sorted(lineage.keys())== ['id', 'val']
+        assert sorted(lineage.keys()) == ['id', 'val']
         assert lineage['id'] == {('PROGRAM', 'id')}
         assert lineage['val'] == {('PROGRAM', 'val')}
 
@@ -1180,7 +1171,7 @@ class TestXFrameColumnLineage:
         res = XFrame(df)
         lineage = res.lineage()['column']
         assert len(lineage) == 2
-        assert sorted(lineage.keys())== ['id', 'val']
+        assert sorted(lineage.keys()) == ['id', 'val']
         assert lineage['id'] == {('PANDAS', 'id')}
         assert lineage['val'] == {('PANDAS', 'val')}
 
@@ -1193,7 +1184,7 @@ class TestXFrameColumnLineage:
         res = XFrame(path)
         lineage = res.lineage()['column']
         assert len(lineage) == 2
-        assert sorted(lineage.keys())== ['id', 'val']
+        assert sorted(lineage.keys()) == ['id', 'val']
         assert lineage['id'] == {(real_inpath, 'id')}
         assert lineage['val'] == {(real_inpath, 'val')}
 
@@ -1415,7 +1406,7 @@ class TestXFrameColumnLineage:
     def test_flat_map(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.flat_map(['number', 'letter'],
-                         lambda row: [list(row.itervalues()) for _ in range(0, row['id'])],
+                         lambda row: [list(six.itervalues(row)) for _ in range(0, row['id'])],
                          column_types=[int, str])
         lineage = res.lineage()['column']
         assert len(lineage) == 2
@@ -1426,7 +1417,7 @@ class TestXFrameColumnLineage:
     def test_flat_map_use_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [10, 20, 30]})
         res = t.flat_map(['number', 'letter'],
-                         lambda row: [list(row.itervalues()) for _ in range(0, row['id'])],
+                         lambda row: [list(six.itervalues(row)) for _ in range(0, row['id'])],
                          column_types=[int, str], use_columns=['id', 'val'])
         lineage = res.lineage()['column']
         assert len(lineage) == 2
@@ -1728,8 +1719,8 @@ class TestXFrameToPandasDataframe:
         assert len(df) == 3
         assert df['id'][0] == 1
         assert df['id'][1] == 2
-        assert df['val'][0] == True
-        assert df['val'][1] == False
+        assert df['val'][0] is True
+        assert df['val'][1] is False
 
     def test_to_pandas_dataframe_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
@@ -1777,10 +1768,11 @@ class TestXFrameForeach:
     def test_foreach(self):
         path = 'tmp/foreach.csv'
         # truncate file
-        with open(path, 'w') as f:
+        with open(path, 'w'):
             pass
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
 
+        # noinspection PyUnusedLocal
         def append_to_file(row, ini):
             with open(path, 'a') as f:
                 f.write('{},{}\n'.format(row['id'], row['val']))
@@ -1796,13 +1788,14 @@ class TestXFrameForeach:
     def test_foreach_init(self):
         path = 'tmp/foreach.csv'
         # truncate file
-        with open(path, 'w') as f:
+        with open(path, 'w'):
             pass
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
 
         def append_to_file(row, ini):
             with open(path, 'a') as f:
                 f.write('{},{},{}\n'.format(row['id'], row['val'], ini))
+
         def add_to_file():
             return 99
 
@@ -1924,7 +1917,7 @@ class TestXFrameTransformCols:
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameFlatMap(XFrameUnitTestCase):
+class TestXFrameFlatMap:
     """
     Tests XFrame flat_map
     """
@@ -1932,96 +1925,96 @@ class TestXFrameFlatMap(XFrameUnitTestCase):
     def test_flat_map(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.flat_map(['number', 'letter'],
-                         lambda row: [list(row.itervalues()) for _ in range(0, row['id'])],
+                         lambda row: [list(six.itervalues(row)) for _ in range(0, row['id'])],
                          column_types=[int, str])
-        self.assertListEqual(['number', 'letter'], res.column_names())
-        self.assertListEqual([int, str], res.dtype())
-        self.assertDictEqual({'number': 1, 'letter': 'a'}, res[0])
-        self.assertDictEqual({'number': 2, 'letter': 'b'}, res[1])
-        self.assertDictEqual({'number': 2, 'letter': 'b'}, res[2])
-        self.assertDictEqual({'number': 3, 'letter': 'c'}, res[3])
-        self.assertDictEqual({'number': 3, 'letter': 'c'}, res[4])
-        self.assertDictEqual({'number': 3, 'letter': 'c'}, res[5])
+        assert res.column_names() == ['number', 'letter']
+        assert res.dtype() == [int, str]
+        assert res[0] == {'number': 1, 'letter': 'a'}
+        assert res[1] == {'number': 2, 'letter': 'b'}
+        assert res[2] == {'number': 2, 'letter': 'b'}
+        assert res[3] == {'number': 3, 'letter': 'c'}
+        assert res[4] == {'number': 3, 'letter': 'c'}
+        assert res[5] == {'number': 3, 'letter': 'c'}
 
     def test_flat_map_identity(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.flat_map(['number', 'letter'],
                          lambda row: [[row['id'], row['val']]],
                          column_types=[int, str])
-        self.assertListEqual(['number', 'letter'], res.column_names())
-        self.assertListEqual([int, str], res.dtype())
-        self.assertDictEqual({'number': 1, 'letter': 'a'}, res[0])
-        self.assertDictEqual({'number': 2, 'letter': 'b'}, res[1])
-        self.assertDictEqual({'number': 3, 'letter': 'c'}, res[2])
+        assert res.column_names() == ['number', 'letter']
+        assert res.dtype() == [int, str]
+        assert res[0] == {'number': 1, 'letter': 'a'}
+        assert res[1] == {'number': 2, 'letter': 'b'}
+        assert res[2] == {'number': 3, 'letter': 'c'}
 
     def test_flat_map_mapped(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.flat_map(['number', 'letter'],
                          lambda row: [[row['id'] * 2, row['val'] + 'x']],
                          column_types=[int, str])
-        self.assertListEqual(['number', 'letter'], res.column_names())
-        self.assertListEqual([int, str], res.dtype())
-        self.assertDictEqual({'number': 2, 'letter': 'ax'}, res[0])
-        self.assertDictEqual({'number': 4, 'letter': 'bx'}, res[1])
-        self.assertDictEqual({'number': 6, 'letter': 'cx'}, res[2])
+        assert res.column_names() == ['number', 'letter']
+        assert res.dtype() == [int, str]
+        assert res[0] == {'number': 2, 'letter': 'ax'}
+        assert res[1] == {'number': 4, 'letter': 'bx'}
+        assert res[2] == {'number': 6, 'letter': 'cx'}
 
     def test_flat_map_auto(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.flat_map(['number', 'letter'],
                          lambda row: [[row['id'] * 2, row['val'] + 'x']])
-        self.assertListEqual(['number', 'letter'], res.column_names())
-        self.assertListEqual([int, str], res.dtype())
-        self.assertDictEqual({'number': 2, 'letter': 'ax'}, res[0])
-        self.assertDictEqual({'number': 4, 'letter': 'bx'}, res[1])
-        self.assertDictEqual({'number': 6, 'letter': 'cx'}, res[2])
+        assert res.column_names() == ['number', 'letter']
+        assert res.dtype() == [int, str]
+        assert res[0] == {'number': 2, 'letter': 'ax'}
+        assert res[1] == {'number': 4, 'letter': 'bx'}
+        assert res[2] == {'number': 6, 'letter': 'cx'}
 
         # TODO: test auto error cases
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSample(XFrameUnitTestCase):
+class TestXFrameSample:
     """
     Tests XFrame sample
     """
 
-    @unittest.skip('depends on number of partitions')
+    @pytest.mark.skip(reason='depends on number of partitions')
     def test_sample_02(self):
         t = XFrame({'id': [1, 2, 3, 4, 5], 'val': ['a', 'b', 'c', 'd', 'e']})
         res = t.sample(0.2, 2)
-        self.assertEqualLen(1, res)
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[0])
+        assert len(res) == 1
+        assert res[0] == {'id': 2, 'val': 'b'}
 
-    @unittest.skip('depends on number of partitions')
+    @pytest.mark.skip(reason='depends on number of partitions')
     def test_sample_08(self):
         t = XFrame({'id': [1, 2, 3, 4, 5], 'val': ['a', 'b', 'c', 'd', 'e']})
         res = t.sample(0.8, 3)
-        self.assertEqualLen(3, res)
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[0])
-        self.assertDictEqual({'id': 4, 'val': 'd'}, res[1])
-        self.assertDictEqual({'id': 5, 'val': 'e'}, res[2])
+        assert len(res) == 3
+        assert res[0] == {'id': 2, 'val': 'b'}
+        assert res[1] == {'id': 4, 'val': 'd'}
+        assert res[2] == {'id': 5, 'val': 'e'}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameRandomSplit(XFrameUnitTestCase):
+class TestXFrameRandomSplit:
     """
     Tests XFrame random_split
     """
 
-    @unittest.skip('depends on number of partitions')
+    @pytest.mark.skip(reason='depends on number of partitions')
     def test_random_split(self):
         t = XFrame({'id': [1, 2, 3, 4, 5], 'val': ['a', 'b', 'c', 'd', 'e']})
         res1, res2 = t.random_split(0.5, 1)
-        self.assertEqualLen(3, res1)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res1[0])
-        self.assertDictEqual({'id': 4, 'val': 'd'}, res1[1])
-        self.assertDictEqual({'id': 5, 'val': 'e'}, res1[2])
-        self.assertEqualLen(2, res2)
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res2[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res2[1])
+        assert len(res1) == 3
+        assert res1[0] == {'id': 1, 'val': 'a'}
+        assert res1[1] == {'id': 4, 'val': 'd'}
+        assert res1[2] == {'id': 5, 'val': 'e'}
+        assert len(res2) == 2
+        assert res2[0] == {'id': 2, 'val': 'b'}
+        assert res2[1] == {'id': 3, 'val': 'c'}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameTopk(XFrameUnitTestCase):
+class TestXFrameTopk:
     """
     Tests XFrame topk
     """
@@ -2029,56 +2022,56 @@ class TestXFrameTopk(XFrameUnitTestCase):
     def test_topk_int(self):
         t = XFrame({'id': [10, 20, 30], 'val': ['a', 'b', 'c']})
         res = t.topk('id', 2)
-        self.assertEqualLen(2, res)
+        assert len(res) == 2
         # noinspection PyUnresolvedReferences
-        self.assertTrue((XArray([30, 20]) == res['id']).all())
-        self.assertColumnEqual(['c', 'b'], res['val'])
-        self.assertListEqual([int, str], res.column_types())
-        self.assertListEqual(['id', 'val'], res.column_names())
+        assert (XArray([30, 20]) == res['id']).all()
+        assert list(res['val']) == ['c', 'b']
+        assert res.column_types() == [int, str]
+        assert res.column_names() == ['id', 'val']
 
     def test_topk_int_reverse(self):
         t = XFrame({'id': [30, 20, 10], 'val': ['c', 'b', 'a']})
         res = t.topk('id', 2, reverse=True)
-        self.assertEqualLen(2, res)
-        self.assertColumnEqual([10, 20], res['id'])
-        self.assertColumnEqual(['a', 'b'], res['val'])
+        assert len(res) == 2
+        assert list(res['id']) == [10, 20]
+        assert list(res['val']) == ['a', 'b']
 
     # noinspection PyUnresolvedReferences
     def test_topk_float(self):
         t = XFrame({'id': [10.0, 20.0, 30.0], 'val': ['a', 'b', 'c']})
         res = t.topk('id', 2)
-        self.assertEqualLen(2, res)
-        self.assertTrue((XArray([30.0, 20.0]) == res['id']).all())
-        self.assertColumnEqual(['c', 'b'], res['val'])
-        self.assertListEqual([float, str], res.column_types())
-        self.assertListEqual(['id', 'val'], res.column_names())
+        assert len(res) == 2
+        assert (XArray([30.0, 20.0]) == res['id']).all()
+        assert list(res['val']) == ['c', 'b']
+        assert res.column_types() == [float, str]
+        assert res.column_names() == ['id', 'val']
 
     def test_topk_float_reverse(self):
         t = XFrame({'id': [30.0, 20.0, 10.0], 'val': ['c', 'b', 'a']})
         res = t.topk('id', 2, reverse=True)
-        self.assertEqualLen(2, res)
-        self.assertColumnEqual([10.0, 20.0], res['id'])
-        self.assertColumnEqual(['a', 'b'], res['val'])
+        assert len(res) == 2
+        assert list(res['id']) == [10.0, 20.0]
+        assert list(res['val']) == ['a', 'b']
 
     def test_topk_str(self):
         t = XFrame({'id': [30, 20, 10], 'val': ['a', 'b', 'c']})
         res = t.topk('val', 2)
-        self.assertEqualLen(2, res)
-        self.assertColumnEqual([10, 20], res['id'])
-        self.assertColumnEqual(['c', 'b'], res['val'])
-        self.assertListEqual([int, str], res.column_types())
-        self.assertListEqual(['id', 'val'], res.column_names())
+        assert len(res) == 2
+        assert list(res['id']) == [10, 20]
+        assert list(res['val']) == ['c', 'b']
+        assert res.column_types() == [int, str]
+        assert res.column_names() == ['id', 'val']
 
     def test_topk_str_reverse(self):
         t = XFrame({'id': [10, 20, 30], 'val': ['c', 'b', 'a']})
         res = t.topk('val', 2, reverse=True)
-        self.assertEqualLen(2, res)
-        self.assertColumnEqual([30, 20], res['id'])
-        self.assertColumnEqual(['a', 'b'], res['val'])
+        assert len(res) == 2
+        assert list(res['id']) == [30, 20]
+        assert list(res['val']) == ['a', 'b']
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSaveBinary(XFrameUnitTestCase):
+class TestXFrameSaveBinary:
     """
     Tests XFrame save binary format
     """
@@ -2089,18 +2082,18 @@ class TestXFrameSaveBinary(XFrameUnitTestCase):
         t.save(path, format='binary')
         with open(os.path.join(path, '_metadata')) as f:
             metadata = pickle.load(f)
-        self.assertListEqual([['id', 'val'], [int, str]], metadata)
+            assert metadata == [['id', 'val'], [int, str]]
         # TODO find some way to check the data
 
-    def test_save_not_exist(self):
-        path = 'xxx/frame'
-        delete_file_or_dir('xxx')
+    def test_save_not_exist(self, tmpdir):
+        path = os.path.join(str(tmpdir), 'frame')
         t = XFrame({'id': [30, 20, 10], 'val': ['a', 'b', 'c']})
         t.save(path, format='binary')
+        # TODO find some way to check the data
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSaveCsv(XFrameUnitTestCase):
+class TestXFrameSaveCsv:
     """
     Tests XFrame save csv format
     """
@@ -2112,20 +2105,20 @@ class TestXFrameSaveCsv(XFrameUnitTestCase):
 
         with open(path + '.csv') as f:
             heading = f.readline().rstrip()
-            self.assertEqual('id,val', heading)
-            self.assertEqual('30,a', f.readline().rstrip())
-            self.assertEqual('20,b', f.readline().rstrip())
-            self.assertEqual('10,c', f.readline().rstrip())
+            assert heading == 'id,val'
+            assert f.readline().rstrip() == '30,a'
+            assert f.readline().rstrip() == '20,b'
+            assert f.readline().rstrip() == '10,c'
 
-    def test_save_not_exist(self):
-        path = 'xxx/frame'
-        delete_file_or_dir('xxx')
+    def test_save_not_exist(self, tmpdir):
+        path = os.path.join(str(tmpdir), 'frame')
         t = XFrame({'id': [30, 20, 10], 'val': ['a', 'b', 'c']})
         t.save(path, format='csv')
+        # TODO find some way to check the data
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSaveParquet(XFrameUnitTestCase):
+class TestXFrameSaveParquet:
     """
     Tests XFrame save for parquet files
     """
@@ -2135,53 +2128,54 @@ class TestXFrameSaveParquet(XFrameUnitTestCase):
         path = 'tmp/frame-parquet'
         t.save(path, format='parquet')
         res = XFrame(path + '.parquet')
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_save_as_parquet(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         path = 'tmp/frame-parquet'
         t.save_as_parquet(path)
         res = XFrame(path, format='parquet')
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_save_rename(self):
         t = XFrame({'id col': [1, 2, 3], 'val,col': ['a', 'b', 'c']})
         path = 'tmp/frame-parquet'
         t.save(path, format='parquet')
         res = XFrame(path + '.parquet')
-        self.assertListEqual(['id_col', 'val_col'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id_col': 1, 'val_col': 'a'}, res[0])
-        self.assertDictEqual({'id_col': 2, 'val_col': 'b'}, res[1])
-        self.assertDictEqual({'id_col': 3, 'val_col': 'c'}, res[2])
+        assert res.column_names() == ['id_col', 'val_col']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id_col': 1, 'val_col': 'a'}
+        assert res[1] == {'id_col': 2, 'val_col': 'b'}
+        assert res[2] == {'id_col': 3, 'val_col': 'c'}
 
     def test_save_as_parquet_rename(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         path = 'tmp/frame-parquet'
         t.save_as_parquet(path, column_names=['id1', 'val1'])
         res = XFrame(path, format='parquet')
-        self.assertListEqual(['id1', 'val1'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id1': 1, 'val1': 'a'}, res[0])
-        self.assertDictEqual({'id1': 2, 'val1': 'b'}, res[1])
-        self.assertDictEqual({'id1': 3, 'val1': 'c'}, res[2])
+        assert res.column_names() == ['id1', 'val1']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id1': 1, 'val1': 'a'}
+        assert res[1] == {'id1': 2, 'val1': 'b'}
+        assert res[2] == {'id1': 3, 'val1': 'c'}
 
     def test_save_not_exist(self):
         t = XFrame({'id': [30, 20, 10], 'val': ['a', 'b', 'c']})
         path = 'xxx/frame'
         t.save_as_parquet(path)
+        # TODO find some way to check the data
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSelectColumn(XFrameUnitTestCase):
+class TestXFrameSelectColumn:
     """
     Tests XFrame select_column
     """
@@ -2189,12 +2183,12 @@ class TestXFrameSelectColumn(XFrameUnitTestCase):
     def test_select_column_id(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.select_column('id')
-        self.assertColumnEqual([1, 2, 3], res)
+        assert list(res) == [1, 2, 3]
 
     def test_select_column_val(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.select_column('val')
-        self.assertColumnEqual(['a', 'b', 'c'], res)
+        assert list(res) == ['a', 'b', 'c']
 
     def test_select_column_bad_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2209,7 +2203,7 @@ class TestXFrameSelectColumn(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSelectColumns(XFrameUnitTestCase):
+class TestXFrameSelectColumns:
     """
     Tests XFrame select_columns
     """
@@ -2217,12 +2211,12 @@ class TestXFrameSelectColumns(XFrameUnitTestCase):
     def test_select_columns_id_val(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         res = t.select_columns(['id', 'val'])
-        self.assertTrue([1, 'a'], res[0])
+        assert res[0] == {'id': 1, 'val': 'a'}
 
     def test_select_columns_id(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         res = t.select_columns(['id'])
-        self.assertTrue([1], res[0])
+        assert res[0] == {'id': 1}
 
     # noinspection PyTypeChecker
     def test_select_columns_not_iterable(self):
@@ -2242,7 +2236,7 @@ class TestXFrameSelectColumns(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameAddColumn(XFrameUnitTestCase):
+class TestXFrameAddColumn:
     """
     Tests XFrame add_column
     """
@@ -2251,26 +2245,26 @@ class TestXFrameAddColumn(XFrameUnitTestCase):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_column(ta, name='another')
-        self.assertListEqual(['id', 'val', 'another'], res.column_names())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'another': 3.0}, res[0])
+        assert res.column_names() == ['id', 'val', 'another']
+        assert res[0] == {'id': 1, 'val': 'a', 'another': 3.0}
 
     def test_add_column_name_default(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_column(ta)
-        self.assertListEqual(['id', 'val', 'X.2'], res.column_names())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'X.2': 3.0}, res[0])
+        assert res.column_names() == ['id', 'val', 'X.2']
+        assert res[0] == {'id': 1, 'val': 'a', 'X.2': 3.0}
 
     def test_add_column_name_dup(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_column(ta, name='id')
-        self.assertListEqual(['id', 'val', 'id.2'], res.column_names())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'id.2': 3.0}, res[0])
+        assert res.column_names() == ['id', 'val', 'id.2']
+        assert res[0] == {'id': 1, 'val': 'a', 'id.2': 3.0}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameAddColumnsArray(XFrameUnitTestCase):
+class TestXFrameAddColumnsArray:
     """
     Tests XFrame add_columns where data is array of XArray
     """
@@ -2279,18 +2273,18 @@ class TestXFrameAddColumnsArray(XFrameUnitTestCase):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_columns([ta], namelist=['new1'])
-        self.assertListEqual(['id', 'val', 'new1'], res.column_names())
-        self.assertListEqual([int, str, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'new1': 3.0}, res[0])
+        assert res.column_names() == ['id', 'val', 'new1']
+        assert res.column_types() == [int, str, float]
+        assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0}
 
     def test_add_columns_two(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
         res = tf.add_columns([ta1, ta2], namelist=['new1', 'new2'])
-        self.assertListEqual(['id', 'val', 'new1', 'new2'], res.column_names())
-        self.assertListEqual([int, str, float, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}, res[0])
+        assert res.column_names() == ['id', 'val', 'new1', 'new2']
+        assert res.column_types() == [int, str, float, float]
+        assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}
 
     def test_add_columns_namelist_missing(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2329,7 +2323,7 @@ class TestXFrameAddColumnsArray(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameAddColumnsFrame(XFrameUnitTestCase):
+class TestXFrameAddColumnsFrame:
     """
     Tests XFrame add_columns where data is XFrame
     """
@@ -2338,21 +2332,21 @@ class TestXFrameAddColumnsFrame(XFrameUnitTestCase):
         tf1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         tf2 = XFrame({'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
         res = tf1.add_columns(tf2)
-        self.assertListEqual(['id', 'val', 'new1', 'new2'], res.column_names())
-        self.assertListEqual([int, str, float, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}, res[0])
+        assert res.column_names() == ['id', 'val', 'new1', 'new2']
+        assert res.column_types() == [int, str, float, float]
+        assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}
 
     def test_add_columns_dup_names(self):
         tf1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         tf2 = XFrame({'new1': [3.0, 2.0, 1.0], 'val': [30.0, 20.0, 10.0]})
         res = tf1.add_columns(tf2)
-        self.assertListEqual(['id', 'val', 'new1', 'val.1'], res.column_names())
-        self.assertListEqual([int, str, float, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'new1': 3.0, 'val.1': 30.0}, res[0])
+        assert res.column_names() == ['id', 'val', 'new1', 'val.1']
+        assert res.column_types() == [int, str, float, float]
+        assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0, 'val.1': 30.0}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameReplaceColumn(XFrameUnitTestCase):
+class TestXFrameReplaceColumn:
     """
     Tests XFrame replace_column
     """
@@ -2361,8 +2355,8 @@ class TestXFrameReplaceColumn(XFrameUnitTestCase):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         a = XArray(['x', 'y', 'z'])
         res = t.replace_column('val', a)
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertDictEqual({'id': 1, 'val': 'x'}, res[0])
+        assert res.column_names() == ['id', 'val']
+        assert res[0] == {'id': 1, 'val': 'x'}
 
     # noinspection PyTypeChecker
     def test_replace_column_bad_col_type(self):
@@ -2385,7 +2379,7 @@ class TestXFrameReplaceColumn(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameRemoveColumn(XFrameUnitTestCase):
+class TestXFrameRemoveColumn:
     """
     Tests XFrame remove_column
     """
@@ -2393,9 +2387,9 @@ class TestXFrameRemoveColumn(XFrameUnitTestCase):
     def test_remove_column(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         res = t.remove_column('another')
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertEqualLen(3, t.column_names())
-        self.assertEqualLen(2, res.column_names())
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert len(t.column_names()) == 3
+        assert len(res.column_names()) == 2
 
     def test_remove_column_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
@@ -2404,7 +2398,7 @@ class TestXFrameRemoveColumn(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameRemoveColumns(XFrameUnitTestCase):
+class TestXFrameRemoveColumns:
     """
     Tests XFrame remove_columns
     """
@@ -2412,9 +2406,9 @@ class TestXFrameRemoveColumns(XFrameUnitTestCase):
     def test_remove_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
         res = t.remove_columns(['new1', 'new2'])
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertEqualLen(2, res.column_names())
-        self.assertEqualLen(4, t.column_names())
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert len(t.column_names()) == 4
+        assert len(res.column_names()) == 2
 
     def test_remove_column_not_iterable(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
@@ -2428,7 +2422,7 @@ class TestXFrameRemoveColumns(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSwapColumns(XFrameUnitTestCase):
+class TestXFrameSwapColumns:
     """
     Tests XFrame swap_columns
     """
@@ -2436,9 +2430,9 @@ class TestXFrameSwapColumns(XFrameUnitTestCase):
     def test_swap_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         res = t.swap_columns('val', 'x')
-        self.assertListEqual(['id', 'x', 'val'], res.column_names())
-        self.assertListEqual(['id', 'val', 'x'], t.column_names())
-        self.assertDictEqual({'id': 1, 'x': 3.0, 'val': 'a'}, res[0])
+        assert res.column_names() == ['id', 'x', 'val']
+        assert t.column_names() == ['id', 'val', 'x']
+        assert res[0] == {'id': 1, 'x': 3.0, 'val': 'a'}
 
     def test_swap_columns_bad_col_1(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
@@ -2452,7 +2446,7 @@ class TestXFrameSwapColumns(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameReorderColumns(XFrameUnitTestCase):
+class TestXFrameReorderColumns:
     """
     Tests XFrame reorder_columns
     """
@@ -2460,10 +2454,11 @@ class TestXFrameReorderColumns(XFrameUnitTestCase):
     def test_reorder_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         res = t.reorder_columns(['val', 'x', 'id'])
-        self.assertListEqual(['val', 'x', 'id'], res.column_names())
-        self.assertListEqual(['id', 'val', 'x'], t.column_names())
-        self.assertDictEqual({'id': 1, 'x': 3.0, 'val': 'a'}, res[0])
+        assert res.column_names() == ['val', 'x', 'id']
+        assert t.column_names() == ['id', 'val', 'x']
+        assert res[0] == {'id': 1, 'x': 3.0, 'val': 'a'}
 
+    # noinspection PyTypeChecker
     def test_reorder_columns_list_not_iterable(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         with pytest.raises(TypeError):
@@ -2481,7 +2476,7 @@ class TestXFrameReorderColumns(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameRename(XFrameUnitTestCase):
+class TestXFrameRename:
     """
     Tests XFrame rename
     """
@@ -2489,9 +2484,9 @@ class TestXFrameRename(XFrameUnitTestCase):
     def test_rename(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.rename({'id': 'new_id'})
-        self.assertListEqual(['new_id', 'val'], res.column_names())
-        self.assertListEqual(['id', 'val'], t.column_names())
-        self.assertDictEqual({'new_id': 1, 'val': 'a'}, res[0])
+        assert res.column_names() == ['new_id', 'val']
+        assert t.column_names() == ['id', 'val']
+        assert res[0] == {'new_id': 1, 'val': 'a'}
 
     # noinspection PyTypeChecker
     def test_rename_arg_not_dict(self):
@@ -2510,15 +2505,15 @@ class TestXFrameRename(XFrameUnitTestCase):
             t.rename(['id'])
 
     def test_rename_list(self):
-        t = XFrame({'X0': [1, 2, 3], 'X1': ['a', 'b', 'c']})
+        t = XFrame({'X.0': [1, 2, 3], 'X.1': ['a', 'b', 'c']})
         res = t.rename(['id', 'val'])
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual(['X0', 'X1'], t.column_names())
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
+        assert res.column_names() == ['id', 'val']
+        assert t.column_names() == ['X.0', 'X.1']
+        assert res[0] == {'id': 1, 'val': 'a'}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameGetitem(XFrameUnitTestCase):
+class TestXFrameGetitem:
     """
     Tests XFrame __getitem__
     """
@@ -2526,17 +2521,17 @@ class TestXFrameGetitem(XFrameUnitTestCase):
     def test_getitem_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t['id']
-        self.assertColumnEqual([1, 2, 3], res)
+        assert list(res) == [1, 2, 3]
 
     def test_getitem_int_pos(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t[1]
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res)
+        assert res == {'id': 2, 'val': 'b'}
 
     def test_getitem_int_neg(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t[-2]
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res)
+        assert res == {'id': 2, 'val': 'b'}
 
     def test_getitem_int_too_low(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2552,14 +2547,14 @@ class TestXFrameGetitem(XFrameUnitTestCase):
         # TODO we could test more variations of slice
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t[:2]
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
     def test_getitem_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [1.0, 2.0, 3.0]})
         res = t[['id', 'x']]
-        self.assertDictEqual({'id': 2, 'x': 2.0}, res[1])
+        assert res[1] == {'id': 2, 'x': 2.0}
 
     def test_getitem_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2572,7 +2567,7 @@ class TestXFrameGetitem(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSetitem(XFrameUnitTestCase):
+class TestXFrameSetitem:
     """
     Tests XFrame __setitem__
     """
@@ -2580,43 +2575,43 @@ class TestXFrameSetitem(XFrameUnitTestCase):
     def test_setitem_float_const(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t['x'] = 5.0
-        self.assertListEqual(['id', 'val', 'x'], t.column_names())
-        self.assertDictEqual({'id': 2, 'val': 'b', 'x': 5.0}, t[1])
+        assert t.column_names() == ['id', 'val', 'x']
+        assert t[1] == {'id': 2, 'val': 'b', 'x': 5.0}
 
     def test_setitem_str_const_replace(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t['val'] = 'x'
-        self.assertListEqual(['id', 'val'], t.column_names())
-        self.assertDictEqual({'id': 2, 'val': 'x'}, t[1])
+        assert t.column_names() == ['id', 'val']
+        assert t[1] == {'id': 2, 'val': 'x'}
 
     def test_setitem_list(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
         tf[['new1', 'new2']] = [ta1, ta2]
-        self.assertListEqual(['id', 'val', 'new1', 'new2'], tf.column_names())
-        self.assertListEqual([int, str, float, float], tf.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}, tf[0])
+        assert tf.column_names() == ['id', 'val', 'new1', 'new2']
+        assert tf.column_types() == [int, str, float, float]
+        assert tf[0] == {'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}
 
     def test_setitem_str_iter(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t['x'] = [1.0, 2.0, 3.0]
-        self.assertListEqual(['id', 'val', 'x'], t.column_names())
-        self.assertDictEqual({'id': 2, 'val': 'b', 'x': 2.0}, t[1])
+        assert t.column_names() == ['id', 'val', 'x']
+        assert t[1] == {'id': 2, 'val': 'b', 'x': 2.0}
 
     def test_setitem_str_xarray(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         tf['new'] = ta
-        self.assertListEqual(['id', 'val', 'new'], tf.column_names())
-        self.assertListEqual([int, str, float], tf.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'new': 3.0}, tf[0])
+        assert tf.column_names() == ['id', 'val', 'new']
+        assert tf.column_types() == [int, str, float]
+        assert tf[0] == {'id': 1, 'val': 'a', 'new': 3.0}
 
     def test_setitem_str_iter_replace(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t['val'] = [1.0, 2.0, 3.0]
-        self.assertListEqual(['id', 'val'], t.column_names())
-        self.assertDictEqual({'id': 2, 'val': 2.0}, t[1])
+        assert t.column_names() == ['id', 'val']
+        assert t[1] == {'id': 2, 'val': 2.0}
 
     def test_setitem_bad_key(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2626,13 +2621,13 @@ class TestXFrameSetitem(XFrameUnitTestCase):
     def test_setitem_str_iter_replace_one_col(self):
         t = XFrame({'val': ['a', 'b', 'c']})
         t['val'] = [1.0, 2.0, 3.0, 4.0]
-        self.assertListEqual(['val'], t.column_names())
-        self.assertEqualLen(4, t)
-        self.assertDictEqual({'val': 2.0}, t[1])
+        assert t.column_names() == ['val']
+        assert len(t) == 4
+        assert t[1] == {'val': 2.0}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameDelitem(XFrameUnitTestCase):
+class TestXFrameDelitem:
     """
     Tests XFrame __delitem__
     """
@@ -2640,7 +2635,7 @@ class TestXFrameDelitem(XFrameUnitTestCase):
     def test_delitem(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         del t['another']
-        self.assertDictEqual({'id': 1, 'val': 'a'}, t[0])
+        assert t[0] == {'id': 1, 'val': 'a'}
 
     def test_delitem_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
@@ -2649,23 +2644,23 @@ class TestXFrameDelitem(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameIsMaterialized(XFrameUnitTestCase):
+class TestXFrameIsMaterialized:
     """
     Tests XFrame _is_materialized
     """
 
     def test_is_materialized_false(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        self.assertFalse(t._is_materialized())
+        assert t._is_materialized() is False
 
     def test_is_materialized(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         len(t)
-        self.assertTrue(t._is_materialized())
+        assert t._is_materialized() is True
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameIter(XFrameUnitTestCase):
+class TestXFrameIter:
     """
     Tests XFrame __iter__
     """
@@ -2675,12 +2670,12 @@ class TestXFrameIter(XFrameUnitTestCase):
         expect_id = [1, 2, 3]
         expect_val = ['a', 'b', 'c']
         for item in zip(t, expect_id, expect_val):
-            self.assertEqual(item[1], item[0]['id'])
-            self.assertEqual(item[2], item[0]['val'])
+            assert item[0]['id'] == item[1]
+            assert item[0]['val'] == item[2]
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameRange(XFrameUnitTestCase):
+class TestXFrameRange:
     """
     Tests XFrame range
     """
@@ -2688,12 +2683,12 @@ class TestXFrameRange(XFrameUnitTestCase):
     def test_range_int_pos(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.range(1)
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res)
+        assert res == {'id': 2, 'val': 'b'}
 
     def test_range_int_neg(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.range(-2)
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res)
+        assert res == {'id': 2, 'val': 'b'}
 
     def test_range_int_too_low(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2708,9 +2703,9 @@ class TestXFrameRange(XFrameUnitTestCase):
     def test_range_slice(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.range(slice(0, 2))
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
     # noinspection PyTypeChecker
     def test_range_bad_type(self):
@@ -2720,7 +2715,7 @@ class TestXFrameRange(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameAppend(XFrameUnitTestCase):
+class TestXFrameAppend:
     """
     Tests XFrame append
     """
@@ -2729,9 +2724,9 @@ class TestXFrameAppend(XFrameUnitTestCase):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [10, 20, 30], 'val': ['aa', 'bb', 'cc']})
         res = t1.append(t2)
-        self.assertEqualLen(6, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 10, 'val': 'aa'}, res[3])
+        assert len(res) == 6
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[3] == {'id': 10, 'val': 'aa'}
 
     # noinspection PyTypeChecker
     def test_append_bad_type(self):
@@ -2743,21 +2738,21 @@ class TestXFrameAppend(XFrameUnitTestCase):
         t1 = XFrame()
         t2 = XFrame()
         res = t1.append(t2)
-        self.assertEqualLen(0, res)
+        assert len(res) == 0
 
     def test_append_first_empty(self):
         t1 = XFrame()
         t2 = XFrame({'id': [10, 20, 30], 'val': ['aa', 'bb', 'cc']})
         res = t1.append(t2)
-        self.assertEqualLen(3, res)
-        self.assertDictEqual({'id': 10, 'val': 'aa'}, res[0])
+        assert len(res) == 3
+        assert res[0] == {'id': 10, 'val': 'aa'}
 
     def test_append_second_empty(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame()
         res = t1.append(t2)
-        self.assertEqualLen(3, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
+        assert len(res) == 3
+        assert res[0] == {'id': 1, 'val': 'a'}
 
     def test_append_unequal_col_length(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2779,7 +2774,7 @@ class TestXFrameAppend(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameGroupby(XFrameUnitTestCase):
+class TestXFrameGroupby:
     """
     Tests XFrame groupby
     """
@@ -2790,12 +2785,12 @@ class TestXFrameGroupby(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id'], res.column_names())
-        self.assertListEqual([int], res.column_types())
-        self.assertDictEqual({'id': 1}, res[0])
-        self.assertDictEqual({'id': 2}, res[1])
-        self.assertDictEqual({'id': 3}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id']
+        assert res.column_types() == [int]
+        assert res[0] == {'id': 1}
+        assert res[1] == {'id': 2}
+        assert res[2] == {'id': 3}
 
     def test_groupby_nooperation(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2803,12 +2798,12 @@ class TestXFrameGroupby(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id')
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id'], res.column_names())
-        self.assertListEqual([int], res.column_types())
-        self.assertDictEqual({'id': 1}, res[0])
-        self.assertDictEqual({'id': 2}, res[1])
-        self.assertDictEqual({'id': 3}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id']
+        assert res.column_types() == [int]
+        assert res[0] == {'id': 1}
+        assert res[1] == {'id': 2}
+        assert res[2] == {'id': 3}
 
     # noinspection PyTypeChecker
     def test_groupby_bad_col_name_type(self):
@@ -2855,7 +2850,7 @@ class TestXFrameGroupby(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
+class TestXFrameGroupbyAggregators:
     """
     Tests XFrame groupby aggregators
     """
@@ -2866,12 +2861,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', COUNT)
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'count'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'count': 3}, res[0])
-        self.assertDictEqual({'id': 2, 'count': 2}, res[1])
-        self.assertDictEqual({'id': 3, 'count': 1}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'count']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'count': 3}
+        assert res[1] == {'id': 2, 'count': 2}
+        assert res[2] == {'id': 3, 'count': 1}
 
     def test_groupby_count_call(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2879,12 +2874,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', COUNT())
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'count'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'count': 3}, res[0])
-        self.assertDictEqual({'id': 2, 'count': 2}, res[1])
-        self.assertDictEqual({'id': 3, 'count': 1}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'count']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'count': 3}
+        assert res[1] == {'id': 2, 'count': 2}
+        assert res[2] == {'id': 3, 'count': 1}
 
     def test_groupby_count_named(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2892,12 +2887,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {'record-count': COUNT})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'record-count'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'record-count': 3}, res[0])
-        self.assertDictEqual({'id': 2, 'record-count': 2}, res[1])
-        self.assertDictEqual({'id': 3, 'record-count': 1}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'record-count']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'record-count': 3}
+        assert res[1] == {'id': 2, 'record-count': 2}
+        assert res[2] == {'id': 3, 'record-count': 1}
 
     def test_groupby_sum(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2905,12 +2900,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {'sum': SUM('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'sum'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'sum': 110}, res[0])
-        self.assertDictEqual({'id': 2, 'sum': 70}, res[1])
-        self.assertDictEqual({'id': 3, 'sum': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'sum']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'sum': 110}
+        assert res[1] == {'id': 2, 'sum': 70}
+        assert res[2] == {'id': 3, 'sum': 30}
 
     def test_groupby_sum_def(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2918,12 +2913,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', SUM('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'sum'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'sum': 110}, res[0])
-        self.assertDictEqual({'id': 2, 'sum': 70}, res[1])
-        self.assertDictEqual({'id': 3, 'sum': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'sum']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'sum': 110}
+        assert res[1] == {'id': 2, 'sum': 70}
+        assert res[2] == {'id': 3, 'sum': 30}
 
     def test_groupby_sum_sum_def(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2931,12 +2926,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', [SUM('another'), SUM('another')])
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'sum', 'sum.1'], res.column_names())
-        self.assertListEqual([int, int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'sum': 110, 'sum.1': 110}, res[0])
-        self.assertDictEqual({'id': 2, 'sum': 70, 'sum.1': 70}, res[1])
-        self.assertDictEqual({'id': 3, 'sum': 30, 'sum.1': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'sum', 'sum.1']
+        assert res.column_types() == [int, int, int]
+        assert res[0] == {'id': 1, 'sum': 110, 'sum.1': 110}
+        assert res[1] == {'id': 2, 'sum': 70, 'sum.1': 70}
+        assert res[2] == {'id': 3, 'sum': 30, 'sum.1': 30}
 
     def test_groupby_sum_rename(self):
         t = XFrame({'sum': [1, 2, 3, 1, 2, 1],
@@ -2944,12 +2939,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('sum', SUM('another'))
         res = res.topk('sum', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['sum', 'sum.1'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'sum': 1, 'sum.1': 110}, res[0])
-        self.assertDictEqual({'sum': 2, 'sum.1': 70}, res[1])
-        self.assertDictEqual({'sum': 3, 'sum.1': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['sum', 'sum.1']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'sum': 1, 'sum.1': 110}
+        assert res[1] == {'sum': 2, 'sum.1': 70}
+        assert res[2] == {'sum': 3, 'sum.1': 30}
 
     def test_groupby_count_sum(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2957,12 +2952,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {'count': COUNT, 'sum': SUM('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'count', 'sum'], res.column_names())
-        self.assertListEqual([int, int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'count': 3, 'sum': 110}, res[0])
-        self.assertDictEqual({'id': 2, 'count': 2, 'sum': 70}, res[1])
-        self.assertDictEqual({'id': 3, 'count': 1, 'sum': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'count', 'sum']
+        assert res.column_types() == [int, int, int]
+        assert res[0] == {'id': 1, 'count': 3, 'sum': 110}
+        assert res[1] == {'id': 2, 'count': 2, 'sum': 70}
+        assert res[2] == {'id': 3, 'count': 1, 'sum': 30}
 
     def test_groupby_count_sum_def(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2970,12 +2965,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', [COUNT, SUM('another')])
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'count', 'sum'], res.column_names())
-        self.assertListEqual([int, int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'count': 3, 'sum': 110}, res[0])
-        self.assertDictEqual({'id': 2, 'count': 2, 'sum': 70}, res[1])
-        self.assertDictEqual({'id': 3, 'count': 1, 'sum': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'count', 'sum']
+        assert res.column_types() == [int, int, int]
+        assert res[0] == {'id': 1, 'count': 3, 'sum': 110}
+        assert res[1] == {'id': 2, 'count': 2, 'sum': 70}
+        assert res[2] == {'id': 3, 'count': 1, 'sum': 30}
 
     def test_groupby_argmax(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2983,12 +2978,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', ARGMAX('another', 'val'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'argmax'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'argmax': 'f'}, res[0])
-        self.assertDictEqual({'id': 2, 'argmax': 'e'}, res[1])
-        self.assertDictEqual({'id': 3, 'argmax': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'argmax']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'argmax': 'f'}
+        assert res[1] == {'id': 2, 'argmax': 'e'}
+        assert res[2] == {'id': 3, 'argmax': 'c'}
 
     def test_groupby_argmin(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2996,12 +2991,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', ARGMIN('another', 'val'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'argmin'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'argmin': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'argmin': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'argmin': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'argmin']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'argmin': 'a'}
+        assert res[1] == {'id': 2, 'argmin': 'b'}
+        assert res[2] == {'id': 3, 'argmin': 'c'}
 
     def test_groupby_max(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3009,12 +3004,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', MAX('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 60}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 50}, res[1])
-        self.assertDictEqual({'id': 3, 'max': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'max': 60}
+        assert res[1] == {'id': 2, 'max': 50}
+        assert res[2] == {'id': 3, 'max': 30}
 
     def test_groupby_max_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3022,12 +3017,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', MAX('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 60.0}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 50.0}, res[1])
-        self.assertDictEqual({'id': 3, 'max': 30.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'max': 60.0}
+        assert res[1] == {'id': 2, 'max': 50.0}
+        assert res[2] == {'id': 3, 'max': 30.0}
 
     def test_groupby_max_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3035,12 +3030,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', MAX('val'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 'f'}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 'e'}, res[1])
-        self.assertDictEqual({'id': 3, 'max': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'max': 'f'}
+        assert res[1] == {'id': 2, 'max': 'e'}
+        assert res[2] == {'id': 3, 'max': 'c'}
 
     def test_groupby_min(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3048,12 +3043,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', MIN('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 10}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'min': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'min': 10}
+        assert res[1] == {'id': 2, 'min': 20}
+        assert res[2] == {'id': 3, 'min': 30}
 
     def test_groupby_min_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3061,12 +3056,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', MIN('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 10.0}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 20.0}, res[1])
-        self.assertDictEqual({'id': 3, 'min': 30.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'min': 10.0}
+        assert res[1] == {'id': 2, 'min': 20.0}
+        assert res[2] == {'id': 3, 'min': 30.0}
 
     def test_groupby_min_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3074,12 +3069,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', MIN('val'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'min': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'min': 'a'}
+        assert res[1] == {'id': 2, 'min': 'b'}
+        assert res[2] == {'id': 3, 'min': 'c'}
 
     def test_groupby_mean(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3087,12 +3082,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', MEAN('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'mean'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'mean': 110.0 / 3.0}, res[0])
-        self.assertDictEqual({'id': 2, 'mean': 70.0 / 2.0}, res[1])
-        self.assertDictEqual({'id': 3, 'mean': 30.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'mean']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'mean': 110.0 / 3.0}
+        assert res[1] == {'id': 2, 'mean': 70.0 / 2.0}
+        assert res[2] == {'id': 3, 'mean': 30}
 
     def test_groupby_variance(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3100,12 +3095,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', VARIANCE('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'variance'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertAlmostEqual(3800.0 / 9.0, res[0]['variance'])
-        self.assertAlmostEqual(225.0, res[1]['variance'])
-        self.assertDictEqual({'id': 3, 'variance': 0.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'variance']
+        assert res.column_types() == [int, float]
+        assert almost_equal(res[0]['variance'], 3800.0 / 9.0)
+        assert almost_equal(res[1]['variance'], 225.0)
+        assert res[2] == {'id': 3, 'variance': 0.0}
 
     def test_groupby_stdv(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3113,12 +3108,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', STDV('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'stdv'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertAlmostEqual(math.sqrt(3800.0 / 9.0), res[0]['stdv'])
-        self.assertAlmostEqual(math.sqrt(225.0), res[1]['stdv'])
-        self.assertDictEqual({'id': 3, 'stdv': 0.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'stdv']
+        assert res.column_types() == [int, float]
+        assert almost_equal(res[0]['stdv'], math.sqrt(3800.0 / 9.0))
+        assert almost_equal(res[1]['stdv'], math.sqrt(225.0))
+        assert res[2] == {'id': 3, 'stdv': 0.0}
 
     def test_groupby_select_one(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3126,12 +3121,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', SELECT_ONE('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'select-one'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'select-one': 60}, res[0])
-        self.assertDictEqual({'id': 2, 'select-one': 50}, res[1])
-        self.assertDictEqual({'id': 3, 'select-one': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'select-one']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'select-one': 60}
+        assert res[1] == {'id': 2, 'select-one': 50}
+        assert res[2] == {'id': 3, 'select-one': 30}
 
     def test_groupby_select_one_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3139,12 +3134,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', SELECT_ONE('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'select-one'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'select-one': 60.0}, res[0])
-        self.assertDictEqual({'id': 2, 'select-one': 50.0}, res[1])
-        self.assertDictEqual({'id': 3, 'select-one': 30.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'select-one']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'select-one': 60.0}
+        assert res[1] == {'id': 2, 'select-one': 50.0}
+        assert res[2] == {'id': 3, 'select-one': 30.0}
 
     def test_groupby_select_one_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3152,12 +3147,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', SELECT_ONE('val'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'select-one'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'select-one': 'f'}, res[0])
-        self.assertDictEqual({'id': 2, 'select-one': 'e'}, res[1])
-        self.assertDictEqual({'id': 3, 'select-one': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'select-one']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'select-one': 'f'}
+        assert res[1] == {'id': 2, 'select-one': 'e'}
+        assert res[2] == {'id': 3, 'select-one': 'c'}
 
     def test_groupby_concat_list(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3165,12 +3160,12 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', CONCAT('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'concat'], res.column_names())
-        self.assertListEqual([int, list], res.column_types())
-        self.assertDictEqual({'id': 1, 'concat': [10, 40, 60]}, res[0])
-        self.assertDictEqual({'id': 2, 'concat': [20, 50]}, res[1])
-        self.assertDictEqual({'id': 3, 'concat': [30]}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'concat']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'id': 1, 'concat': [10, 40, 60]}
+        assert res[1] == {'id': 2, 'concat': [20, 50]}
+        assert res[2] == {'id': 3, 'concat': [30]}
 
     def test_groupby_concat_dict(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3178,46 +3173,38 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', CONCAT('val', 'another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'concat'], res.column_names())
-        self.assertListEqual([int, dict], res.column_types())
-        self.assertDictEqual({'id': 1, 'concat': {'a': 10, 'd': 40, 'f': 60}}, res[0])
-        self.assertDictEqual({'id': 2, 'concat': {'b': 20, 'e': 50}}, res[1])
-        self.assertDictEqual({'id': 3, 'concat': {'c': 30}}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'concat']
+        assert res.column_types() == [int, dict]
+        assert res[0] == {'id': 1, 'concat': {'a': 10, 'd': 40, 'f': 60}}
+        assert res[1] == {'id': 2, 'concat': {'b': 20, 'e': 50}}
+        assert res[2] == {'id': 3, 'concat': {'c': 30}}
 
     def test_groupby_values_list(self):
-        def comp_results(expected, actual):
-            self.assertDictKeysEqual(expected, actual)
-            self.assertDictValsEqual(expected, actual)
-
         t = XFrame({'id': [1, 2, 3, 1, 2, 1, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
                     'another': [10, 20, 30, 40, 50, 60, 10]})
         res = t.groupby('id', VALUES('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'values'], res.column_names())
-        self.assertListEqual([int, list], res.column_types())
-        comp_results({'id': 1, 'values': [10, 40, 60]}, res[0])
-        comp_results({'id': 2, 'values': [20, 50]}, res[1])
-        self.assertDictEqual({'id': 3, 'values': [30]}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'values']
+        assert res.column_types() == [int, list]
+        assert dict_keys_equal(res[0], {'id': 1, 'values': [10, 40, 60]})
+        assert dict_keys_equal(res[2], {'id': 2, 'values': [20, 50]})
+        assert res[2] == {'id': 3, 'values': [30]}
 
     def test_groupby_values_count_list(self):
-        def comp_results(expected, actual):
-            self.assertDictKeysEqual(expected, actual)
-            self.assertDictValsEqual(expected, actual)
-
         t = XFrame({'id': [1, 2, 3, 1, 2, 1, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
                     'another': [10, 20, 30, 40, 50, 60, 10]})
         res = t.groupby('id', VALUES_COUNT('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'values-count'], res.column_names())
-        self.assertListEqual([int, dict], res.column_types())
-        comp_results({'id': 1, 'values-count': {10: 2, 40: 1, 60: 1}}, res[0])
-        comp_results({'id': 2, 'values-count': {20: 1, 50: 1}}, res[1])
-        self.assertDictEqual({'id': 3, 'values-count': {30: 1}}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'values-count']
+        assert res.column_types() == [int, dict]
+        assert dict_keys_equal(res[0], {'id': 1, 'values-count': {10: 2, 40: 1, 60: 1}})
+        assert dict_keys_equal(res[2], {'id': 2, 'values-count': {20: 1, 50: 1}})
+        assert res[2] == {'id': 3, 'values-count': {30: 1}}
 
     def test_groupby_quantile(self):
         # not implemented
@@ -3225,7 +3212,7 @@ class TestXFrameGroupbyAggregators(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
+class TestXFrameGroupbyAggregatorsWithMissingValues:
     """
     Tests XFrame groupby aggregators with missing values
     """
@@ -3237,13 +3224,13 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', COUNT)
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(4, res)
-        self.assertListEqual(['id', 'count'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': None, 'count': 2}, res[0])
-        self.assertDictEqual({'id': 1, 'count': 2}, res[1])
-        self.assertDictEqual({'id': 2, 'count': 1}, res[2])
-        self.assertDictEqual({'id': 3, 'count': 1}, res[3])
+        assert len(res) == 4
+        assert res.column_names() == ['id', 'count']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': None, 'count': 2}
+        assert res[1] == {'id': 1, 'count': 2}
+        assert res[2] == {'id': 2, 'count': 1}
+        assert res[3] == {'id': 3, 'count': 1}
 
     def test_groupby_sum(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3251,12 +3238,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', SUM('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'sum'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'sum': 70}, res[0])
-        self.assertDictEqual({'id': 2, 'sum': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'sum': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'sum']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'sum': 70}
+        assert res[1] == {'id': 2, 'sum': 20}
+        assert res[2] == {'id': 3, 'sum': 30}
 
     def test_groupby_argmax(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3264,12 +3251,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, None, None]})
         res = t.groupby('id', {'argmax': ARGMAX('another', 'val')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'argmax'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'argmax': 'd'}, res[0])
-        self.assertDictEqual({'id': 2, 'argmax': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'argmax': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'argmax']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'argmax': 'd'}
+        assert res[1] == {'id': 2, 'argmax': 'b'}
+        assert res[2] == {'id': 3, 'argmax': 'c'}
 
     def test_groupby_argmin(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3277,12 +3264,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, None, 30, 40, 50, 60]})
         res = t.groupby('id', {'argmin': ARGMIN('another', 'val')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'argmin'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'argmin': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'argmin': 'e'}, res[1])
-        self.assertDictEqual({'id': 3, 'argmin': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'argmin']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'argmin': 'a'}
+        assert res[1] == {'id': 2, 'argmin': 'e'}
+        assert res[2] == {'id': 3, 'argmin': 'c'}
 
     def test_groupby_max(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3290,12 +3277,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', {'max': MAX('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 60}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'max': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'max': 60}
+        assert res[1] == {'id': 2, 'max': 20}
+        assert res[2] == {'id': 3, 'max': 30}
 
     def test_groupby_max_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3303,12 +3290,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, float('nan'), float('nan'), 60.0]})
         res = t.groupby('id', {'max': MAX('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 60.0}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 20.0}, res[1])
-        self.assertDictEqual({'id': 3, 'max': 30.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'max': 60.0}
+        assert res[1] == {'id': 2, 'max': 20.0}
+        assert res[2] == {'id': 3, 'max': 30.0}
 
     def test_groupby_max_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3316,12 +3303,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', {'max': MAX('val')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 'f'}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'max': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'max': 'f'}
+        assert res[1] == {'id': 2, 'max': 'b'}
+        assert res[2] == {'id': 3, 'max': 'c'}
 
     def test_groupby_min(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3329,12 +3316,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [None, None, 30, 40, 50, 60]})
         res = t.groupby('id', {'min': MIN('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 40}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 50}, res[1])
-        self.assertDictEqual({'id': 3, 'min': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'min': 40}
+        assert res[1] == {'id': 2, 'min': 50}
+        assert res[2] == {'id': 3, 'min': 30}
 
     def test_groupby_min_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3342,12 +3329,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [None, None, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', {'min': MIN('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 40.0}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 50.0}, res[1])
-        self.assertDictEqual({'id': 3, 'min': 30.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'min': 40.0}
+        assert res[1] == {'id': 2, 'min': 50.0}
+        assert res[2] == {'id': 3, 'min': 30.0}
 
     def test_groupby_min_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3355,12 +3342,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', {'min': MIN('val')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 'd'}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 'e'}, res[1])
-        self.assertDictEqual({'id': 3, 'min': 'c'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'min': 'd'}
+        assert res[1] == {'id': 2, 'min': 'e'}
+        assert res[2] == {'id': 3, 'min': 'c'}
 
     def test_groupby_mean(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3368,12 +3355,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', {'mean': MEAN('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'mean'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'mean': 70.0 / 2.0}, res[0])
-        self.assertDictEqual({'id': 2, 'mean': 20.0}, res[1])
-        self.assertDictEqual({'id': 3, 'mean': 30.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'mean']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'mean': 70.0 / 2.0}
+        assert res[1] == {'id': 2, 'mean': 20.0}
+        assert res[2] == {'id': 3, 'mean': 30.0}
 
     def test_groupby_variance(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3381,12 +3368,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', {'variance': VARIANCE('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'variance'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertAlmostEqual(2500.0 / 4.0, res[0]['variance'])
-        self.assertAlmostEqual(0.0, res[1]['variance'])
-        self.assertDictEqual({'id': 3, 'variance': 0.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'variance']
+        assert res.column_types() == [int, float]
+        assert almost_equal(res[0]['variance'], 2500.0 / 4.0)
+        assert almost_equal(res[1]['variance'], 0.0)
+        assert res[2] == {'id': 3, 'variance': 0.0}
 
     def test_groupby_stdv(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3394,12 +3381,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', {'stdv': STDV('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'stdv'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertAlmostEqual(math.sqrt(2500.0 / 4.0), res[0]['stdv'])
-        self.assertAlmostEqual(math.sqrt(0.0), res[1]['stdv'])
-        self.assertDictEqual({'id': 3, 'stdv': 0.0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'stdv']
+        assert res.column_types() == [int, float]
+        assert almost_equal(res[0]['stdv'], math.sqrt(2500.0 / 4.0))
+        assert almost_equal(res[1]['stdv'], 0.0)
+        assert res[2] == {'id': 3, 'stdv': 0.0}
 
     def test_groupby_select_one(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3407,12 +3394,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', {'select_one': SELECT_ONE('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'select_one'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'select_one': 60}, res[0])
-        self.assertDictEqual({'id': 2, 'select_one': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'select_one': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'select_one']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'select_one': 60}
+        assert res[1] == {'id': 2, 'select_one': 20}
+        assert res[2] == {'id': 3, 'select_one': 30}
 
     def test_groupby_concat_list(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3420,12 +3407,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', {'concat': CONCAT('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'concat'], res.column_names())
-        self.assertListEqual([int, list], res.column_types())
-        self.assertDictEqual({'id': 1, 'concat': [10, 60]}, res[0])
-        self.assertDictEqual({'id': 2, 'concat': [20]}, res[1])
-        self.assertDictEqual({'id': 3, 'concat': [30]}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'concat']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'id': 1, 'concat': [10, 60]}
+        assert res[1] == {'id': 2, 'concat': [20]}
+        assert res[2] == {'id': 3, 'concat': [30]}
 
     def test_groupby_concat_dict(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3433,16 +3420,16 @@ class TestXFrameGroupbyAggregatorsWithMissingValues(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {'concat': CONCAT('val', 'another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'concat'], res.column_names())
-        self.assertListEqual([int, dict], res.column_types())
-        self.assertDictEqual({'id': 1, 'concat': {'a': 10, 'f': 60}}, res[0])
-        self.assertDictEqual({'id': 2, 'concat': {'b': 20}}, res[1])
-        self.assertDictEqual({'id': 3, 'concat': {'c': 30}}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'concat']
+        assert res.column_types() == [int, dict]
+        assert res[0] == {'id': 1, 'concat': {'a': 10, 'f': 60}}
+        assert res[1] == {'id': 2, 'concat': {'b': 20}}
+        assert res[2] == {'id': 3, 'concat': {'c': 30}}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
+class TestXFrameGroupbyAggregatorsEmpty:
     """
     Tests XFrame groupby aggregators with missing values
     """
@@ -3454,12 +3441,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', COUNT)
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'count'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': None, 'count': 3}, res[0])
-        self.assertDictEqual({'id': 1, 'count': 2}, res[1])
-        self.assertDictEqual({'id': 2, 'count': 1}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'count']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': None, 'count': 3}
+        assert res[1] == {'id': 1, 'count': 2}
+        assert res[2] == {'id': 2, 'count': 1}
 
     def test_groupby_sum(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3467,12 +3454,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, None, None, None, 60]})
         res = t.groupby('id', SUM('another'))
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'sum'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'sum': 70}, res[0])
-        self.assertDictEqual({'id': 2, 'sum': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'sum': 0}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'sum']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'sum': 70}
+        assert res[1] == {'id': 2, 'sum': 20}
+        assert res[2] == {'id': 3, 'sum': 0}
 
     def test_groupby_argmax(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3480,12 +3467,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, None, 40, None, None]})
         res = t.groupby('id', {'argmax': ARGMAX('another', 'val')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'argmax'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'argmax': 'd'}, res[0])
-        self.assertDictEqual({'id': 2, 'argmax': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'argmax': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'argmax']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'argmax': 'd'}
+        assert res[1] == {'id': 2, 'argmax': 'b'}
+        assert res[2] == {'id': 3, 'argmax': None}
 
     def test_groupby_argmin(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3493,12 +3480,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, None, None, 40, 50, 60]})
         res = t.groupby('id', {'argmin': ARGMIN('another', 'val')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'argmin'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'argmin': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'argmin': 'e'}, res[1])
-        self.assertDictEqual({'id': 3, 'argmin': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'argmin']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'argmin': 'a'}
+        assert res[1] == {'id': 2, 'argmin': 'e'}
+        assert res[2] == {'id': 3, 'argmin': None}
 
     def test_groupby_max(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3506,12 +3493,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, None, None, None, 60]})
         res = t.groupby('id', {'max': MAX('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 60}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'max': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'max': 60}
+        assert res[1] == {'id': 2, 'max': 20}
+        assert res[2] == {'id': 3, 'max': None}
 
     def test_groupby_max_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3519,12 +3506,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10.0, 20.0, None, float('nan'), float('nan'), 60.0]})
         res = t.groupby('id', {'max': MAX('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 60.0}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 20.0}, res[1])
-        self.assertDictEqual({'id': 3, 'max': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'max': 60.0}
+        assert res[1] == {'id': 2, 'max': 20.0}
+        assert res[2] == {'id': 3, 'max': None}
 
     def test_groupby_max_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3532,12 +3519,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', {'max': MAX('val')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'max'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'max': 'f'}, res[0])
-        self.assertDictEqual({'id': 2, 'max': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'max': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'max']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'max': 'f'}
+        assert res[1] == {'id': 2, 'max': 'b'}
+        assert res[2] == {'id': 3, 'max': None}
 
     def test_groupby_min(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3545,12 +3532,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [None, None, None, 40, 50, 60]})
         res = t.groupby('id', {'min': MIN('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 40}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 50}, res[1])
-        self.assertDictEqual({'id': 3, 'min': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'min': 40}
+        assert res[1] == {'id': 2, 'min': 50}
+        assert res[2] == {'id': 3, 'min': None}
 
     def test_groupby_min_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3558,12 +3545,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [None, None, None, 40.0, 50.0, 60.0]})
         res = t.groupby('id', {'min': MIN('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 40.0}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 50.0}, res[1])
-        self.assertDictEqual({'id': 3, 'min': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'min': 40.0}
+        assert res[1] == {'id': 2, 'min': 50.0}
+        assert res[2] == {'id': 3, 'min': None}
 
     def test_groupby_min_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3571,12 +3558,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', {'min': MIN('val')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'min'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'min': 'd'}, res[0])
-        self.assertDictEqual({'id': 2, 'min': 'e'}, res[1])
-        self.assertDictEqual({'id': 3, 'min': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'min']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'min': 'd'}
+        assert res[1] == {'id': 2, 'min': 'e'}
+        assert res[2] == {'id': 3, 'min': None}
 
     def test_groupby_mean(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3584,12 +3571,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, None, None, None, 60]})
         res = t.groupby('id', {'mean': MEAN('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'mean'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertDictEqual({'id': 1, 'mean': 70.0 / 2.0}, res[0])
-        self.assertDictEqual({'id': 2, 'mean': 20.0}, res[1])
-        self.assertDictEqual({'id': 3, 'mean': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'mean']
+        assert res.column_types() == [int, float]
+        assert res[0] == {'id': 1, 'mean': 70.0 / 2.0}
+        assert res[1] == {'id': 2, 'mean': 20.0}
+        assert res[2] == {'id': 3, 'mean': None}
 
     def test_groupby_variance(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3597,12 +3584,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, None, None, None, 60]})
         res = t.groupby('id', {'variance': VARIANCE('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'variance'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertAlmostEqual(2500.0 / 4.0, res[0]['variance'])
-        self.assertAlmostEqual(0.0, res[1]['variance'])
-        self.assertDictEqual({'id': 3, 'variance': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'variance']
+        assert res.column_types() == [int, float]
+        assert almost_equal(res[0]['variance'], 2500.0 / 4.0)
+        assert almost_equal(res[1]['variance'], 0.0)
+        assert res[2] == {'id': 3, 'variance': None}
 
     def test_groupby_stdv(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3610,12 +3597,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, None, None, None, 60]})
         res = t.groupby('id', {'stdv': STDV('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'stdv'], res.column_names())
-        self.assertListEqual([int, float], res.column_types())
-        self.assertAlmostEqual(math.sqrt(2500.0 / 4.0), res[0]['stdv'])
-        self.assertAlmostEqual(math.sqrt(0.0), res[1]['stdv'])
-        self.assertDictEqual({'id': 3, 'stdv': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'stdv']
+        assert res.column_types() == [int, float]
+        assert almost_equal(res[0]['stdv'], math.sqrt(2500.0 / 4.0))
+        assert almost_equal(res[1]['stdv'], math.sqrt(0.0))
+        assert res[2] == {'id': 3, 'stdv': None}
 
     def test_groupby_select_one(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3623,12 +3610,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, None, None, None, 60]})
         res = t.groupby('id', {'select_one': SELECT_ONE('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'select_one'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'select_one': 60}, res[0])
-        self.assertDictEqual({'id': 2, 'select_one': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'select_one': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'select_one']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'select_one': 60}
+        assert res[1] == {'id': 2, 'select_one': 20}
+        assert res[2] == {'id': 3, 'select_one': None}
 
     def test_groupby_concat_list(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3636,12 +3623,12 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, None, None, None, 60]})
         res = t.groupby('id', {'concat': CONCAT('another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'concat'], res.column_names())
-        self.assertListEqual([int, list], res.column_types())
-        self.assertDictEqual({'id': 1, 'concat': [10, 60]}, res[0])
-        self.assertDictEqual({'id': 2, 'concat': [20]}, res[1])
-        self.assertDictEqual({'id': 3, 'concat': []}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'concat']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'id': 1, 'concat': [10, 60]}
+        assert res[1] == {'id': 2, 'concat': [20]}
+        assert res[2] == {'id': 3, 'concat': []}
 
     def test_groupby_concat_dict(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3649,16 +3636,16 @@ class TestXFrameGroupbyAggregatorsEmpty(XFrameUnitTestCase):
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {'concat': CONCAT('val', 'another')})
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'concat'], res.column_names())
-        self.assertListEqual([int, dict], res.column_types())
-        self.assertDictEqual({'id': 1, 'concat': {'a': 10, 'f': 60}}, res[0])
-        self.assertDictEqual({'id': 2, 'concat': {'b': 20}}, res[1])
-        self.assertDictEqual({'id': 3, 'concat': {}}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'concat']
+        assert res.column_types() == [int, dict]
+        assert res[0] == {'id': 1, 'concat': {'a': 10, 'f': 60}}
+        assert res[1] == {'id': 2, 'concat': {'b': 20}}
+        assert res[2] == {'id': 3, 'concat': {}}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameJoin(XFrameUnitTestCase):
+class TestXFrameJoin:
     """
     Tests XFrame join
     """
@@ -3667,130 +3654,130 @@ class TestXFrameJoin(XFrameUnitTestCase):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 3], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2).sort('id').head()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'doubled': 'aa'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'doubled': 'bb'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c', 'doubled': 'cc'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val', 'doubled']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val': 'a', 'doubled': 'aa'}
+        assert res[1] == {'id': 2, 'val': 'b', 'doubled': 'bb'}
+        assert res[2] == {'id': 3, 'val': 'c', 'doubled': 'cc'}
 
     def test_join_rename(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 3], 'val': ['aa', 'bb', 'cc']})
         res = t1.join(t2, on='id').sort('id').head()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val', 'val.1'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'val.1': 'aa'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'val.1': 'bb'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c', 'val.1': 'cc'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val', 'val.1']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val': 'a', 'val.1': 'aa'}
+        assert res[1] == {'id': 2, 'val': 'b', 'val.1': 'bb'}
+        assert res[2] == {'id': 3, 'val': 'c', 'val.1': 'cc'}
 
     def test_join_compound_key(self):
         t1 = XFrame({'id1': [1, 2, 3], 'id2': [10, 20, 30], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id1': [1, 2, 3], 'id2': [10, 20, 30], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2).sort('id1').head()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id1', 'id2', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, int, str, str], res.column_types())
-        self.assertDictEqual({'id1': 1, 'id2': 10, 'val': 'a', 'doubled': 'aa'}, res[0])
-        self.assertDictEqual({'id1': 2, 'id2': 20, 'val': 'b', 'doubled': 'bb'}, res[1])
-        self.assertDictEqual({'id1': 3, 'id2': 30, 'val': 'c', 'doubled': 'cc'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id1', 'id2', 'val', 'doubled']
+        assert res.column_types() == [int, int, str, str]
+        assert res[0] == {'id1': 1, 'id2': 10, 'val': 'a', 'doubled': 'aa'}
+        assert res[1] == {'id1': 2, 'id2': 20, 'val': 'b', 'doubled': 'bb'}
+        assert res[2] == {'id1': 3, 'id2': 30, 'val': 'c', 'doubled': 'cc'}
 
     def test_join_dict_key(self):
         t1 = XFrame({'id1': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id2': [1, 2, 3], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2, on={'id1': 'id2'}).sort('id1').head()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id1', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id1': 1, 'val': 'a', 'doubled': 'aa'}, res[0])
-        self.assertDictEqual({'id1': 2, 'val': 'b', 'doubled': 'bb'}, res[1])
-        self.assertDictEqual({'id1': 3, 'val': 'c', 'doubled': 'cc'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id1', 'val', 'doubled']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id1': 1, 'val': 'a', 'doubled': 'aa'}
+        assert res[1] == {'id1': 2, 'val': 'b', 'doubled': 'bb'}
+        assert res[2] == {'id1': 3, 'val': 'c', 'doubled': 'cc'}
 
     def test_join_partial(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 4], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2).sort('id').head()
-        self.assertEqualLen(2, res)
-        self.assertListEqual(['id', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'doubled': 'aa'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'doubled': 'bb'}, res[1])
+        assert len(res) == 2
+        assert res.column_names() == ['id', 'val', 'doubled']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val': 'a', 'doubled': 'aa'}
+        assert res[1] == {'id': 2, 'val': 'b', 'doubled': 'bb'}
 
     def test_join_empty(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [4, 5, 6], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2).head()
-        self.assertEqualLen(0, res)
-        self.assertListEqual(['id', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
+        assert len(res) == 0
+        assert res.column_names() == ['id', 'val', 'doubled']
+        assert res.column_types() == [int, str, str]
 
     def test_join_on_val(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [10, 20, 30], 'val': ['a', 'b', 'c']})
         res = t1.join(t2, on='val').sort('id').head()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val', 'id.1'], res.column_names())
-        self.assertListEqual([int, str, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'id.1': 10}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'id.1': 20}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c', 'id.1': 30}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val', 'id.1']
+        assert res.column_types() == [int, str, int]
+        assert res[0] == {'id': 1, 'val': 'a', 'id.1': 10}
+        assert res[1] == {'id': 2, 'val': 'b', 'id.1': 20}
+        assert res[2] == {'id': 3, 'val': 'c', 'id.1': 30}
 
     def test_join_inner(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 4], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2, how='inner').sort('id').head()
-        self.assertEqualLen(2, res)
-        self.assertListEqual(['id', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'doubled': 'aa'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'doubled': 'bb'}, res[1])
+        assert len(res) == 2
+        assert res.column_names() == ['id', 'val', 'doubled']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val': 'a', 'doubled': 'aa'}
+        assert res[1] == {'id': 2, 'val': 'b', 'doubled': 'bb'}
 
     def test_join_left(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 4], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2, how='left').sort('id').head()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'doubled': 'aa'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'doubled': 'bb'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c', 'doubled': None}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val', 'doubled']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val': 'a', 'doubled': 'aa'}
+        assert res[1] == {'id': 2, 'val': 'b', 'doubled': 'bb'}
+        assert res[2] == {'id': 3, 'val': 'c', 'doubled': None}
 
     def test_join_right(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 4], 'doubled': ['aa', 'bb', 'dd']})
         res = t1.join(t2, how='right').sort('id').head()
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'doubled': 'aa'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'doubled': 'bb'}, res[1])
-        self.assertDictEqual({'id': 4, 'val': None, 'doubled': 'dd'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val', 'doubled']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val': 'a', 'doubled': 'aa'}
+        assert res[1] == {'id': 2, 'val': 'b', 'doubled': 'bb'}
+        assert res[2] == {'id': 4, 'val': None, 'doubled': 'dd'}
 
     def test_join_full(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 4], 'doubled': ['aa', 'bb', 'dd']})
         res = t1.join(t2, how='full').sort('id').head()
-        self.assertEqualLen(4, res)
-        self.assertListEqual(['id', 'val', 'doubled'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'doubled': 'aa'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'doubled': 'bb'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c', 'doubled': None}, res[2])
-        self.assertDictEqual({'id': 4, 'val': None, 'doubled': 'dd'}, res[3])
+        assert len(res) == 4
+        assert res.column_names() == ['id', 'val', 'doubled']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val': 'a', 'doubled': 'aa'}
+        assert res[1] == {'id': 2, 'val': 'b', 'doubled': 'bb'}
+        assert res[2] == {'id': 3, 'val': 'c', 'doubled': None}
+        assert res[3] == {'id': 4, 'val': None, 'doubled': 'dd'}
 
     def test_join_cartesian(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [10, 20, 30], 'doubled': ['aa', 'bb', 'cc']})
         res = t1.join(t2, how='cartesian').sort(['id', 'id.1']).head()
-        self.assertEqualLen(9, res)
-        self.assertListEqual(['id', 'val', 'doubled', 'id.1'], res.column_names())
-        self.assertListEqual([int, str, str, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'val': 'a', 'doubled': 'aa', 'id.1': 10}, res[0])
-        self.assertDictEqual({'id': 1, 'val': 'a', 'doubled': 'bb', 'id.1': 20}, res[1])
-        self.assertDictEqual({'id': 2, 'val': 'b', 'doubled': 'aa', 'id.1': 10}, res[3])
-        self.assertDictEqual({'id': 3, 'val': 'c', 'doubled': 'cc', 'id.1': 30}, res[8])
+        assert len(res) == 9
+        assert res.column_names() == ['id', 'val', 'doubled', 'id.1']
+        assert res.column_types() == [int, str, str, int]
+        assert res[0] == {'id': 1, 'val': 'a', 'doubled': 'aa', 'id.1': 10}
+        assert res[1] == {'id': 1, 'val': 'a', 'doubled': 'bb', 'id.1': 20}
+        assert res[3] == {'id': 2, 'val': 'b', 'doubled': 'aa', 'id.1': 10}
+        assert res[8] == {'id': 3, 'val': 'c', 'doubled': 'cc', 'id.1': 30}
 
     def test_join_bad_how(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -3825,7 +3812,7 @@ class TestXFrameJoin(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSplitDatetime(XFrameUnitTestCase):
+class TestXFrameSplitDatetime:
     """
     Tests XFrame split_datetime
     """
@@ -3835,18 +3822,18 @@ class TestXFrameSplitDatetime(XFrameUnitTestCase):
                                              datetime(2012, 2, 2),
                                              datetime(2013, 3, 3)]})
         res = t.split_datetime('val')
-        self.assertListEqual(['id',
-                              'val.year', 'val.month', 'val.day',
-                              'val.hour', 'val.minute', 'val.second'], res.column_names())
-        self.assertListEqual([int, int, int, int, int, int, int], res.column_types())
-        self.assertEqualLen(3, res)
-        self.assertColumnEqual([1, 2, 3], res['id'])
-        self.assertColumnEqual([2011, 2012, 2013], res['val.year'])
-        self.assertColumnEqual([1, 2, 3], res['val.month'])
-        self.assertColumnEqual([1, 2, 3], res['val.day'])
-        self.assertColumnEqual([0, 0, 0], res['val.hour'])
-        self.assertColumnEqual([0, 0, 0], res['val.minute'])
-        self.assertColumnEqual([0, 0, 0], res['val.second'])
+        assert len(res) == 3
+        assert res.column_names() == ['id',
+                                      'val.year', 'val.month', 'val.day',
+                                      'val.hour', 'val.minute', 'val.second']
+        assert res.column_types() == [int, int, int, int, int, int, int]
+        assert list(res['id']) == [1, 2, 3]
+        assert list(res['val.year']) == [2011, 2012, 2013]
+        assert list(res['val.month']) == [1, 2, 3]
+        assert list(res['val.day']) == [1, 2, 3]
+        assert list(res['val.hour']) == [0, 0, 0]
+        assert list(res['val.minute']) == [0, 0, 0]
+        assert list(res['val.second']) == [0, 0, 0]
 
     # noinspection PyTypeChecker
     def test_split_datetime_col_conflict(self):
@@ -3856,12 +3843,12 @@ class TestXFrameSplitDatetime(XFrameUnitTestCase):
                             datetime(2012, 2, 2),
                             datetime(2013, 3, 3)]})
         res = t.split_datetime('val', limit='year')
-        self.assertListEqual(['id', 'val.year', 'val.year.1'], res.column_names())
-        self.assertListEqual([int, str, int], res.column_types())
-        self.assertEqualLen(3, res)
-        self.assertColumnEqual([1, 2, 3], res['id'])
-        self.assertColumnEqual(['x', 'y', 'z'], res['val.year'])
-        self.assertColumnEqual([2011, 2012, 2013], res['val.year.1'])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val.year', 'val.year.1']
+        assert res.column_types() == [int, str, int]
+        assert list(res['id']) == [1, 2, 3]
+        assert list(res['val.year']) == ['x', 'y', 'z']
+        assert list(res['val.year.1']) == [2011, 2012, 2013]
 
     def test_split_datetime_bad_col(self):
         t = XFrame({'id': [1, 2, 3], 'val': [datetime(2011, 1, 1),
@@ -3872,7 +3859,7 @@ class TestXFrameSplitDatetime(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameFilterby(XFrameUnitTestCase):
+class TestXFrameFilterby:
     """
     Tests XFrame filterby
     """
@@ -3880,14 +3867,14 @@ class TestXFrameFilterby(XFrameUnitTestCase):
     def test_filterby_int_id(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.filterby(1, 'id').sort('id')
-        self.assertEqualLen(1, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
+        assert len(res) == 1
+        assert res[0] == {'id': 1, 'val': 'a'}
 
     def test_filterby_str_id(self):
         t = XFrame({'id': ['qaz', 'wsx', 'edc', 'rfv'], 'val': ['a', 'b', 'c', 'd']})
         res = t.filterby('qaz', 'id').sort('id')
-        self.assertEqualLen(1, res)
-        self.assertDictEqual({'id': 'qaz', 'val': 'a'}, res[0])
+        assert len(res) == 1
+        assert res[0] == {'id': 'qaz', 'val': 'a'}
 
     def test_filterby_object_id(self):
         t = XFrame({'id': [datetime(2016, 2, 1, 0, 0),
@@ -3896,85 +3883,85 @@ class TestXFrameFilterby(XFrameUnitTestCase):
                            datetime(2016, 2, 4, 0, 0)],
                     'val': ['a', 'b', 'c', 'd']})
         res = t.filterby(datetime(2016, 2, 1, 0, 0), 'id').sort('id')
-        self.assertEqualLen(1, res)
-        self.assertDictEqual({'id': datetime(2016, 2, 1, 0, 0), 'val': 'a'}, res[0])
+        assert len(res) == 1
+        assert res[0] == {'id': datetime(2016, 2, 1, 0, 0), 'val': 'a'}
 
     def test_filterby_list_id(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.filterby([1, 3], 'id').sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 3, 'val': 'c'}
 
     def test_filterby_tuple_id(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.filterby((1, 3), 'id').sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 3, 'val': 'c'}
 
     def test_filterby_iterable_id(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        res = t.filterby(xrange(3), 'id').sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
+        res = t.filterby(range(3), 'id').sort('id')
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
 
     def test_filterby_set_id(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.filterby({1, 3}, 'id').sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 3, 'val': 'c'}
 
     def test_filterby_list_val(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.filterby(['a', 'b'], 'val').sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertColumnEqual([1, 2], res['id'])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert list(res['id']) == [1, 2]
 
     def test_filterby_xarray(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         a = XArray([1, 3])
         res = t.filterby(a, 'id').sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
-        self.assertColumnEqual([1, 3], res['id'])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 3, 'val': 'c'}
+        assert list(res['id']) == [1, 3]
 
     def test_filterby_function(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.filterby(lambda x: x != 2, 'id').sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
-        self.assertColumnEqual([1, 3], res['id'])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 3, 'val': 'c'}
+        assert list(res['id']) == [1, 3]
 
     def test_filterby_function_exclude(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.filterby(lambda x: x == 2, 'id', exclude=True).sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
-        self.assertColumnEqual([1, 3], res['id'])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 3, 'val': 'c'}
+        assert list(res['id']) == [1, 3]
 
     def test_filterby_function_row(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.filterby(lambda row: row['id'] != 2, None).sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
-        self.assertColumnEqual([1, 3], res['id'])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 3, 'val': 'c'}
+        assert list(res['id']) == [1, 3]
 
     def test_filterby_list_exclude(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.filterby([1, 3], 'id', exclude=True).sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[0])
-        self.assertDictEqual({'id': 4, 'val': 'd'}, res[1])
-        self.assertColumnEqual([2, 4], res['id'])
+        assert len(res) == 2
+        assert res[0] == {'id': 2, 'val': 'b'}
+        assert res[1] == {'id': 4, 'val': 'd'}
+        assert list(res['id']) == [2, 4]
 
     def test_filterby_bad_column_type_list(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
@@ -3985,10 +3972,10 @@ class TestXFrameFilterby(XFrameUnitTestCase):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         a = XArray([1, 3])
         res = t.filterby(a, 'id', exclude=True).sort('id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[0])
-        self.assertDictEqual({'id': 4, 'val': 'd'}, res[1])
-        self.assertColumnEqual([2, 4], res['id'])
+        assert len(res) == 2
+        assert res[0] == {'id': 2, 'val': 'b'}
+        assert res[1] == {'id': 4, 'val': 'd'}
+        assert list(res['id']) == [2, 4]
 
     # noinspection PyTypeChecker
     def test_filterby_bad_column_name_type(self):
@@ -4020,7 +4007,7 @@ class TestXFrameFilterby(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFramePackColumnsList(XFrameUnitTestCase):
+class TestXFramePackColumnsList:
     """
     Tests XFrame pack_columns into list
     """
@@ -4028,86 +4015,86 @@ class TestXFramePackColumnsList(XFrameUnitTestCase):
     def test_pack_columns(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new')
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([list], res.dtype())
-        self.assertListEqual(['new'], res.column_names())
-        self.assertDictEqual({'new': [1, 'a']}, res[0])
-        self.assertDictEqual({'new': [2, 'b']}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.column_names() == ['new']
+        assert res.column_types() == [list]
+        assert res[0] == {'new': [1, 'a']}
+        assert res[1] == {'new': [2, 'b']}
 
     def test_pack_columns_all(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.pack_columns(new_column_name='new')
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([list], res.dtype())
-        self.assertListEqual(['new'], res.column_names())
-        self.assertDictEqual({'new': [1, 'a']}, res[0])
-        self.assertDictEqual({'new': [2, 'b']}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.column_names() == ['new']
+        assert res.column_types() == [list]
+        assert res[0] == {'new': [1, 'a']}
+        assert res[1] == {'new': [2, 'b']}
 
     def test_pack_columns_prefix(self):
         t = XFrame({'x.id': [1, 2, 3, 4], 'x.val': ['a', 'b', 'c', 'd'], 'another': [10, 20, 30, 40]})
         res = t.pack_columns(column_prefix='x', new_column_name='new')
-        self.assertEqualLen(4, res)
-        self.assertEqual(2, res.num_columns())
-        self.assertListEqual([int, list], res.dtype())
-        self.assertListEqual(['another', 'new'], res.column_names())
-        self.assertDictEqual({'another': 10, 'new': [1, 'a']}, res[0])
-        self.assertDictEqual({'another': 20, 'new': [2, 'b']}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 2
+        assert res.column_names() == ['another', 'new']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'another': 10, 'new': [1, 'a']}
+        assert res[1] == {'another': 20, 'new': [2, 'b']}
 
     def test_pack_columns_rest(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd'], 'another': [10, 20, 30, 40]})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new')
-        self.assertEqualLen(4, res)
-        self.assertEqual(2, res.num_columns())
-        self.assertListEqual([int, list], res.dtype())
-        self.assertListEqual(['another', 'new'], res.column_names())
-        self.assertDictEqual({'another': 10, 'new': [1, 'a']}, res[0])
-        self.assertDictEqual({'another': 20, 'new': [2, 'b']}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 2
+        assert res.column_names() == ['another', 'new']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'another': 10, 'new': [1, 'a']}
+        assert res[1] == {'another': 20, 'new': [2, 'b']}
 
     def test_pack_columns_na(self):
         t = XFrame({'id': [1, 2, None, 4], 'val': ['a', 'b', 'c', None]})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new', fill_na='x')
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([list], res.dtype())
-        self.assertListEqual(['new'], res.column_names())
-        self.assertDictEqual({'new': [1, 'a']}, res[0])
-        self.assertDictEqual({'new': [2, 'b']}, res[1])
-        self.assertDictEqual({'new': ['x', 'c']}, res[2])
-        self.assertDictEqual({'new': [4, 'x']}, res[3])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.column_names() == ['new']
+        assert res.column_types() == [list]
+        assert res[0] == {'new': [1, 'a']}
+        assert res[1] == {'new': [2, 'b']}
+        assert res[2] == {'new': ['x', 'c']}
+        assert res[3] == {'new': [4, 'x']}
 
     def test_pack_columns_fill_na(self):
         t = XFrame({'id': [1, 2, None, 4], 'val': ['a', 'b', 'c', None]})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new', fill_na=99)
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([list], res.dtype())
-        self.assertListEqual(['new'], res.column_names())
-        self.assertDictEqual({'new': [1, 'a']}, res[0])
-        self.assertDictEqual({'new': [2, 'b']}, res[1])
-        self.assertDictEqual({'new': [99, 'c']}, res[2])
-        self.assertDictEqual({'new': [4, 99]}, res[3])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.column_names() == ['new']
+        assert res.column_types() == [list]
+        assert res[0] == {'new': [1, 'a']}
+        assert res[1] == {'new': [2, 'b']}
+        assert res[2] == {'new': [99, 'c']}
+        assert res[3] == {'new': [4, 99]}
 
     def test_pack_columns_def_new_name(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.pack_columns(columns=['id', 'val'])
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([list], res.dtype())
-        self.assertListEqual(['X.0'], res.column_names())
-        self.assertDictEqual({'X.0': [1, 'a']}, res[0])
-        self.assertDictEqual({'X.0': [2, 'b']}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.column_names() == ['X.0']
+        assert res.column_types() == [list]
+        assert res[0] == {'X.0': [1, 'a']}
+        assert res[1] == {'X.0': [2, 'b']}
 
     def test_pack_columns_prefix_def_new_name(self):
         t = XFrame({'x.id': [1, 2, 3, 4], 'x.val': ['a', 'b', 'c', 'd'], 'another': [10, 20, 30, 40]})
         res = t.pack_columns(column_prefix='x')
-        self.assertEqualLen(4, res)
-        self.assertEqual(2, res.num_columns())
-        self.assertListEqual([int, list], res.dtype())
-        self.assertListEqual(['another', 'x'], res.column_names())
-        self.assertDictEqual({'another': 10, 'x': [1, 'a']}, res[0])
-        self.assertDictEqual({'another': 20, 'x': [2, 'b']}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 2
+        assert res.column_names() == ['another', 'x']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'another': 10, 'x': [1, 'a']}
+        assert res[1] == {'another': 20, 'x': [2, 'b']}
 
     # noinspection PyTypeChecker
     def test_pack_columns_bad_col_spec(self):
@@ -4161,13 +4148,13 @@ class TestXFramePackColumnsList(XFrameUnitTestCase):
     def test_pack_columns_good_new_col_name_dup_key(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='id')
-        self.assertListEqual(['id'], res.column_names())
-        self.assertDictEqual({'id': [1, 'a']}, res[0])
-        self.assertDictEqual({'id': [2, 'b']}, res[1])
+        assert res.column_names() == ['id']
+        assert res[0] == {'id': [1, 'a']}
+        assert res[1] == {'id': [2, 'b']}
 
 
 # noinspection PyClassHasNoInit
-class TestXFramePackColumnsDict(XFrameUnitTestCase):
+class TestXFramePackColumnsDict:
     """
     Tests XFrame pack_columns into dict
     """
@@ -4175,70 +4162,70 @@ class TestXFramePackColumnsDict(XFrameUnitTestCase):
     def test_pack_columns(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new', dtype=dict)
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([dict], res.dtype())
-        self.assertListEqual(['new'], res.column_names())
-        self.assertDictEqual({'new': {'id': 1, 'val': 'a'}}, res[0])
-        self.assertDictEqual({'new': {'id': 2, 'val': 'b'}}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.dtype() == [dict]
+        assert res.column_names() == ['new']
+        assert res[0] == {'new': {'id': 1, 'val': 'a'}}
+        assert res[1] == {'new': {'id': 2, 'val': 'b'}}
 
     def test_pack_columns_prefix(self):
         t = XFrame({'x.id': [1, 2, 3, 4], 'x.val': ['a', 'b', 'c', 'd'], 'another': [10, 20, 30, 40]})
         res = t.pack_columns(column_prefix='x', dtype=dict)
-        self.assertEqualLen(4, res)
-        self.assertEqual(2, res.num_columns())
-        self.assertListEqual([int, dict], res.dtype())
-        self.assertListEqual(['another', 'x'], res.column_names())
-        self.assertDictEqual({'another': 10, 'x': {'id': 1, 'val': 'a'}}, res[0])
-        self.assertDictEqual({'another': 20, 'x': {'id': 2, 'val': 'b'}}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 2
+        assert res.dtype() == [int, dict]
+        assert res.column_names() == ['another', 'x']
+        assert res[0] == {'another': 10, 'x': {'id': 1, 'val': 'a'}}
+        assert res[1] == {'another': 20, 'x': {'id': 2, 'val': 'b'}}
 
     def test_pack_columns_prefix_named(self):
         t = XFrame({'x.id': [1, 2, 3, 4], 'x.val': ['a', 'b', 'c', 'd'], 'another': [10, 20, 30, 40]})
         res = t.pack_columns(column_prefix='x', dtype=dict, new_column_name='new')
-        self.assertEqualLen(4, res)
-        self.assertEqual(2, res.num_columns())
-        self.assertListEqual([int, dict], res.dtype())
-        self.assertListEqual(['another', 'new'], res.column_names())
-        self.assertDictEqual({'another': 10, 'new': {'id': 1, 'val': 'a'}}, res[0])
-        self.assertDictEqual({'another': 20, 'new': {'id': 2, 'val': 'b'}}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 2
+        assert res.dtype() == [int, dict]
+        assert res.column_names() == ['another', 'new']
+        assert res[0] == {'another': 10, 'new': {'id': 1, 'val': 'a'}}
+        assert res[1] == {'another': 20, 'new': {'id': 2, 'val': 'b'}}
 
     def test_pack_columns_prefix_no_remove(self):
         t = XFrame({'x.id': [1, 2, 3, 4], 'x.val': ['a', 'b', 'c', 'd'], 'another': [10, 20, 30, 40]})
         res = t.pack_columns(column_prefix='x', dtype=dict, remove_prefix=False)
-        self.assertEqualLen(4, res)
-        self.assertEqual(2, res.num_columns())
-        self.assertListEqual([int, dict], res.dtype())
-        self.assertListEqual(['another', 'x'], res.column_names())
-        self.assertDictEqual({'another': 10, 'x': {'x.id': 1, 'x.val': 'a'}}, res[0])
-        self.assertDictEqual({'another': 20, 'x': {'x.id': 2, 'x.val': 'b'}}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 2
+        assert res.dtype() == [int, dict]
+        assert res.column_names() == ['another', 'x']
+        assert res[0] == {'another': 10, 'x': {'x.id': 1, 'x.val': 'a'}}
+        assert res[1] == {'another': 20, 'x': {'x.id': 2, 'x.val': 'b'}}
 
     def test_pack_columns_drop_missing(self):
         t = XFrame({'id': [1, 2, None, 4], 'val': ['a', 'b', 'c', None]})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new', dtype=dict)
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([dict], res.dtype())
-        self.assertListEqual(['new'], res.column_names())
-        self.assertDictEqual({'new': {'id': 1, 'val': 'a'}}, res[0])
-        self.assertDictEqual({'new': {'id': 2, 'val': 'b'}}, res[1])
-        self.assertDictEqual({'new': {'val': 'c'}}, res[2])
-        self.assertDictEqual({'new': {'id': 4}}, res[3])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.dtype() == [dict]
+        assert res.column_names() == ['new']
+        assert res[0] == {'new': {'id': 1, 'val': 'a'}}
+        assert res[1] == {'new': {'id': 2, 'val': 'b'}}
+        assert res[2] == {'new': {'val': 'c'}}
+        assert res[3] == {'new': {'id': 4}}
 
     def test_pack_columns_fill_na(self):
         t = XFrame({'id': [1, 2, None, 4], 'val': ['a', 'b', 'c', None]})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new', dtype=dict, fill_na=99)
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([dict], res.dtype())
-        self.assertListEqual(['new'], res.column_names())
-        self.assertDictEqual({'new': {'id': 1, 'val': 'a'}}, res[0])
-        self.assertDictEqual({'new': {'id': 2, 'val': 'b'}}, res[1])
-        self.assertDictEqual({'new': {'id': 99, 'val': 'c'}}, res[2])
-        self.assertDictEqual({'new': {'id': 4, 'val': 99}}, res[3])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.dtype() == [dict]
+        assert res.column_names() == ['new']
+        assert res[0] == {'new': {'id': 1, 'val': 'a'}}
+        assert res[1] == {'new': {'id': 2, 'val': 'b'}}
+        assert res[2] == {'new': {'id': 99, 'val': 'c'}}
+        assert res[3] == {'new': {'id': 4, 'val': 99}}
 
 
 # noinspection PyClassHasNoInit
-class TestXFramePackColumnsArray(XFrameUnitTestCase):
+class TestXFramePackColumnsArray:
     """
     Tests XFrame pack_columns into array
     """
@@ -4246,12 +4233,12 @@ class TestXFramePackColumnsArray(XFrameUnitTestCase):
     def test_pack_columns(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [10, 20, 30, 40]})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new', dtype=array.array)
-        self.assertEqualLen(4, res)
-        self.assertEqual(1, res.num_columns())
-        self.assertListEqual([array.array], res.dtype())
-        self.assertListEqual(['new'], res.column_names())
-        self.assertDictEqual({'new': array.array('d', [1.0, 10.0])}, res[0])
-        self.assertDictEqual({'new': array.array('d', [2.0, 20.0])}, res[1])
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.dtype() == [array.array]
+        assert res.column_names() == ['new']
+        assert res[0] == {'new': array.array('d', [1.0, 10.0])}
+        assert res[1] == {'new': array.array('d', [2.0, 20.0])}
 
     def test_pack_columns_bad_fill_na_not_numeric(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [10, 20, 30, 40]})
@@ -4267,7 +4254,7 @@ class TestXFramePackColumnsArray(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameUnpackList(XFrameUnitTestCase):
+class TestXFrameUnpackList:
     """
     Tests XFrame unpack where the unpacked column contains a list
     """
@@ -4275,53 +4262,53 @@ class TestXFrameUnpackList(XFrameUnitTestCase):
     def test_unpack(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [[10, 'a'], [20, 'b'], [30, 'c'], [40, 'd']]})
         res = t.unpack('val')
-        self.assertEqualLen(4, res)
-        self.assertListEqual(['id', 'val.0', 'val.1'], res.column_names())
-        self.assertListEqual([int, int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.0': 10, 'val.1': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val.0': 20, 'val.1': 'b'}, res[1])
+        assert len(res) == 4
+        assert res.column_names() == ['id', 'val.0', 'val.1']
+        assert res.column_types() == [int, int, str]
+        assert res[0] == {'id': 1, 'val.0': 10, 'val.1': 'a'}
+        assert res[1] == {'id': 2, 'val.0': 20, 'val.1': 'b'}
 
     def test_unpack_prefix(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [[10, 'a'], [20, 'b'], [30, 'c'], [40, 'd']]})
         res = t.unpack('val', column_name_prefix='x')
-        self.assertEqualLen(4, res)
-        self.assertListEqual(['id', 'x.0', 'x.1'], res.column_names())
-        self.assertListEqual([int, int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'x.0': 10, 'x.1': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'x.0': 20, 'x.1': 'b'}, res[1])
+        assert len(res) == 4
+        assert res.column_names() == ['id', 'x.0', 'x.1']
+        assert res.column_types() == [int, int, str]
+        assert res[0] == {'id': 1, 'x.0': 10, 'x.1': 'a'}
+        assert res[1] == {'id': 2, 'x.0': 20, 'x.1': 'b'}
 
     def test_unpack_types(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [[10, 'a'], [20, 'b'], [30, 'c'], [40, 'd']]})
         res = t.unpack('val', column_types=[str, str])
-        self.assertEqualLen(4, res)
-        self.assertListEqual(['id', 'val.0', 'val.1'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.0': '10', 'val.1': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val.0': '20', 'val.1': 'b'}, res[1])
+        assert len(res) == 4
+        assert res.column_names() == ['id', 'val.0', 'val.1']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val.0': '10', 'val.1': 'a'}
+        assert res[1] == {'id': 2, 'val.0': '20', 'val.1': 'b'}
 
     def test_unpack_na_value(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [[10, 'a'], [20, 'b'], [None, 'c'], [40, None]]})
         res = t.unpack('val', na_value=99)
-        self.assertEqualLen(4, res)
-        self.assertListEqual(['id', 'val.0', 'val.1'], res.column_names())
-        self.assertListEqual([int, int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.0': 10, 'val.1': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val.0': 20, 'val.1': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val.0': 99, 'val.1': 'c'}, res[2])
-        self.assertDictEqual({'id': 4, 'val.0': 40, 'val.1': '99'}, res[3])
+        assert len(res) == 4
+        assert res.column_names() == ['id', 'val.0', 'val.1']
+        assert res.column_types() == [int, int, str]
+        assert res[0] == {'id': 1, 'val.0': 10, 'val.1': 'a'}
+        assert res[1] == {'id': 2, 'val.0': 20, 'val.1': 'b'}
+        assert res[2] == {'id': 3, 'val.0': 99, 'val.1': 'c'}
+        assert res[3] == {'id': 4, 'val.0': 40, 'val.1': '99'}
 
     def test_unpack_limit(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [[10, 'a'], [20, 'b'], [30, 'c'], [40, 'd']]})
         res = t.unpack('val', limit=[1])
-        self.assertEqualLen(4, res)
-        self.assertListEqual(['id', 'val.1'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.1': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val.1': 'b'}, res[1])
+        assert len(res) == 4
+        assert res.column_names() == ['id', 'val.1']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 1, 'val.1': 'a'}
+        assert res[1] == {'id': 2, 'val.1': 'b'}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameUnpackDict(XFrameUnitTestCase):
+class TestXFrameUnpackDict:
     """
     Tests XFrame unpack where the unpacked column contains a dict
     """
@@ -4329,61 +4316,61 @@ class TestXFrameUnpackDict(XFrameUnitTestCase):
     def test_unpack(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 1}, {'b': 2}, {'c': 3}, {'d': 4}]})
         res = t.unpack('val')
-        self.assertEqualLen(4, res)
-        self.assertListEqual(['id', 'val.a', 'val.c', 'val.b', 'val.d'], res.column_names())
-        self.assertListEqual([int, int, int, int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.a': 1, 'val.c': None, 'val.b': None, 'val.d': None}, res[0])
-        self.assertDictEqual({'id': 2, 'val.a': None, 'val.c': None, 'val.b': 2, 'val.d': None}, res[1])
+        assert len(res) == 4
+        assert res.column_names() == ['id', 'val.a', 'val.c', 'val.b', 'val.d']
+        assert res.column_types() == [int, int, int, int, int]
+        assert res[0] == {'id': 1, 'val.a': 1, 'val.c': None, 'val.b': None, 'val.d': None}
+        assert res[1] == {'id': 2, 'val.a': None, 'val.c': None, 'val.b': 2, 'val.d': None}
 
     def test_unpack_mult(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'a': 1}, {'b': 2}, {'a': 1, 'b': 2}]})
         res = t.unpack('val')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val.a', 'val.b'], res.column_names())
-        self.assertListEqual([int, int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.a': 1, 'val.b': None}, res[0])
-        self.assertDictEqual({'id': 2, 'val.a': None, 'val.b': 2}, res[1])
-        self.assertDictEqual({'id': 3, 'val.a': 1, 'val.b': 2}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val.a', 'val.b']
+        assert res.column_types() == [int, int, int]
+        assert res[0] == {'id': 1, 'val.a': 1, 'val.b': None}
+        assert res[1] == {'id': 2, 'val.a': None, 'val.b': 2}
+        assert res[2] == {'id': 3, 'val.a': 1, 'val.b': 2}
 
     def test_unpack_prefix(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'a': 1}, {'b': 2}, {'a': 1, 'b': 2}]})
         res = t.unpack('val', column_name_prefix='x')
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'x.a', 'x.b'], res.column_names())
-        self.assertListEqual([int, int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'x.a': 1, 'x.b': None}, res[0])
-        self.assertDictEqual({'id': 2, 'x.a': None, 'x.b': 2}, res[1])
-        self.assertDictEqual({'id': 3, 'x.a': 1, 'x.b': 2}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'x.a', 'x.b']
+        assert res.column_types() == [int, int, int]
+        assert res[0] == {'id': 1, 'x.a': 1, 'x.b': None}
+        assert res[1] == {'id': 2, 'x.a': None, 'x.b': 2}
+        assert res[2] == {'id': 3, 'x.a': 1, 'x.b': 2}
 
     def test_unpack_types(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'a': 1}, {'b': 2}, {'a': 1, 'b': 2}]})
         res = t.unpack('val', column_types=[str, str], limit=['a', 'b'])
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val.a', 'val.b'], res.column_names())
-        self.assertListEqual([int, str, str], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.a': '1', 'val.b': None}, res[0])
-        self.assertDictEqual({'id': 2, 'val.a': None, 'val.b': '2'}, res[1])
-        self.assertDictEqual({'id': 3, 'val.a': '1', 'val.b': '2'}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val.a', 'val.b']
+        assert res.column_types() == [int, str, str]
+        assert res[0] == {'id': 1, 'val.a': '1', 'val.b': None}
+        assert res[1] == {'id': 2, 'val.a': None, 'val.b': '2'}
+        assert res[2] == {'id': 3, 'val.a': '1', 'val.b': '2'}
 
     def test_unpack_na_value(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'a': 1}, {'b': 2}, {'a': 1, 'b': 2}]})
         res = t.unpack('val', na_value=99)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val.a', 'val.b'], res.column_names())
-        self.assertListEqual([int, int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.a': 1, 'val.b': 99}, res[0])
-        self.assertDictEqual({'id': 2, 'val.a': 99, 'val.b': 2}, res[1])
-        self.assertDictEqual({'id': 3, 'val.a': 1, 'val.b': 2}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val.a', 'val.b']
+        assert res.column_types() == [int, int, int]
+        assert res[0] == {'id': 1, 'val.a': 1, 'val.b': 99}
+        assert res[1] == {'id': 2, 'val.a': 99, 'val.b': 2}
+        assert res[2] == {'id': 3, 'val.a': 1, 'val.b': 2}
 
     def test_unpack_limit(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'a': 1}, {'b': 2}, {'a': 1, 'b': 2}]})
         res = t.unpack('val', limit=['b'])
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'val.b'], res.column_names())
-        self.assertListEqual([int, int], res.column_types())
-        self.assertDictEqual({'id': 1, 'val.b': None}, res[0])
-        self.assertDictEqual({'id': 2, 'val.b': 2}, res[1])
-        self.assertDictEqual({'id': 3, 'val.b': 2}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'val.b']
+        assert res.column_types() == [int, int]
+        assert res[0] == {'id': 1, 'val.b': None}
+        assert res[1] == {'id': 2, 'val.b': 2}
+        assert res[2] == {'id': 3, 'val.b': 2}
 
     def test_unpack_bad_types_no_limit(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'a': 1}, {'b': 2}, {'a': 1, 'b': 2}]})
@@ -4394,7 +4381,7 @@ class TestXFrameUnpackDict(XFrameUnitTestCase):
 # TODO unpack array
 
 # noinspection PyClassHasNoInit
-class TestXFrameStackList(XFrameUnitTestCase):
+class TestXFrameStackList:
     """
     Tests XFrame stack where column is a list
     """
@@ -4402,24 +4389,24 @@ class TestXFrameStackList(XFrameUnitTestCase):
     def test_stack_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
         res = t.stack('val')
-        self.assertListEqual(['id', 'X'], res.column_names())
-        self.assertEqualLen(9, res)
-        self.assertDictEqual({'id': 1, 'X': 'a1'}, res[0])
-        self.assertDictEqual({'id': 3, 'X': None}, res[8])
+        assert len(res) == 9
+        assert res.column_names() == ['id', 'X']
+        assert res[0] == {'id': 1, 'X': 'a1'}
+        assert res[8] == {'id': 3, 'X': None}
 
     def test_stack_list_drop_na(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
         res = t.stack('val', drop_na=True)
-        self.assertListEqual(['id', 'X'], res.column_names())
-        self.assertEqualLen(8, res)
-        self.assertDictEqual({'id': 1, 'X': 'a1'}, res[0])
-        self.assertDictEqual({'id': 3, 'X': 'c3'}, res[7])
+        assert len(res) == 8
+        assert res.column_names() == ['id', 'X']
+        assert res[0] == {'id': 1, 'X': 'a1'}
+        assert res[7] == {'id': 3, 'X': 'c3'}
 
     def test_stack_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
         res = t.stack('val', new_column_name='flat_val')
-        self.assertListEqual(['id', 'flat_val'], res.column_names())
-        self.assertEqualLen(9, res)
+        assert len(res) == 9
+        assert res.column_names() == ['id', 'flat_val']
 
     def test_stack_bad_col_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
@@ -4440,7 +4427,7 @@ class TestXFrameStackList(XFrameUnitTestCase):
     def test_stack_new_col_name_dup_ok(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
         res = t.stack('val', new_column_name='val')
-        self.assertListEqual(['id', 'val'], res.column_names())
+        assert res.column_names() == ['id', 'val']
 
     def test_stack_bad_new_col_name_dup(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
@@ -4455,7 +4442,7 @@ class TestXFrameStackList(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameStackDict(XFrameUnitTestCase):
+class TestXFrameStackDict:
     """
     Tests XFrame stack where column is a dict
     """
@@ -4463,26 +4450,26 @@ class TestXFrameStackDict(XFrameUnitTestCase):
     def test_stack_dict(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
         res = t.stack('val')
-        self.assertListEqual(['id', 'K', 'V'], res.column_names())
-        self.assertEqualLen(7, res)
-        self.assertDictEqual({'id': 1, 'K': 'a', 'V': 3}, res[0])
-        self.assertDictEqual({'id': 4, 'K': None, 'V': None}, res[6])
+        assert len(res) == 7
+        assert res.column_names() == ['id', 'K', 'V']
+        assert res[0] == {'id': 1, 'K': 'a', 'V': 3}
+        assert res[6] == {'id': 4, 'K': None, 'V': None}
 
     def test_stack_names(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
         res = t.stack('val', ['new_k', 'new_v'])
-        self.assertListEqual(['id', 'new_k', 'new_v'], res.column_names())
-        self.assertEqualLen(7, res)
-        self.assertDictEqual({'id': 1, 'new_k': 'a', 'new_v': 3}, res[0])
-        self.assertDictEqual({'id': 4, 'new_k': None, 'new_v': None}, res[6])
+        assert len(res) == 7
+        assert res.column_names() == ['id', 'new_k', 'new_v']
+        assert res[0] == {'id': 1, 'new_k': 'a', 'new_v': 3}
+        assert res[6] == {'id': 4, 'new_k': None, 'new_v': None}
 
     def test_stack_dropna(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
         res = t.stack('val', drop_na=True)
-        self.assertListEqual(['id', 'K', 'V'], res.column_names())
-        self.assertEqualLen(6, res)
-        self.assertDictEqual({'id': 1, 'K': 'a', 'V': 3}, res[0])
-        self.assertDictEqual({'id': 3, 'K': 'd', 'V': 3}, res[5])
+        assert len(res) == 6
+        assert res.column_names() == ['id', 'K', 'V']
+        assert res[0] == {'id': 1, 'K': 'a', 'V': 3}
+        assert res[5] == {'id': 3, 'K': 'd', 'V': 3}
 
     def test_stack_bad_col_name(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
@@ -4513,7 +4500,7 @@ class TestXFrameStackDict(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameUnstackList(XFrameUnitTestCase):
+class TestXFrameUnstackList:
     """
     Tests XFrame unstack where unstack column is list
     """
@@ -4522,27 +4509,27 @@ class TestXFrameUnstackList(XFrameUnitTestCase):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1, 3], 'val': ['a1', 'b1', 'c1', 'a2', 'b2', 'a3', 'c3']})
         res = t.unstack('val')
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'unstack'], res.column_names())
-        self.assertListEqual([int, list], res.column_types())
-        self.assertDictEqual({'id': 1, 'unstack': ['a1', 'a2', 'a3']}, res[0])
-        self.assertDictEqual({'id': 2, 'unstack': ['b1', 'b2']}, res[1])
-        self.assertDictEqual({'id': 3, 'unstack': ['c1', 'c3']}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'unstack']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'id': 1, 'unstack': ['a1', 'a2', 'a3']}
+        assert res[1] == {'id': 2, 'unstack': ['b1', 'b2']}
+        assert res[2] == {'id': 3, 'unstack': ['c1', 'c3']}
 
     def test_unstack_name(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1, 3], 'val': ['a1', 'b1', 'c1', 'a2', 'b2', 'a3', 'c3']})
         res = t.unstack('val', new_column_name='vals')
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'vals'], res.column_names())
-        self.assertListEqual([int, list], res.column_types())
-        self.assertDictEqual({'id': 1, 'vals': ['a1', 'a2', 'a3']}, res[0])
-        self.assertDictEqual({'id': 2, 'vals': ['b1', 'b2']}, res[1])
-        self.assertDictEqual({'id': 3, 'vals': ['c1', 'c3']}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'vals']
+        assert res.column_types() == [int, list]
+        assert res[0] == {'id': 1, 'vals': ['a1', 'a2', 'a3']}
+        assert res[1] == {'id': 2, 'vals': ['b1', 'b2']}
+        assert res[2] == {'id': 3, 'vals': ['c1', 'c3']}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameUnstackDict(XFrameUnitTestCase):
+class TestXFrameUnstackDict:
     """
     Tests XFrame unstack where unstack column is dict
     """
@@ -4554,12 +4541,12 @@ class TestXFrameUnstackDict(XFrameUnitTestCase):
                     'val': ['a1', 'b1', 'c1', 'a2', 'b2', 'a3', 'c3']})
         res = t.unstack(['key', 'val'])
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'unstack'], res.column_names())
-        self.assertListEqual([int, dict], res.column_types())
-        self.assertDictEqual({'id': 1, 'unstack': {'ka1': 'a1', 'ka2': 'a2', 'ka3': 'a3'}}, res[0])
-        self.assertDictEqual({'id': 2, 'unstack': {'kb1': 'b1', 'kb2': 'b2'}}, res[1])
-        self.assertDictEqual({'id': 3, 'unstack': {'kc1': 'c1', 'kc3': 'c3'}}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'unstack']
+        assert res.column_types() == [int, dict]
+        assert res[0] == {'id': 1, 'unstack': {'ka1': 'a1', 'ka2': 'a2', 'ka3': 'a3'}}
+        assert res[1] == {'id': 2, 'unstack': {'kb1': 'b1', 'kb2': 'b2'}}
+        assert res[2] == {'id': 3, 'unstack': {'kc1': 'c1', 'kc3': 'c3'}}
 
     def test_unstack_name(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1, 3],
@@ -4567,16 +4554,16 @@ class TestXFrameUnstackDict(XFrameUnitTestCase):
                     'val': ['a1', 'b1', 'c1', 'a2', 'b2', 'a3', 'c3']})
         res = t.unstack(['key', 'val'], new_column_name='vals')
         res = res.topk('id', reverse=True)
-        self.assertEqualLen(3, res)
-        self.assertListEqual(['id', 'vals'], res.column_names())
-        self.assertListEqual([int, dict], res.column_types())
-        self.assertDictEqual({'id': 1, 'vals': {'ka1': 'a1', 'ka2': 'a2', 'ka3': 'a3'}}, res[0])
-        self.assertDictEqual({'id': 2, 'vals': {'kb1': 'b1', 'kb2': 'b2'}}, res[1])
-        self.assertDictEqual({'id': 3, 'vals': {'kc1': 'c1', 'kc3': 'c3'}}, res[2])
+        assert len(res) == 3
+        assert res.column_names() == ['id', 'vals']
+        assert res.column_types() == [int, dict]
+        assert res[0] == {'id': 1, 'vals': {'ka1': 'a1', 'ka2': 'a2', 'ka3': 'a3'}}
+        assert res[1] == {'id': 2, 'vals': {'kb1': 'b1', 'kb2': 'b2'}}
+        assert res[2] == {'id': 3, 'vals': {'kc1': 'c1', 'kc3': 'c3'}}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameUnique(XFrameUnitTestCase):
+class TestXFrameUnique:
     """
     Tests XFrame unique
     """
@@ -4584,21 +4571,27 @@ class TestXFrameUnique(XFrameUnitTestCase):
     def test_unique_noop(self):
         t = XFrame({'id': [3, 2, 1], 'val': ['c', 'b', 'a']})
         res = t.unique()
-        self.assertEqualLen(3, res)
+        assert len(res) == 3
+        assert sorted(list(res['id'])) == [1, 2, 3]
+        assert sorted(list(res['val'])) == ['a', 'b', 'c']
 
     def test_unique(self):
         t = XFrame({'id': [3, 2, 1, 1], 'val': ['c', 'b', 'a', 'a']})
         res = t.unique()
-        self.assertEqualLen(3, res)
+        assert len(res) == 3
+        assert sorted(list(res['id'])) == [1, 2, 3]
+        assert sorted(list(res['val'])) == ['a', 'b', 'c']
 
     def test_unique_part(self):
         t = XFrame({'id': [3, 2, 1, 1], 'val': ['c', 'b', 'a', 'x']})
         res = t.unique()
-        self.assertEqualLen(4, res)
+        assert len(res) == 4
+        assert sorted(list(res['id'])) == [1, 1, 2, 3]
+        assert sorted(list(res['val'])) == ['a', 'b', 'c', 'x']
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameSort(XFrameUnitTestCase):
+class TestXFrameSort:
     """
     Tests XFrame sort
     """
@@ -4606,30 +4599,34 @@ class TestXFrameSort(XFrameUnitTestCase):
     def test_sort(self):
         t = XFrame({'id': [3, 2, 1], 'val': ['c', 'b', 'a']})
         res = t.sort('id')
-        self.assertColumnEqual([1, 2, 3], res['id'])
-        self.assertColumnEqual(['a', 'b', 'c'], res['val'])
+        assert len(res) == 3
+        assert list(res['id']) == [1, 2, 3]
+        assert list(res['val']) == ['a', 'b', 'c']
 
     def test_sort_descending(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.sort('id', ascending=False)
-        self.assertColumnEqual([3, 2, 1], res['id'])
-        self.assertColumnEqual(['c', 'b', 'a'], res['val'])
+        assert len(res) == 3
+        assert list(res['id']) == [3, 2, 1]
+        assert list(res['val']) == ['c', 'b', 'a']
 
     def test_sort_multi_col(self):
         t = XFrame({'id': [3, 2, 1, 1], 'val': ['c', 'b', 'b', 'a']})
         res = t.sort(['id', 'val'])
-        self.assertColumnEqual([1, 1, 2, 3], res['id'])
-        self.assertColumnEqual(['a', 'b', 'b', 'c'], res['val'])
+        assert len(res) == 4
+        assert list(res['id']) == [1, 1, 2, 3]
+        assert list(res['val']) == ['a', 'b', 'b', 'c']
 
     def test_sort_multi_col_asc_desc(self):
         t = XFrame({'id': [3, 2, 1, 1], 'val': ['c', 'b', 'b', 'a']})
         res = t.sort([('id', True), ('val', False)])
-        self.assertColumnEqual([1, 1, 2, 3], res['id'])
-        self.assertColumnEqual(['b', 'a', 'b', 'c'], res['val'])
+        assert len(res) == 4
+        assert list(res['id']) == [1, 1, 2, 3]
+        assert list(res['val']) == ['b', 'a', 'b', 'c']
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameDropna(XFrameUnitTestCase):
+class TestXFrameDropna:
     """
     Tests XFrame dropna
     """
@@ -4637,66 +4634,66 @@ class TestXFrameDropna(XFrameUnitTestCase):
     def test_dropna_no_drop(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.dropna()
-        self.assertEqualLen(3, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_dropna_none(self):
         t = XFrame({'id': [1, None, 3], 'val': ['a', 'b', 'c']})
         res = t.dropna()
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 3, 'val': 'c'}
 
     def test_dropna_nan(self):
         t = XFrame({'id': [1.0, float('nan'), 3.0], 'val': ['a', 'b', 'c']})
         res = t.dropna()
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1.0, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3.0, 'val': 'c'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1.0, 'val': 'a'}
+        assert res[1] == {'id': 3.0, 'val': 'c'}
 
     def test_dropna_float_none(self):
         t = XFrame({'id': [1.0, None, 3.0], 'val': ['a', 'b', 'c']})
         res = t.dropna()
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1.0, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 3.0, 'val': 'c'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1.0, 'val': 'a'}
+        assert res[1] == {'id': 3.0, 'val': 'c'}
 
     def test_dropna_empty_list(self):
         t = XFrame({'id': [1, None, 3], 'val': ['a', 'b', 'c']})
         res = t.dropna(columns=[])
-        self.assertEqualLen(3, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': None, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': None, 'val': 'b'}
+        assert res[2] == {'id': 3, 'val': 'c'}
 
     def test_dropna_any(self):
         t = XFrame({'id': [1, None, None], 'val': ['a', None, 'c']})
         res = t.dropna()
-        self.assertEqualLen(1, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
+        assert len(res) == 1
+        assert res[0] == {'id': 1, 'val': 'a'}
 
     def test_dropna_all(self):
         t = XFrame({'id': [1, None, None], 'val': ['a', None, 'c']})
         res = t.dropna(how='all')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': None, 'val': 'c'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': None, 'val': 'c'}
 
     def test_dropna_col_val(self):
         t = XFrame({'id': [1, None, None], 'val': ['a', None, 'c']})
         res = t.dropna(columns='val')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': None, 'val': 'c'}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': None, 'val': 'c'}
 
     def test_dropna_col_id(self):
         t = XFrame({'id': [1, 2, None], 'val': ['a', None, 'c']})
         res = t.dropna(columns='id')
-        self.assertEqualLen(2, res)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 2, 'val': None}, res[1])
+        assert len(res) == 2
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 2, 'val': None}
 
     # noinspection PyTypeChecker
     def test_dropna_bad_col_arg(self):
@@ -4718,7 +4715,7 @@ class TestXFrameDropna(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameDropnaSplit(XFrameUnitTestCase):
+class TestXFrameDropnaSplit:
     """
     Tests XFrame dropna_split
     """
@@ -4726,33 +4723,33 @@ class TestXFrameDropnaSplit(XFrameUnitTestCase):
     def test_dropna_split_no_drop(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res1, res2 = t.dropna_split()
-        self.assertEqualLen(3, res1)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res1[0])
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res1[1])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res1[2])
-        self.assertEqualLen(0, res2)
+        assert len(res1) == 3
+        assert res1[0] == {'id': 1, 'val': 'a'}
+        assert res1[1] == {'id': 2, 'val': 'b'}
+        assert res1[2] == {'id': 3, 'val': 'c'}
+        assert len(res2) == 0
 
     def test_dropna_split_none(self):
         t = XFrame({'id': [1, None, 3], 'val': ['a', 'b', 'c']})
         res1, res2 = t.dropna_split()
-        self.assertEqualLen(2, res1)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res1[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res1[1])
-        self.assertEqualLen(1, res2)
-        self.assertDictEqual({'id': None, 'val': 'b'}, res2[0])
+        assert len(res1) == 2
+        assert res1[0] == {'id': 1, 'val': 'a'}
+        assert res1[1] == {'id': 3, 'val': 'c'}
+        assert len(res2) == 1
+        assert res2[0] == {'id': None, 'val': 'b'}
 
     def test_dropna_split_all(self):
         t = XFrame({'id': [1, None, None], 'val': ['a', None, 'c']})
         res1, res2 = t.dropna_split(how='all')
-        self.assertEqualLen(2, res1)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res1[0])
-        self.assertDictEqual({'id': None, 'val': 'c'}, res1[1])
-        self.assertEqualLen(1, res2)
-        self.assertDictEqual({'id': None, 'val': None}, res2[0])
+        assert len(res1) == 2
+        assert res1[0] == {'id': 1, 'val': 'a'}
+        assert res1[1] == {'id': None, 'val': 'c'}
+        assert len(res2) == 1
+        assert res2[0] == {'id': None, 'val': None}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameFillna(XFrameUnitTestCase):
+class TestXFrameFillna:
     """
     Tests XFrame fillna
     """
@@ -4760,9 +4757,10 @@ class TestXFrameFillna(XFrameUnitTestCase):
     def test_fillna(self):
         t = XFrame({'id': [1, None, None], 'val': ['a', 'b', 'c']})
         res = t.fillna('id', 0)
-        self.assertDictEqual({'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 0, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 0, 'val': 'c'}, res[2])
+        assert len(res) == 3
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert res[1] == {'id': 0, 'val': 'b'}
+        assert res[2] == {'id': 0, 'val': 'c'}
 
     def test_fillna_bad_col_name(self):
         t = XFrame({'id': [1, None, None], 'val': ['a', 'b', 'c']})
@@ -4777,7 +4775,7 @@ class TestXFrameFillna(XFrameUnitTestCase):
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameAddRowNumber(XFrameUnitTestCase):
+class TestXFrameAddRowNumber:
     """
     Tests XFrame add_row_number
     """
@@ -4785,46 +4783,46 @@ class TestXFrameAddRowNumber(XFrameUnitTestCase):
     def test_add_row_number(self):
         t = XFrame({'ident': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.add_row_number()
-        self.assertListEqual(['id', 'ident', 'val'], res.column_names())
-        self.assertDictEqual({'id': 0, 'ident': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 1, 'ident': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 2, 'ident': 3, 'val': 'c'}, res[2])
+        assert res.column_names() == ['id', 'ident', 'val']
+        assert res[0] == {'id': 0, 'ident': 1, 'val': 'a'}
+        assert res[1] == {'id': 1, 'ident': 2, 'val': 'b'}
+        assert res[2] == {'id': 2, 'ident': 3, 'val': 'c'}
 
     def test_add_row_number_start(self):
         t = XFrame({'ident': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.add_row_number(start=10)
-        self.assertListEqual(['id', 'ident', 'val'], res.column_names())
-        self.assertDictEqual({'id': 10, 'ident': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'id': 11, 'ident': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'id': 12, 'ident': 3, 'val': 'c'}, res[2])
+        assert res.column_names() == ['id', 'ident', 'val']
+        assert res[0] == {'id': 10, 'ident': 1, 'val': 'a'}
+        assert res[1] == {'id': 11, 'ident': 2, 'val': 'b'}
+        assert res[2] == {'id': 12, 'ident': 3, 'val': 'c'}
 
     def test_add_row_number_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.add_row_number(column_name='row_number')
-        self.assertListEqual(['row_number', 'id', 'val'], res.column_names())
-        self.assertDictEqual({'row_number': 0, 'id': 1, 'val': 'a'}, res[0])
-        self.assertDictEqual({'row_number': 1, 'id': 2, 'val': 'b'}, res[1])
-        self.assertDictEqual({'row_number': 2, 'id': 3, 'val': 'c'}, res[2])
+        assert res.column_names() == ['row_number', 'id', 'val']
+        assert res[0] == {'row_number': 0, 'id': 1, 'val': 'a'}
+        assert res[1] == {'row_number': 1, 'id': 2, 'val': 'b'}
+        assert res[2] == {'row_number': 2, 'id': 3, 'val': 'c'}
 
 
 # noinspection PyClassHasNoInit
-class TestXFrameShape(XFrameUnitTestCase):
+class TestXFrameShape:
     """
     Tests XFrame shape
     """
 
     def test_shape(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        self.assertEqual((3, 2), t.shape)
+        assert t.shape == (3, 2)
 
     def test_shape_empty(self):
         t = XFrame()
-        self.assertEqual((0, 0), t.shape)
+        assert t.shape == (0, 0)
 
 
 # noinspection SqlNoDataSourceInspection,SqlDialectInspection
 # noinspection PyClassHasNoInit
-class TestXFrameSql(XFrameUnitTestCase):
+class TestXFrameSql:
     """
     Tests XFrame sql
     """
@@ -4832,19 +4830,16 @@ class TestXFrameSql(XFrameUnitTestCase):
     def test_sql(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.sql("SELECT * FROM xframe WHERE id > 1 ORDER BY id")
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
+
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 2, 'val': 'b'}
+        assert res[1] == {'id': 3, 'val': 'c'}
 
     def test_sql_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.sql("SELECT * FROM tmp_tbl WHERE id > 1 ORDER BY id", table_name='tmp_tbl')
-        self.assertListEqual(['id', 'val'], res.column_names())
-        self.assertListEqual([int, str], res.column_types())
-        self.assertDictEqual({'id': 2, 'val': 'b'}, res[0])
-        self.assertDictEqual({'id': 3, 'val': 'c'}, res[1])
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert res.column_names() == ['id', 'val']
+        assert res.column_types() == [int, str]
+        assert res[0] == {'id': 2, 'val': 'b'}
+        assert res[1] == {'id': 3, 'val': 'c'}
