@@ -1,0 +1,8 @@
+This directory provides a way to run a local hdfs filesystem
+for use by xframes unit tests.
+
+The scripts present here run an HDFS docker, which is built and stored on dockerhub.
+The docker is pre-loaded with hdfs data that the tests depend on.
+
+Use the scripts to run the docker, and wait until it has fully started.
+Then run the hdfstests.
