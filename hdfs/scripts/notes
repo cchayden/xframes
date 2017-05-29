@@ -18,7 +18,7 @@ $ docker-setup
 Runs the HDFS docker and initializes an empty HDFS.
 The hdfs filesystem is mapped to /tmp/cache, so that it is persistent
 across different runs of the docker.
-$XPATTERNS_HOME/dockdir is also exposed within the docker via /opt/xpatterns.
+$XFRAMES_HOME/dockdir is also exposed within the docker via /opt/xframes.
 
 $ docker-run
 Runs the HDFS docker without reinitializing hdfs.
@@ -35,13 +35,13 @@ Connects to an interactive shell within the HDFS docker.
 $ docker-init-test-data
 Initializes the test data in the HDFS docker.
 You need to wait a minute after starting the docker to let it get fully started.
-
+Docker-setup initializes this data automatically, so you should have to run this.
 
 Hosts
 -----
-The docker returns URLs with its hostname (xpatterns-hadoop) embedded.
+The docker returns URLs with its hostname (xframes-hdfs) embedded.
 To resolve these properly, add the following line to /etc/hosts:
-127.0.0.1 xpatterns-hadoop
+127.0.0.1 xframes-hdfs
 If you do not do this, several of the test_save tests will fail.
 
 Unit Tests
@@ -49,8 +49,10 @@ Unit Tests
 Tests of HDFS capabilities are in xframes/test/testhdfs.py.
 These depend on configuration settings in default.ini.
 These tests assume the presence of preexisting files, which
-are created using the script in dockdir/scripts/hdfs-setup.
+are created when docker-setup is run.
+
 Before running testhdfs:
 1) Run docker-setup.
 2) Make sure /etc/hosts has been updated, as described above.
-3) Run docker-init-test-data to copy files to hdfs.
+3) Run docker-check-files to wait until hdfs comes up.  If this has not returned in 1 minute,
+   something is wrong.
