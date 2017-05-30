@@ -1705,6 +1705,9 @@ class TestXFrameToPandasDataframe:
     Tests XFrame to_pandas_dataframe
     """
 
+    # Note: with numpy and pandas, use expr == True instead of
+    #  expr is True.  This is because numpy(pandas) boolean is of type
+    #   <type 'numpy.bool_'> and not bool.
     def test_to_pandas_dataframe_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         df = t.to_pandas_dataframe()
@@ -1719,8 +1722,8 @@ class TestXFrameToPandasDataframe:
         assert len(df) == 3
         assert df['id'][0] == 1
         assert df['id'][1] == 2
-        assert df['val'][0] is True
-        assert df['val'][1] is False
+        assert df['val'][0] == True
+        assert df['val'][1] == False
 
     def test_to_pandas_dataframe_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
