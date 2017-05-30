@@ -9,6 +9,6 @@ virtualenv venv
 . venv/bin/activate
 pip install pandas
 pip install sphinx
-pip install ipython[all]
+pip install jupyter
 easy_install -U distribute
 pip install matplotlib

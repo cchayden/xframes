@@ -1,8 +1,11 @@
 #!/bin/bash
 
-hdfs dfs -mkdir /user/xpatterns
-hdfs dfs -mkdir /user/xpatterns/files
+# This runs within the docker.
+# It is used to copy data files into hdfs for use by the test suite.
+
+hdfs dfs -mkdir /user/xframes
+hdfs dfs -mkdir /user/xframes/files
 
 
 # for xpatterns/xframe
-hdfs dfs -copyFromLocal -f ../data/files/* /user/xpatterns/files/
+hdfs dfs -copyFromLocal -f /opt/xframes/data/files/* /user/xframes/files/

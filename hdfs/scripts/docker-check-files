@@ -3,4 +3,10 @@
 # This docker is contains an HDFS file system, accessed through hdfs server interface
 # This connects to a shell in that docker.
 
-docker exec -it xframes-hdfs /bin/bash
+until docker exec -it xframes-hdfs hdfs dfs -ls /user/xframes/files >/dev/null
+do
+  sleep 5
+  echo 'waiting ...'
+done
+
+

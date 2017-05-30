@@ -1,9 +1,8 @@
-import unittest
-
 from xframes import fileio
 
 
-class TestFileioLength(unittest.TestCase):
+# run with pytest
+class TestFileioLength:
     """
     Tests length function
     """
@@ -11,13 +10,9 @@ class TestFileioLength(unittest.TestCase):
     def test_length_file(self):
         path = 'files/test-frame-auto.csv'
         length = fileio.length(path)
-        self.assertEqual(166, length)
+        assert length == 166
 
     def test_length_fdir(self):
         path = 'files/test-frame'
         length = fileio.length(path)
-        self.assertEqual(575, length)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert length == 575
