@@ -1938,8 +1938,12 @@ class XFrameImpl(TracedObject):
             left_key_indexes = []
             right_key_indexes = []
             for left_key, right_key in join_keys.iteritems():
+                if left_key not in self.col_names:
+                    raise ValueError("Key '{}' is not a column name.".format(left_key))
                 left_index = self.col_names.index(left_key)
                 left_key_indexes.append(left_index)
+                if right_key not in right.col_names:
+                    raise ValueError("Key '{}' is not a column name.".format(right_key))
                 right_index = right.col_names.index(right_key)
                 right_key_indexes.append(right_index)
                 right_key_indexes.sort(reverse=True)

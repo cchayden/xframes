@@ -407,7 +407,7 @@ def to_schema_type(typ, elem):
             raise ValueError('Schema type cannot be determined.')
         elem_type = to_schema_type(type(elem[0]), None)
         if elem_type is None:
-            raise TypeError('Element type cannot be determined')
+            raise TypeError('Element type cannot be determined.')
         return ArrayType(elem_type)
     if issubclass(typ, dict):
         if elem is None or len(elem) == 0:
@@ -417,7 +417,7 @@ def to_schema_type(typ, elem):
             raise TypeError('Key type cannot be determined')
         val_type = to_schema_type(type(elem.values()[0]), None)
         if val_type is None:
-            raise TypeError('Value type cannot be determined')
+            raise TypeError('Value type cannot be determined.')
         return MapType(key_type, val_type)
     if issubclass(typ, types.NoneType):
         return None

@@ -310,7 +310,7 @@ class XFrame(object):
         elif _format == 'empty':
             self._impl = XFrameImpl()
         else:
-            raise ValueError('Unknown input type: {}.'.format(format))
+            raise ValueError("Unknown input type: '{}'.".format(format))
         if self._impl is None:
             raise ValueError('Constructor failed')
 
@@ -373,13 +373,13 @@ class XFrame(object):
             An empty XFrame with the given column names and types.
         """
         if not isinstance(column_names, list):
-            raise TypeError('Column_names must be a list')
+            raise TypeError('Column_names must be a list.')
         for name in column_names:
             if not isinstance(name, basestring):
-                raise TypeError('Column_names must be strings')
+                raise TypeError('Column_names must be strings.')
         for typ in column_types:
             if not isinstance(typ, type):
-                raise TypeError('Column_types must be types')
+                raise TypeError('Column_types must be types.')
             if not is_xframe_type(typ):
                 raise TypeError('Type "{}" is not a valid column type.'.format(typ.__name__))
 
@@ -2612,7 +2612,7 @@ class XFrame(object):
         ['alice', 'bob', 'charlie']
         """
         if not isinstance(column_name, str):
-            raise TypeError('Invalid column_name type: must be str.')
+            raise TypeError('Invalid column_name type must be str.')
         return XArray(data=[], impl=self._impl.select_column(column_name))
 
     def select_columns(self, keylist):
@@ -2771,7 +2771,7 @@ class XFrame(object):
             if not all([isinstance(x, XArray) for x in cols]):
                 raise TypeError('Must give column as XArray.')
             if not all([isinstance(x, str) for x in namelist]):
-                raise TypeError("Invalid column name in list : must all be 'str'.")
+                raise TypeError("Invalid column name in list : must all be str.")
             if len(namelist) != len(cols):
                 raise ValueError('Namelist length mismatch.')
 
@@ -2819,7 +2819,7 @@ class XFrame(object):
         if not isinstance(name, str):
             raise TypeError('Invalid column name: must be str.')
         if name not in self.column_names():
-            raise ValueError('Column name must be in XFrame')
+            raise ValueError('Column name must be in XFrame.')
         return XFrame(impl=self._impl.replace_selected_column(name, col.impl()))
 
     def remove_column(self, name):
@@ -2853,7 +2853,7 @@ class XFrame(object):
         [3 rows x 1 columns]
         """
         if name not in self.column_names():
-            raise KeyError('Cannot find column {}.'.format(name))
+            raise KeyError("Cannot find column '{}'.".format(name))
         return XFrame(impl=self._impl.remove_column(name))
 
     def remove_columns(self, column_names):
@@ -2889,7 +2889,7 @@ class XFrame(object):
             raise TypeError('Column_names must be an iterable.')
         for name in column_names:
             if name not in self.column_names():
-                raise KeyError('Cannot find column {}.'.format(name))
+                raise KeyError("Cannot find column '{}'.".format(name))
         return XFrame(impl=self._impl.remove_columns(column_names))
 
     def swap_columns(self, column_1, column_2):
@@ -3068,8 +3068,12 @@ class XFrame(object):
             if key < 0:
                 key += len(self)
             if key >= len(self):
-                raise IndexError('XFrame index out of range.')
-            return list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))[0]
+                raise IndexError('XFrame index out of range (too high).')
+            res = list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))
+            if len(res) == 0:
+                raise IndexError('XFrame index out of range (too low).')
+            return res[0]
+#            return list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))[0]
         if isinstance(key, slice):
             start = key.start
             stop = key.stop
@@ -3088,7 +3092,7 @@ class XFrame(object):
             return XFrame(impl=self._impl.copy_range(start, step, stop))
 
         raise TypeError('Invalid index type: must be XArray, ' +
-                        "'int', 'list', slice, or 'str': ({})".format(type(key).__name__))
+                        "'int', 'list', slice, or 'str': ({}).".format(type(key).__name__))
 
     def __setitem__(self, key, value):
         """
@@ -3164,7 +3168,7 @@ class XFrame(object):
         Removes a column and returns the modified XFrame.
         """
         if name not in self.column_names():
-            raise KeyError('Cannot find column {}.'.format(name))
+            raise KeyError("Cannot find column '{}'.".format(name))
         self._impl.remove_column_in_place(name)
         return self
 
@@ -3248,8 +3252,12 @@ class XFrame(object):
             if key < 0:
                 key += len(self)
             if key >= len(self):
-                raise IndexError('XFrame index out of range.')
-            return list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))[0]
+                raise IndexError('XFrame index out of range (too high).')
+            res = list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))
+            if len(res) == 0:
+                raise IndexError('XFrame index out of range (too low).')
+            return res[0]
+#            return list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))[0]
         elif isinstance(key, slice):
             start = key.start
             stop = key.stop
@@ -3267,7 +3275,7 @@ class XFrame(object):
                 stop += len(self)
             return XFrame(impl=self._impl.copy_range(start, step, stop))
         else:
-            raise TypeError("Invalid argument type: must be int or slice ({})".format(type(key).__name__))
+            raise TypeError("Invalid argument type: must be int or slice ({}).".format(type(key).__name__))
 
     def append(self, other):
         """
@@ -3352,7 +3360,7 @@ class XFrame(object):
             if not isinstance(column, str):
                 raise TypeError('Column name must be a string.')
             if column not in my_column_names:
-                raise KeyError("Column '{}' does not exist in XFrame".format(column))
+                raise KeyError("Column '{}' does not exist in XFrame.".format(column))
             column_type = my_column_types[my_column_names.index(column)]
             if column_type is dict:
                 raise TypeError('Cannot group on a dictionary column.')
@@ -4215,11 +4223,11 @@ class XFrame(object):
 
         if column_prefix is not None:
             if not isinstance(column_prefix, str):
-                raise TypeError("'Column_prefix' must be a string. {} {}".format(
+                raise TypeError("'Column_prefix' must be a string. Found '{}': {}.".format(
                     type(column_prefix).__name__, column_prefix))
             columns = [name for name in self.column_names() if name.startswith(column_prefix)]
             if len(columns) == 0:
-                raise ValueError("There are no column starts with prefix '{}.".format(column_prefix))
+                raise ValueError("There are no column starts with prefix '{}'.".format(column_prefix))
         elif columns is None:
             columns = self.column_names()
         else:
@@ -4268,10 +4276,10 @@ class XFrame(object):
         rest_columns = [name for name in self.column_names() if name not in columns]
         if new_column_name is not None:
             if not isinstance(new_column_name, str):
-                raise TypeError("'New_column_name' has to be a string. {} {}".format(
+                raise TypeError("'New_column_name' must be a string. Found '{}': {}.".format(
                     type(new_column_name).__name__, new_column_name))
             if new_column_name in rest_columns:
-                raise KeyError('Current XFrame already contains a column name {}.'.format(new_column_name))
+                raise KeyError("Current XFrame already contains a column name '{}'.".format(new_column_name))
         else:
             new_column_name = ''
 
@@ -4550,13 +4558,13 @@ class XFrame(object):
         if new_column_name is not None:
             if stack_column_type == dict:
                 if not isinstance(new_column_name, list):
-                    raise TypeError("'New_column_name' has to be a 'list' to stack 'dict' type. {} {}".format(
+                    raise TypeError("'New_column_name' has to be a 'list' to stack 'dict' type. Found '{}': {}".format(
                         type(new_column_name).__name__, new_column_name))
                 elif len(new_column_name) != 2:
                     raise TypeError("'New_column_name' must have length of two.")
             else:
                 if not isinstance(new_column_name, str):
-                    raise TypeError("'New_column_name' has to be a 'str'. {} {}".format(
+                    raise TypeError("'New_column_name' has to be a 'str'. Found '{}': {}".format(
                         type(new_column_name).__name__, new_column_name))
                 new_column_name = [new_column_name]
 
@@ -4574,7 +4582,7 @@ class XFrame(object):
         # TODO do this with head_as_list
         head_row = XArray(self[column_name].head(100)).dropna()
         if len(head_row) == 0:
-            raise ValueError('Cannot infer column type because there are not enough rows to infer value.')
+            raise ValueError('Cannot infer column type because there are not enough rows.')
         if stack_column_type is dict:
             # infer key/value type
             keys = []
@@ -5086,7 +5094,7 @@ class XFrame(object):
         """
         # Normal error checking
         if not isinstance(column, basestring):
-            raise TypeError("Must give column name as a 'str'. {} {}".format(type(column).__name__, column))
+            raise TypeError("Must give column name as a 'str'. Found '{}': {}.".format(type(column).__name__, column))
         ret = self.select_columns(self.column_names())
         ret[column] = ret[column].fillna(value)
         return ret

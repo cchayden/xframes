@@ -988,7 +988,7 @@ class XStream(object):
         if not isinstance(name, str):
             raise TypeError('Invalid column name: must be str.')
         if name not in self.column_names():
-            raise ValueError('Column name must be in XFrame')
+            raise ValueError('Column name must be in XFrame.')
         return XStream(impl=self._impl.replace_selected_column(name, col.impl(), col.dtype()))
 
     def remove_column(self, name):

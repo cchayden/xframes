@@ -196,8 +196,10 @@ class TestXFrameConstructor:
             def iteritems():
                 return iter([('id', 1), ('val', 'a')])
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             _ = XFrame(MyIterItem())
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Iterator values must be iterable.'
 
     def test_construct_iter(self):
         # construct an XFrame from an object that has __iter__
@@ -219,8 +221,11 @@ class TestXFrameConstructor:
             def __iter__(self):
                 return iter([])
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             _ = XFrame(MyIter())
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Cannot determine types.'
+
 
     def test_construct_empty(self):
         # construct an empty XFrame
@@ -260,19 +265,25 @@ class TestXFrameConstructor:
     def test_construct_array_mixed_xarray(self):
         # construct an XFrame from an xarray and values
         xa = XArray([1, 2, 3])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             _ = XFrame([1, 2, xa], format='array')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Cannot create XFrame from mix of regular values and XArrays.'
 
     def test_construct_array_mixed_types(self):
         # construct an XFrame from
         # an array of mixed types
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             _ = XFrame([1, 2, 'a'], format='array')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Infer_type_of_list: mixed types in list: <type 'str'> <type 'int'>"
 
     def test_construct_unknown_format(self):
         # test unknown format
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             _ = XFrame([1, 2, 'a'], format='bad-format')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Unknown input type: 'bad-format'."
 
     def test_construct_array_empty(self):
         # construct an XFrame from an empty array
@@ -335,8 +346,10 @@ class TestXFrameConstructor:
 
     def test_construct_dict_int_str_bad_len(self):
         # construct an XFrame from a dict of int and str with different lengths
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             XFrame({'id': [1, 2, 3], 'val': ['a', 'b']})
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Cannot create XFrame from dict of lists of different lengths.'
 
     def test_construct_binary(self):
         # make binary file
@@ -372,8 +385,10 @@ class TestXFrameConstructor:
 
     def test_construct_binary_not_exist(self):
         path = 'does-not-exist'
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             _ = XFrame(path)
+        exception_message = exception_info.value.args[0]
+        assert exception_message.startswith('Input file does not exist:')
 
 
 # noinspection PyClassHasNoInit
@@ -421,8 +436,10 @@ class TestXFrameReadCsvWithErrors:
 
     def test_read_csv_file_not_exist(self):
         path = 'files/does-not-exist.csv'
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             XFrame.read_csv_with_errors(path)
+        exception_message = exception_info.value.args[0]
+        assert exception_message.startswith('Input file does not exist:')
 
     # Cannot figure out how to cause SystemError in csv reader.
     # But it happened one time
@@ -567,8 +584,10 @@ class TestXFrameReadCsv:
 
     def test_read_csv_file_not_exist(self):
         path = 'files/does-not-exist.csv'
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             _ = XFrame.read_csv(path)
+        exception_message = exception_info.value.args[0]
+        assert exception_message.startswith('Input file does not exist:')
 
 
 # noinspection PyClassHasNoInit
@@ -599,8 +618,10 @@ class TestXFrameReadText:
 
     def test_read_text_file_not_exist(self):
         path = 'files/does-not-exist.txt'
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             XFrame.read_text(path)
+        exception_message = exception_info.value.args[0]
+        assert exception_message.startswith('Input file does not exist:')
 
 
 # noinspection PyClassHasNoInit
@@ -696,8 +717,10 @@ class TestXFrameReadParquet:
 
     def test_read_parquet_not_exist(self):
         path = 'files/does-not-exist.parquet'
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             _ = XFrame(path)
+        exception_message = exception_info.value.args[0]
+        assert exception_message.startswith('Input file does not exist:')
 
 
 # noinspection PyClassHasNoInit
@@ -787,8 +810,10 @@ class TestXFrameToSparkDataFrame:
 
     def test_to_spark_dataframe_list_bad(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[None, 1], [2, 2], [3, 3]]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.to_spark_dataframe('tmp_tbl')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Element type cannot be determined.'
 
     def test_to_spark_dataframe_map(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'x': 1}, {'y': 2}, {'z': 3}]})
@@ -802,8 +827,10 @@ class TestXFrameToSparkDataFrame:
 
     def test_to_spark_dataframe_map_bad(self):
         t = XFrame({'id': [1, 2, 3], 'val': [None, {'y': 2}, {'z': 3}]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.to_spark_dataframe('tmp_tbl')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Schema type cannot be determined.'
 
     @pytest.mark.skip(reason='files in spark 2')
     def test_to_spark_dataframe_map_hint(self):
@@ -838,13 +865,15 @@ class TestXFrameToSparkDataFrame:
 
     def test_to_spark_dataframe_str_rename_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.to_spark_dataframe('tmp_tbl', column_names='id1')
 
     def test_to_spark_dataframe_str_rename_bad_len(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.to_spark_dataframe('tmp_tbl', column_names=['id1'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column names list must match number of columns: actual: 1, expected: 2'
 
 
 # noinspection PyClassHasNoInit
@@ -904,14 +933,18 @@ class TestXFrameFromRdd:
     def test_from_rdd_names_bad(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             XFrame.from_rdd(rdd, column_names=('id',))
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Length of names does not match RDD: ('id',) (1, 'a')."
 
     def test_from_rdd_types_bad(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(None, 'a'), (2, 'b'), (3, 'c')])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             XFrame.from_rdd(rdd, column_types=(int,))
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Length of types does not match RDD.'
 
 
 # noinspection PyClassHasNoInit
@@ -2195,14 +2228,18 @@ class TestXFrameSelectColumn:
 
     def test_select_column_bad_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.select_column('xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column name does not exist: 'xx'."
 
     # noinspection PyTypeChecker
     def test_select_column_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.select_column(1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Invalid column_name type must be str.'
 
 
 # noinspection PyClassHasNoInit
@@ -2224,18 +2261,24 @@ class TestXFrameSelectColumns:
     # noinspection PyTypeChecker
     def test_select_columns_not_iterable(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.select_columns(1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Keylist must be an iterable.'
 
     def test_select_columns_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.select_columns(['id', 2])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Invalid key type: must be str.'
 
     def test_select_columns_bad_dup(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.select_columns(['id', 'id'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "There are duplicate keys in key list: 'id'."
 
 
 # noinspection PyClassHasNoInit
@@ -2293,36 +2336,46 @@ class TestXFrameAddColumnsArray:
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             tf.add_columns([ta1, ta2])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Namelist must be an iterable.'
 
     # noinspection PyTypeChecker
     def test_add_columns_data_not_iterable(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             tf.add_columns(1, namelist=[])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column list must be an iterable.'
 
     # noinspection PyTypeChecker
     def test_add_columns_namelist_not_iterable(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             tf.add_columns([ta1, ta2], namelist=1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Namelist must be an iterable.'
 
     def test_add_columns_not_xarray(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = [30.0, 20.0, 10.0]
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             tf.add_columns([ta1, ta2], namelist=['new1', 'new2'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Must give column as XArray.'
 
     def test_add_columns_name_not_str(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             tf.add_columns([ta1, ta2], namelist=['new1', 1])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Invalid column name in list : must all be str."
 
 
 # noinspection PyClassHasNoInit
@@ -2364,21 +2417,27 @@ class TestXFrameReplaceColumn:
     # noinspection PyTypeChecker
     def test_replace_column_bad_col_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.replace_column('val', ['x', 'y', 'z'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Must give column as XArray.'
 
     def test_replace_column_bad_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         a = XArray(['x', 'y', 'z'])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.replace_column('xx', a)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column name must be in XFrame.'
 
     # noinspection PyTypeChecker
     def test_replace_column_bad_name_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         a = XArray(['x', 'y', 'z'])
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.replace_column(2, a)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Invalid column name: must be str.'
 
 
 # noinspection PyClassHasNoInit
@@ -2396,8 +2455,10 @@ class TestXFrameRemoveColumn:
 
     def test_remove_column_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.remove_column('xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'xx'."
 
 
 # noinspection PyClassHasNoInit
@@ -2415,13 +2476,17 @@ class TestXFrameRemoveColumns:
 
     def test_remove_column_not_iterable(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.remove_columns('xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column_names must be an iterable.'
 
     def test_remove_column_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.remove_columns(['xx'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'xx'."
 
 
 # noinspection PyClassHasNoInit
@@ -2439,13 +2504,17 @@ class TestXFrameSwapColumns:
 
     def test_swap_columns_bad_col_1(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.swap_columns('xx', 'another')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'xx'."
 
     def test_swap_columns_bad_col_2(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.swap_columns('val', 'xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'xx'."
 
 
 # noinspection PyClassHasNoInit
@@ -2464,18 +2533,24 @@ class TestXFrameReorderColumns:
     # noinspection PyTypeChecker
     def test_reorder_columns_list_not_iterable(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.reorder_columns('val')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Keylist must be an iterable.'
 
     def test_reorder_columns_bad_col(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.reorder_columns(['val', 'y', 'id'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'y'."
 
     def test_reorder_columns_incomplete(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.reorder_columns(['val', 'id'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column 'x' not assigned'."
 
 
 # noinspection PyClassHasNoInit
@@ -2494,18 +2569,24 @@ class TestXFrameRename:
     # noinspection PyTypeChecker
     def test_rename_arg_not_dict(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.rename('id')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Names must be a dictionary: oldname -> newname or a list of newname (str).'
 
     def test_rename_col_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.rename({'xx': 'new_id'})
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'xx' in the XFrame."
 
     def test_rename_bad_length(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.rename(['id'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Names must be the same length as the number of columns (names: 1 columns: 2).'
 
     def test_rename_list(self):
         t = XFrame({'X.0': [1, 2, 3], 'X.1': ['a', 'b', 'c']})
@@ -2538,13 +2619,17 @@ class TestXFrameGetitem:
 
     def test_getitem_int_too_low(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(IndexError):
+        with pytest.raises(IndexError) as exception_info:
             _ = t[-100]
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'XFrame index out of range (too low).'
 
     def test_getitem_int_too_high(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(IndexError):
+        with pytest.raises(IndexError) as exception_info:
             _ = t[100]
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'XFrame index out of range (too high).'
 
     def test_getitem_slice(self):
         # TODO we could test more variations of slice
@@ -2561,8 +2646,10 @@ class TestXFrameGetitem:
 
     def test_getitem_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             _ = t[{'a': 1}]
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Invalid index type: must be XArray, 'int', 'list', slice, or 'str': (dict)."
 
     # TODO: need to implement
     def test_getitem_xarray(self):
@@ -2618,8 +2705,10 @@ class TestXFrameSetitem:
 
     def test_setitem_bad_key(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t[{'a': 1}] = [1.0, 2.0, 3.0]
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Cannot set column with key type dict.'
 
     def test_setitem_str_iter_replace_one_col(self):
         t = XFrame({'val': ['a', 'b', 'c']})
@@ -2642,8 +2731,10 @@ class TestXFrameDelitem:
 
     def test_delitem_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             del t['xx']
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'xx'."
 
 
 # noinspection PyClassHasNoInit
@@ -2695,13 +2786,17 @@ class TestXFrameRange:
 
     def test_range_int_too_low(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(IndexError):
+        with pytest.raises(IndexError) as exception_info:
             _ = t.range(-100)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'XFrame index out of range (too low).'
 
     def test_range_int_too_high(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(IndexError):
+        with pytest.raises(IndexError) as exception_info:
             _ = t.range(100)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'XFrame index out of range (too high).'
 
     def test_range_slice(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2713,8 +2808,10 @@ class TestXFrameRange:
     # noinspection PyTypeChecker
     def test_range_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             _ = t.range({'a': 1})
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Invalid argument type: must be int or slice (dict).'
 
 
 # noinspection PyClassHasNoInit
@@ -2734,8 +2831,10 @@ class TestXFrameAppend:
     # noinspection PyTypeChecker
     def test_append_bad_type(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as exception_info:
             t1.append(1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'XFrame append can only work with XFrame.'
 
     def test_append_both_empty(self):
         t1 = XFrame()
@@ -2760,20 +2859,27 @@ class TestXFrameAppend:
     def test_append_unequal_col_length(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [10, 20, 30], 'val': ['aa', 'bb', 'cc'], 'another': [1.0, 2.0, 3.0]})
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as exception_info:
             t1.append(t2)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Two XFrames must have the same number of columns.'
 
     def test_append_col_name_mismatch(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [10, 20, 30], 'xx': ['a', 'b', 'c']})
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as exception_info:
             t1.append(t2)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column val name is not the same in two XFrames, one is val the other is xx.'
 
     def test_append_col_type_mismatch(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [10, 20], 'val': [1.0, 2.0]})
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as exception_info:
             t1.append(t2)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column val type is not the same in two XFrames, " + \
+                                    "one is <type 'str'> the other is [<type 'int'>, <type 'float'>]."
 
 
 # noinspection PyClassHasNoInit
@@ -2813,43 +2919,55 @@ class TestXFrameGroupby:
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f'],
                     'another': [10, 20, 30, 40, 50, 60]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.groupby(1, {})
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "'int' object is not iterable"
 
     # noinspection PyTypeChecker
     def test_groupby_bad_col_name_list_type(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f'],
                     'another': [10, 20, 30, 40, 50, 60]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.groupby([1], {})
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column name must be a string.'
 
     def test_groupby_bad_col_group_name(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f'],
                     'another': [10, 20, 30, 40, 50, 60]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.groupby('xx', {})
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column 'xx' does not exist in XFrame."
 
     def test_groupby_bad_group_type(self):
         t = XFrame({'id': [{1: 'a', 2: 'b'}, {3: 'c'}],
                     'val': ['a', 'b']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.groupby('id', {})
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Cannot group on a dictionary column.'
 
     def test_groupby_bad_agg_group_name(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f'],
                     'another': [10, 20, 30, 40, 50, 60]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.groupby('id', SUM('xx'))
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column 'xx' does not exist in XFrame."
 
     def test_groupby_bad_agg_group_type(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f'],
                     'another': [10, 20, 30, 40, 50, 60]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.groupby('id', SUM(1))
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column name must be a string.'
 
 
 # noinspection PyClassHasNoInit
@@ -3785,33 +3903,43 @@ class TestXFrameJoin:
     def test_join_bad_how(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 3], 'doubled': ['aa', 'bb', 'cc']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t1.join(t2, how='xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Invalid join type.'
 
     # noinspection PyTypeChecker
     def test_join_bad_right(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t1.join([1, 2, 3])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Can only join two XFrames.'
 
     def test_join_bad_on_list(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 3], 'doubled': ['aa', 'bb', 'cc']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t1.join(t2, on=['id', 1])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Join keys must each be a str.'
 
     # noinspection PyTypeChecker
     def test_join_bad_on_type(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 3], 'doubled': ['aa', 'bb', 'cc']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t1.join(t2, on=1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Must pass a 'str', 'list', or 'dict' of join keys."
 
     def test_join_bad_on_col_name(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [1, 2, 3], 'doubled': ['aa', 'bb', 'cc']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t1.join(t2, on='xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Key 'xx' is not a column name."
 
 
 # noinspection PyClassHasNoInit
@@ -3857,8 +3985,10 @@ class TestXFrameSplitDatetime:
         t = XFrame({'id': [1, 2, 3], 'val': [datetime(2011, 1, 1),
                                              datetime(2011, 2, 2),
                                              datetime(2011, 3, 3)]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.split_datetime('xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column 'xx' does not exist in current XFrame."
 
 
 # noinspection PyClassHasNoInit
@@ -3968,8 +4098,10 @@ class TestXFrameFilterby:
 
     def test_filterby_bad_column_type_list(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.filterby([1, 3], 'val')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Value type (int) does not match column type (str).'
 
     def test_filterby_xarray_exclude(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
@@ -3983,30 +4115,42 @@ class TestXFrameFilterby:
     # noinspection PyTypeChecker
     def test_filterby_bad_column_name_type(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.filterby([1, 3], 1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column_name must be a string.'
 
     def test_filterby_bad_column_name(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.filterby([1, 3], 'xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column 'xx' not in XFrame."
 
     def test_filterby_bad_column_type_xarray(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         a = XArray([1, 3])
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.filterby(a, 'val')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Type of given values ('<type 'int'>') does not match " + \
+                                    "type of column 'val' ('<type 'str'>') in XFrame."
 
     def test_filterby_bad_list_empty(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.filterby([], 'id').sort('id')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Value list is empty.'
 
     def test_filterby_bad_xarray_empty(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         a = XArray([])
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.filterby(a, 'val')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Type of given values ('None') does not match " + \
+                                    "type of column 'val' ('<type 'str'>') in XFrame."
 
 
 # noinspection PyClassHasNoInit
@@ -4102,51 +4246,69 @@ class TestXFramePackColumnsList:
     # noinspection PyTypeChecker
     def test_pack_columns_bad_col_spec(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.pack_columns(columns='id', column_prefix='val')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "'Columns' and 'column_prefix' parameter cannot be given at the same time."
 
     # noinspection PyTypeChecker
     def test_pack_columns_bad_col_prefix_type(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.pack_columns(column_prefix=1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "'Column_prefix' must be a string. Found 'int': 1."
 
     def test_pack_columns_bad_col_prefix(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.pack_columns(column_prefix='xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "There are no column starts with prefix 'xx'."
 
     def test_pack_columns_bad_cols(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.pack_columns(columns=['xx'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Current XFrame has no column called 'xx'."
 
     def test_pack_columns_bad_cols_dup(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.pack_columns(columns=['id', 'id'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'There are duplicate column names in columns parameter.'
 
     def test_pack_columns_bad_cols_single(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.pack_columns(columns=['id'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Please provide at least two columns to pack.'
 
     # noinspection PyTypeChecker
     def test_pack_columns_bad_dtype(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.pack_columns(columns=['id', 'val'], dtype=int)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Resulting dtype has to be one of 'dict', 'array.array', or 'list type."
 
     # noinspection PyTypeChecker
     def test_pack_columns_bad_new_col_name_type(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.pack_columns(columns=['id', 'val'], new_column_name=1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "'New_column_name' must be a string. Found 'int': 1."
 
     def test_pack_columns_bad_new_col_name_dup_rest(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd'], 'another': [11, 12, 13, 14]})
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError) as exception_info:
             t.pack_columns(columns=['id', 'val'], new_column_name='another')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Current XFrame already contains a column name 'another'."
 
     def test_pack_columns_good_new_col_name_dup_key(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
@@ -4245,15 +4407,19 @@ class TestXFramePackColumnsArray:
 
     def test_pack_columns_bad_fill_na_not_numeric(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [10, 20, 30, 40]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.pack_columns(columns=['id', 'val'], new_column_name='new', dtype=array.array, fill_na='a')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Fill_na value for array needs to be numeric type.'
 
     def test_pack_columns_bad_not_numeric(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.pack_columns(columns=['id', 'val'], new_column_name='new', dtype=array.array)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column 'val' type is not numeric, cannot pack into array type."
 
-    # TODO list
+        # TODO list
 
 
 # noinspection PyClassHasNoInit
@@ -4377,8 +4543,10 @@ class TestXFrameUnpackDict:
 
     def test_unpack_bad_types_no_limit(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'a': 1}, {'b': 2}, {'a': 1, 'b': 2}]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.unpack('val', column_types=[str, str])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "If 'column_types' is given, 'limit' has to be provided to unpack dict type."
 
 
 # TODO unpack array
@@ -4413,19 +4581,25 @@ class TestXFrameStackList:
 
     def test_stack_bad_col_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.stack('xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'xx' in the XFrame."
 
     def test_stack_bad_col_value(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.stack('val')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Stack is only supported for column of 'dict', 'list', or 'array' type."
 
     # noinspection PyTypeChecker
     def test_stack_bad_new_col_name_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.stack('val', new_column_name=1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Stack is only supported for column of 'dict', 'list', or 'array' type."
 
     def test_stack_new_col_name_dup_ok(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
@@ -4434,14 +4608,18 @@ class TestXFrameStackList:
 
     def test_stack_bad_new_col_name_dup(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.stack('val', new_column_name='id')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column with name 'id' already exists, pick a new column name."
 
     def test_stack_bad_no_data(self):
         t = XFrame({'id': [1, 2, 3], 'val': [['a1', 'b1', 'c1'], ['a2', 'b2'], ['a3', 'b3', 'c3', None]]})
         t = t.head(0)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.stack('val', new_column_name='val')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Cannot infer column type because there are not enough rows.'
 
 
 # noinspection PyClassHasNoInit
@@ -4476,30 +4654,40 @@ class TestXFrameStackDict:
 
     def test_stack_bad_col_name(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.stack('xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Cannot find column 'xx' in the XFrame."
 
     # noinspection PyTypeChecker
     def test_stack_bad_new_col_name_type(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.stack('val', new_column_name=1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "'New_column_name' has to be a 'list' to stack 'dict' type. Found 'int': 1"
 
     def test_stack_bad_new_col_name_len(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.stack('val', new_column_name=['a'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "'New_column_name' must have length of two."
 
     def test_stack_bad_new_col_name_dup(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.stack('val', new_column_name=['id', 'xx'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column with name 'id' already exists, pick a new column name."
 
     def test_stack_bad_no_data(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': [{'a': 3, 'b': 2}, {'a': 2, 'c': 2}, {'c': 1, 'd': 3}, {}]})
         t = t.head(0)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.stack('val', new_column_name=['k', 'v'])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Cannot infer column type because there are not enough rows.'
 
 
 # noinspection PyClassHasNoInit
@@ -4701,20 +4889,26 @@ class TestXFrameDropna:
     # noinspection PyTypeChecker
     def test_dropna_bad_col_arg(self):
         t = XFrame({'id': [1, 2, None], 'val': ['a', None, 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.dropna(columns=1)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Must give columns as a 'list', 'str', or 'None'."
 
     def test_dropna_bad_col_name_in_list(self):
         t = XFrame({'id': [1, 2, None], 'val': ['a', None, 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.dropna(columns=['id', 2])
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "All columns must be of 'str' type."
 
     def test_dropna_bad_how(self):
         t = XFrame({'id': [1, 2, None], 'val': ['a', None, 'c']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.dropna(how='xx')
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Must specify 'any' or 'all'."
 
-    # TODO drop_missing
+        # TODO drop_missing
 
 
 # noinspection PyClassHasNoInit
@@ -4767,14 +4961,18 @@ class TestXFrameFillna:
 
     def test_fillna_bad_col_name(self):
         t = XFrame({'id': [1, None, None], 'val': ['a', 'b', 'c']})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception_info:
             t.fillna('xx', 0)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Column name does not exist: 'xx'."
 
     # noinspection PyTypeChecker
     def test_fillna_bad_arg_type(self):
         t = XFrame({'id': [1, None, None], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exception_info:
             t.fillna(1, 0)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == "Must give column name as a 'str'. Found 'int': 1."
 
 
 # noinspection PyClassHasNoInit
