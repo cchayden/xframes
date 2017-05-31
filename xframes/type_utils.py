@@ -121,7 +121,7 @@ def infer_types(rdd):
     try:
         return [infer_type_of_list(get_col(head, i)) for i in range(n_cols)]
     except IndexError:
-        raise ValueError('rows are not the same length')
+        raise ValueError('Rows are not the same length.')
 
 
 def is_numeric_type(typ):
