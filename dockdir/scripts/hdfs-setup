@@ -7,5 +7,4 @@ hdfs dfs -mkdir /user/xframes
 hdfs dfs -mkdir /user/xframes/files
 
 
-# for xpatterns/xframe
 hdfs dfs -copyFromLocal -f /opt/xframes/data/files/* /user/xframes/files/
