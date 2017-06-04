@@ -181,7 +181,7 @@ class XArrayImpl(TracedObject):
         if not ignore_cast_failure:
             errs = len(rdd.filter(lambda x: x is ValueError).take(1)) == 1
             if errs:
-                raise ValueError('Cast failure loading data from iterable.')
+                raise ValueError
 
         return cls(rdd, dtype, Lineage.init_array_lineage(Lineage.PROGRAM))
 
@@ -1064,7 +1064,7 @@ class XArrayImpl(TracedObject):
         if count == 0:     # action
             return None
         if not is_numeric_type(self.elem_type):
-            raise TypeError('Max: non numeric type.')
+            raise TypeError('max: non numeric type')
         return self._rdd.max()          # action
 
     def min(self):
@@ -1079,7 +1079,7 @@ class XArrayImpl(TracedObject):
         if count == 0:     # action
             return None
         if not is_numeric_type(self.elem_type):
-            raise TypeError('Min: non numeric type.')
+            raise TypeError('sum: non numeric type')
         return self._rdd.min()      # action
 
     def sum(self):
@@ -1102,7 +1102,7 @@ class XArrayImpl(TracedObject):
         elif self.elem_type is array.array:
             def array_sum(x, y):
                 if x.typecode != y.typecode:
-                    logging.warn('Sum: arrays are not compatible.')
+                    logging.warn('Sum: arrays are not compatible')
                 total = array.array(x.typecode)
                 total.fromlist([a + b for a, b in zip(x, y)])
                 return total
@@ -1117,7 +1117,7 @@ class XArrayImpl(TracedObject):
             total = self._rdd.reduce(dict_sum)
 
         else:
-            raise TypeError('Sum: non numeric type.')
+            raise TypeError('sum: non numeric type')
         return total
 
     def mean(self):
@@ -1132,7 +1132,7 @@ class XArrayImpl(TracedObject):
         if count == 0:     # action
             return None
         if not is_numeric_type(self.elem_type):
-            raise TypeError('Mean: non numeric type.')
+            raise TypeError('mean: non numeric type')
         return self._rdd.mean()       # action
 
     def std(self, ddof):
@@ -1147,7 +1147,7 @@ class XArrayImpl(TracedObject):
         if count == 0:      # action
             return None
         if not is_numeric_type(self.elem_type):
-            raise TypeError('Std: non numeric type.')
+            raise TypeError('mean: non numeric type')
         if ddof < 0 or ddof > 1 or ddof >= count:
             raise ValueError('std: invalid ddof {}'.format(ddof))
         if ddof == 0:
@@ -1168,7 +1168,7 @@ class XArrayImpl(TracedObject):
         if count == 0:      # action
             return None
         if not is_numeric_type(self.elem_type):
-            raise TypeError('Var: non numeric type.')
+            raise TypeError('mean: non numeric type')
         if ddof < 0 or ddof > 1 or ddof >= count:
             raise ValueError('std: invalid ddof {}'.format(ddof))
         if ddof == 0:
@@ -1291,7 +1291,7 @@ class XArrayImpl(TracedObject):
         """
         self._entry(keys=keys, exclude=exclude)
         if not issubclass(self.dtype(), dict):
-            raise TypeError('XArray dtype must be dict: {}.'.format(self.dtype()))
+            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype))
 
         def trim_keys(items):
             if exclude:
@@ -1310,7 +1310,7 @@ class XArrayImpl(TracedObject):
         """
         self._entry(lower=lower, upper=upper)
         if not issubclass(self.dtype(), dict):
-            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype()))
+            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype))
 
         def trim_values(items):
             return {k: items[k] for k in items if lower <= items[k] <= upper}
@@ -1324,7 +1324,7 @@ class XArrayImpl(TracedObject):
         """
         self._entry()
         if not issubclass(self.dtype(), dict):
-            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype()))
+            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype))
 
         res = self._rdd.map(lambda item: item.keys())
         column_types = infer_types(res)
@@ -1338,7 +1338,7 @@ class XArrayImpl(TracedObject):
         """
         self._entry()
         if not issubclass(self.dtype(), dict):
-            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype()))
+            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype))
 
         res = self._rdd.map(lambda item: item.values())
         column_types = infer_types(res)
@@ -1354,7 +1354,7 @@ class XArrayImpl(TracedObject):
         """
         self._entry(keys=keys)
         if not issubclass(self.dtype(), dict):
-            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype()))
+            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype))
 
         def has_any_keys(items):
             return all(key in items for key in keys)
@@ -1370,7 +1370,7 @@ class XArrayImpl(TracedObject):
         """
         self._entry(keys=keys)
         if not issubclass(self.dtype(), dict):
-            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype()))
+            raise TypeError('XArray dtype must be dict: {}'.format(self.dtype))
 
         def has_all_keys(items):
             return all(key in items for key in keys)

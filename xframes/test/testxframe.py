@@ -1348,7 +1348,7 @@ class TestXFrameColumnLineage:
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
-        res = tf.add_columns([ta1, ta2], namelist=['new1', 'new2'])
+        res = tf.add_columns([ta1, ta2], names=['new1', 'new2'])
         lineage = res.lineage()['column']
         assert len(lineage) == 4
         assert sorted(lineage.keys()) == ['id', 'new1', 'new2', 'val']
@@ -2318,7 +2318,7 @@ class TestXFrameAddColumnsArray:
     def test_add_columns_one(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
-        res = tf.add_columns([ta], namelist=['new1'])
+        res = tf.add_columns([ta], names=['new1'])
         assert res.column_names() == ['id', 'val', 'new1']
         assert res.column_types() == [int, str, float]
         assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0}
@@ -2327,7 +2327,7 @@ class TestXFrameAddColumnsArray:
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
-        res = tf.add_columns([ta1, ta2], namelist=['new1', 'new2'])
+        res = tf.add_columns([ta1, ta2], names=['new1', 'new2'])
         assert res.column_names() == ['id', 'val', 'new1', 'new2']
         assert res.column_types() == [int, str, float, float]
         assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}
@@ -2345,7 +2345,7 @@ class TestXFrameAddColumnsArray:
     def test_add_columns_data_not_iterable(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(TypeError) as exception_info:
-            tf.add_columns(1, namelist=[])
+            tf.add_columns(1, names=[])
         exception_message = exception_info.value.args[0]
         assert exception_message == 'Column list must be an iterable.'
 
@@ -2355,7 +2355,7 @@ class TestXFrameAddColumnsArray:
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
         with pytest.raises(TypeError) as exception_info:
-            tf.add_columns([ta1, ta2], namelist=1)
+            tf.add_columns([ta1, ta2], names=1)
         exception_message = exception_info.value.args[0]
         assert exception_message == 'Namelist must be an iterable.'
 
@@ -2364,7 +2364,7 @@ class TestXFrameAddColumnsArray:
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = [30.0, 20.0, 10.0]
         with pytest.raises(TypeError) as exception_info:
-            tf.add_columns([ta1, ta2], namelist=['new1', 'new2'])
+            tf.add_columns([ta1, ta2], names=['new1', 'new2'])
         exception_message = exception_info.value.args[0]
         assert exception_message == 'Must give column as XArray.'
 
@@ -2373,7 +2373,7 @@ class TestXFrameAddColumnsArray:
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
         with pytest.raises(TypeError) as exception_info:
-            tf.add_columns([ta1, ta2], namelist=['new1', 1])
+            tf.add_columns([ta1, ta2], names=['new1', 1])
         exception_message = exception_info.value.args[0]
         assert exception_message == "Invalid column name in list : must all be str."
 
@@ -2459,6 +2459,20 @@ class TestXFrameRemoveColumn:
             t.remove_column('xx')
         exception_message = exception_info.value.args[0]
         assert exception_message == "Cannot find column 'xx'."
+
+    def test_remove_column_many(self):
+        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
+        res = t.remove_column(['new1', 'new2'])
+        assert res[0] == {'id': 1, 'val': 'a'}
+        assert len(t.column_names()) == 4
+        assert len(res.column_names()) == 2
+
+    def test_remove_column_many_bad_type(self):
+        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
+        with pytest.raises(TypeError) as exception_info:
+            t.remove_columns(10)
+        exception_message = exception_info.value.args[0]
+        assert exception_message == 'Column_names must be an iterable.'
 
 
 # noinspection PyClassHasNoInit
@@ -4317,6 +4331,21 @@ class TestXFramePackColumnsList:
         assert res[0] == {'id': [1, 'a']}
         assert res[1] == {'id': [2, 'b']}
 
+
+class TestXFramePackColumnsTuple:
+    """
+    Tests XFrame pack_columns into tuple
+    """
+
+    def test_pack_columns(self):
+        t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
+        res = t.pack_columns(columns=['id', 'val'], new_column_name='new', dtype=tuple)
+        assert len(res) == 4
+        assert res.num_columns() == 1
+        assert res.column_names() == ['new']
+        assert res.column_types() == [tuple]
+        assert res[0] == {'new': (1, 'a')}
+        assert res[1] == {'new': (2, 'b')}
 
 # noinspection PyClassHasNoInit
 class TestXFramePackColumnsDict:

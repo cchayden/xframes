@@ -1135,27 +1135,6 @@ class XFrameImpl(TracedObject):
         lineage = self.lineage.merge(other.lineage)
         return self._replace(res, names, types, lineage)
 
-    def remove_column(self, name):
-        """
-        Remove a column from the RDD.
-
-        This operation creates a new xframe_impl and returns it.
-        """
-        self._entry(name=name)
-        col = self.col_names.index(name)
-        names = copy.copy(self.col_names)
-        column_types = copy.copy(self.column_types)
-        names.pop(col)
-        column_types.pop(col)
-
-        def pop_col(row):
-            lst = list(row)
-            lst.pop(col)
-            return tuple(lst)
-        res = self._rdd.map(lambda row: pop_col(row))
-        lineage = self.lineage.remove_column(name)
-        return self._rv(res, names, column_types, lineage)
-
     def remove_column_in_place(self, name):
         """
         Remove a column from the RDD.
@@ -1172,7 +1151,7 @@ class XFrameImpl(TracedObject):
             lst.pop(col)
             return tuple(lst)
         res = self._rdd.map(lambda row: pop_col(row))
-        lineage = self.lineage.remove_column(name)
+        lineage = self.lineage.remove_columns([name])
         return self._replace(res, lineage=lineage)
 
     def remove_columns(self, column_names):
@@ -1609,6 +1588,8 @@ class XFrameImpl(TracedObject):
          - *array.array*: pack all values from the packing columns into an array
 
          - *list*: pack all values from the packing columns into a list.
+         
+         - *tuple*: pack all values from the packing columns into a tuple.
         """
         self._entry(columns=columns, dict_keys=dict_keys, dtype=dtype, fill_na=fill_na)
         cols = [self.col_names.index(col) for col in columns]
@@ -1619,6 +1600,9 @@ class XFrameImpl(TracedObject):
 
         def pack_row_list(row):
             return [substitute_missing(v) for v in row]
+
+        def pack_row_tuple(row):
+            return tuple([substitute_missing(v) for v in row])
 
         def pack_row_array(row, typecode):
             lst = [substitute_missing(v) for v in row]
@@ -1634,6 +1618,8 @@ class XFrameImpl(TracedObject):
 
         if dtype is list:
             res = keys.map(pack_row_list)
+        elif dtype is tuple:
+            res = keys.map(pack_row_tuple)
         elif dtype is array.array:
             res = keys.map(lambda row: pack_row_array(row, 'd'))
         elif dtype is dict:

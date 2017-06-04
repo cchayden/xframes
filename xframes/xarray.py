@@ -1677,7 +1677,7 @@ class XArray(object):
         xframes.XArray.datetime_to_str
         """
         if not issubclass(self.dtype(), basestring):
-            raise TypeError('Str_to_datetime expects XArray of str as input XArray.')
+            raise TypeError("'Str_to_datetime' expects XArray of str as input XArray.")
 
         return XArray(impl=self._impl.str_to_datetime(str_format))
 
@@ -2336,7 +2336,7 @@ class XArray(object):
 
         if column_types is not None:
             if not hasattr(column_types, '__iter__'):
-                raise TypeError("'Column_types' must be a list.")
+                raise TypeError("'column_types' must be a list.")
 
             for column_type in column_types:
                 if column_type not in (int, float, str, list, dict, array.array):

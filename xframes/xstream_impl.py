@@ -352,27 +352,6 @@ class XStreamImpl(TracedObject):
     def add_columns_frame_in_place(self, other):
         raise UnimplementedException()
 
-    def remove_column(self, name):
-        """
-        Remove a column from the XStream.
-
-        This operation creates a new XStreamImpl and returns it.
-        """
-        self._entry(name=name)
-        col = self.col_names.index(name)
-        names = copy.copy(self.col_names)
-        column_types = copy.copy(self.column_types)
-        names.pop(col)
-        column_types.pop(col)
-
-        def pop_col(row):
-            lst = list(row)
-            lst.pop(col)
-            return tuple(lst)
-        res = self._dstream.map(pop_col)
-        lineage = self.lineage.remove_column(name)
-        return self._rv(res, names, column_types, lineage)
-
     def remove_column_in_place(self, name):
         """
         Remove a column from the RDD.
@@ -389,7 +368,7 @@ class XStreamImpl(TracedObject):
             lst.pop(col)
             return tuple(lst)
         res = self._dstream.map(pop_col)
-        lineage = self.lineage.remove_column(name)
+        lineage = self.lineage.remove_columns([name])
         return self._replace(res, lineage=lineage)
 
     def remove_columns(self, column_names):

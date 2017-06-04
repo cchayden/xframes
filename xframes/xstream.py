@@ -993,13 +993,14 @@ class XStream(object):
 
     def remove_column(self, name):
         """
-        Remove a column from this XFrame. This
+        Remove a column or columns from this XFrame. This
         operation returns a new XFrame with the given column removed.
 
         Parameters
         ----------
-        name : string
+        name : string or list or iterable
             The name of the column to remove.
+            If a list or iterable is given, all the named columns are removed.
 
         Returns
         -------
@@ -1011,9 +1012,14 @@ class XStream(object):
         xframes.XFrame.remove_column
             Corresponding function on individual frame.
         """
-        if name not in self.column_names():
-            raise KeyError('Cannot find column {}.'.format(name))
-        return XStream(impl=self._impl.remove_column(name))
+        if isinstance(name, basestring):
+            column_names = [name]
+        else:
+            column_names = name
+        for name in column_names:
+            if name not in self.column_names():
+                raise KeyError('Cannot find column {}.'.format(name))
+        return XStream(impl=self._impl.remove_columns(column_names))
 
     def remove_columns(self, column_names):
         """

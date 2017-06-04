@@ -2718,7 +2718,7 @@ class XFrame(object):
             raise TypeError('Invalid column name: must be str.')
         return XFrame(impl=self._impl.add_column(col.impl(), name))
 
-    def add_columns(self, cols, namelist=None):
+    def add_columns(self, cols, names=None):
         """
         Adds multiple columns to this XFrame. The length of the new columns
         must match the length of the existing XFrame. This
@@ -2726,12 +2726,16 @@ class XFrame(object):
 
         Parameters
         ----------
-        cols : list of :class:`.XArray` or XFrame
+        cols : :class:`.XArray` or list of :class:`.XArray` or :class:`XFrame`
             The columns to add.  If `cols` is an XFrame, all columns in it are added.
 
-        namelist : list of string, optional
-            A list of column names. All names must be specified. `Namelist` is
-            ignored if `cols` is an XFrame.  If there are columns with duplicate names, they
+        names : string or list of string, optional
+            If cols is an XArray, then the name of the column. If no name is given, a default name is
+            chosen.
+            If cols is a list of :class:`.XArray`, then a list of column names. 
+            All names must be specified. 
+            `Namelist` is ignored if `cols` is an XFrame.  
+            If there are columns with duplicate names, they
             will be made unambiguous by adding .1 to the second copy.
 
         Returns
@@ -2742,10 +2746,24 @@ class XFrame(object):
         See Also
         --------
         xframes.XFrame.add_column
-            adds one column
+            Adds one column
 
         Examples
         --------
+        >>> xf = xframes.XFrame({'id': [1, 2, 3], 'val': ['A', 'B', 'C']})
+        >>> xa = xframes.XArray(['cat', 'dog', 'fossa'])
+        >>> # This line is equivalant to `xf['species'] = xa`
+        >>> xf2 = xf.add_columns(xa, names='species')
+        >>> xf2
+        +----+-----+---------+
+        | id | val | species |
+        +----+-----+---------+
+        | 1  |  A  |   cat   |
+        | 2  |  B  |   dog   |
+        | 3  |  C  |  fossa  |
+        +----+-----+---------+
+        [3 rows x 3 columns]
+
         >>> xf = xframes.XFrame({'id': [1, 2, 3], 'val': ['A', 'B', 'C']})
         >>> xf2 = xframes.XFrame({'species': ['cat', 'dog', 'horse'],
         ...                        'age': [3, 5, 9]})
@@ -2762,21 +2780,25 @@ class XFrame(object):
         """
         if isinstance(cols, XFrame):
             return XFrame(impl=self._impl.add_columns_frame(cols._impl))
+        if isinstance(cols, XArray):
+            if not isinstance(names, str):
+                raise TypeError('Invalid column name: must be str.')
+            return XFrame(impl=self._impl.add_column(cols.impl(), names))
         else:
             if not hasattr(cols, '__iter__'):
                 raise TypeError('Column list must be an iterable.')
-            if not hasattr(namelist, '__iter__'):
+            if not hasattr(names, '__iter__'):
                 raise TypeError('Namelist must be an iterable.')
 
-            if not all([isinstance(x, XArray) for x in cols]):
-                raise TypeError('Must give column as XArray.')
-            if not all([isinstance(x, str) for x in namelist]):
-                raise TypeError("Invalid column name in list : must all be str.")
-            if len(namelist) != len(cols):
-                raise ValueError('Namelist length mismatch.')
+        if not all([isinstance(x, XArray) for x in cols]):
+            raise TypeError('Must give column as XArray.')
+        if not all([isinstance(x, str) for x in names]):
+            raise TypeError("Invalid column name in list : must all be str.")
+        if len(names) != len(cols):
+            raise ValueError('Namelist length mismatch.')
 
-            cols_impl = [col.impl() for col in cols]
-            return XFrame(impl=self._impl.add_columns_array(cols_impl, namelist))
+        cols_impl = [col.impl() for col in cols]
+        return XFrame(impl=self._impl.add_columns_array(cols_impl, names))
 
     def replace_column(self, name, col):
         """
@@ -2824,23 +2846,23 @@ class XFrame(object):
 
     def remove_column(self, name):
         """
-        Remove a column from this XFrame. This
+        Remove a column or more columns from this XFrame. This
         operation returns a new XFrame with the given column removed.
 
         Parameters
         ----------
-        name : string
+        name : string or list or iterable
             The name of the column to remove.
+            If a list or iterable is given, all the named columns are removed.
 
         Returns
         -------
         :class:`.XFrame`
-            A new XFrame with given column removed.
+            A new XFrame with given column or columns removed.
 
         Examples
         --------
         >>> xf = xframes.XFrame({'id': [1, 2, 3], 'val': ['A', 'B', 'C']})
-        >>> # This is equivalent to `del xf['val']`
         >>> xf2 = xf.remove_column('val')
         >>> xf2
         +----+
@@ -2851,10 +2873,27 @@ class XFrame(object):
         | 3  |
         +----+
         [3 rows x 1 columns]
+        
+        >>> xf = xframes.XFrame({'id': [1, 2, 3], 'val1': ['A', 'B', 'C'], 'val2': [10, 11, 12]})
+        >>> xf2 = xf.remove_column(['val1', 'val2'])
+        >>> xf2
+        +----+
+        | id |
+        +----+
+        | 1  |
+        | 2  |
+        | 3  |
+        +----+
+        [3 rows x 1 columns]
         """
-        if name not in self.column_names():
-            raise KeyError("Cannot find column '{}'.".format(name))
-        return XFrame(impl=self._impl.remove_column(name))
+        if isinstance(name, basestring):
+            column_names = [name]
+        else:
+            column_names = name
+        for name in column_names:
+            if name not in self.column_names():
+                raise KeyError("Cannot find column '{}'.".format(name))
+        return XFrame(impl=self._impl.remove_columns(column_names))
 
     def remove_columns(self, column_names):
         """
@@ -3073,7 +3112,6 @@ class XFrame(object):
             if len(res) == 0:
                 raise IndexError('XFrame index out of range (too low).')
             return res[0]
-#            return list(XFrame(impl=self._impl.copy_range(key, 1, key + 1)))[0]
         if isinstance(key, slice):
             start = key.start
             stop = key.stop
@@ -4062,7 +4100,7 @@ class XFrame(object):
         have the given prefix are to be packed.
 
         The type of the resulting column is decided by the `dtype` parameter.
-        Allowed values for `dtype` are dict, array.array and list:
+        Allowed values for `dtype` are dict, array.array list, and tuple:
 
          - dict: pack to a dictionary XArray where column name becomes
            dictionary key and column value becomes dictionary value
@@ -4070,6 +4108,8 @@ class XFrame(object):
          - array.array: pack all values from the packing columns into an array
 
          - list: pack all values from the packing columns into a list.
+
+         - tuple: pack all values from the packing columns into a tuple.
 
         Parameters
         ----------
@@ -4083,7 +4123,7 @@ class XFrame(object):
             Pack all columns with the given `column_prefix`.
             This parameter is mutually exclusive with the `columns` parameter.
 
-        dtype : dict | array.array | list, optional
+        dtype : dict | array.array | list | tuple, optional
             The resulting packed column type. If not provided, dtype is list.
 
         fill_na : value, optional
@@ -4246,8 +4286,8 @@ class XFrame(object):
         if len(columns) <= 1:
             raise ValueError('Please provide at least two columns to pack.')
 
-        if dtype not in (dict, list, array.array):
-            raise ValueError("Resulting dtype has to be one of 'dict', 'array.array', or 'list type.")
+        if dtype not in (dict, list, tuple, array.array):
+            raise ValueError("Resulting dtype has to be one of 'dict', 'array.array', 'list', or 'tuple' type.")
 
         # fill_na value for array needs to be numeric
         if dtype is array.array:
@@ -4725,8 +4765,7 @@ class XFrame(object):
         +----+-------+
         | 1  |   1   |
         | 2  |   2   |
-        | 3  |   3   |
-        | 3  |   3   |
+        | 3  |   3   |        | 3  |   3   |
         | 4  |   4   |
         +----+-------+
         [5 rows x 2 columns]

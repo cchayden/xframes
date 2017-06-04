@@ -131,11 +131,9 @@ class TestXArrayConstructorLocal:
         assert t.dtype() is int
 
     def test_construct_list_int_cast_fail(self):
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t = XArray(['a', 'b', 'c'], dtype=int)
             len(t)     # force materialization
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Cast failure loading data from iterable.'
 
     def test_construct_list_int_cast_ignore(self):
         t = XArray(['1', '2', 'c'], dtype=int, ignore_cast_failure=True)
@@ -153,24 +151,18 @@ class TestXArrayConstructorRange:
 
     # noinspection PyArgumentList
     def test_construct_none(self):
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             XArray.from_sequence()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'from_sequence() takes at least 2 arguments (1 given)'
 
     # noinspection PyTypeChecker
     def test_construct_nonint_stop(self):
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             XArray.from_sequence(1.0)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Start' and 'stop' must be int."
 
     # noinspection PyTypeChecker
     def test_construct_nonint_start(self):
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             XArray.from_sequence(1.0, 10.0)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Start' and 'stop' must be int."
 
     def test_construct_stop(self):
         t = XArray.from_sequence(100, 200)
@@ -241,10 +233,8 @@ class TestXArrayConstructorLoad:
         assert t[2] == datetime.datetime(2017, 10, 17)
 
     def test_construct_local_file_not_exist(self):
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             _ = XArray('files/does-not-exist')
-        exception_message = exception_info.value.args[0]
-        assert exception_message.startswith('Input file does not exist:')
 
 
 # noinspection PyClassHasNoInit
@@ -302,23 +292,17 @@ class TestXArrayFromConst:
         assert t.dtype() is dict
 
     def test_from_const_negint(self):
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             XArray.from_const(1, -10)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Size must be positive.'
 
     # noinspection PyTypeChecker
     def test_from_const_nonint(self):
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             XArray.from_const(1, 'a')
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Size must be a int.'
 
     def test_from_const_bad_type(self):
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             XArray.from_const((1, 1), 10)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "Cannot create xarray of value type 'tuple'."
 
 
 # noinspection PyClassHasNoInit
@@ -631,17 +615,13 @@ class TestXArrayOpScalar:
 
     def test_and_scalar(self):
         t = XArray([1, 2, 3])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             _ = t & True
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'XArray can only perform logical and against another XArray.'
 
     def test_or_scalar(self):
         t = XArray([1, 2, 3])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             _ = t | False
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'XArray can only perform logical or against another XArray.'
 
 
 # noinspection PyUnresolvedReferences
@@ -792,10 +772,8 @@ class TestXArrayLogicalFilter:
     def test_logical_filter_len_error(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([1, 0])
-        with pytest.raises(IndexError) as exception_info:
+        with pytest.raises(IndexError):
             _ = t1[t2]
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Cannot perform logical indexing on arrays of different length.'
 
 
 # noinspection PyClassHasNoInit
@@ -813,11 +791,9 @@ class TestXArrayCopyRange:
 
     def test_copy_range_index_err(self):
         t = XArray([1, 2, 3])
-        with pytest.raises(IndexError) as exception_info:
+        with pytest.raises(IndexError):
             _ = t[3]
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'XArray index out of range.'
-
+        
     def test_copy_range_slice(self):
         t = XArray([1, 2, 3])
         res = t[0:2]
@@ -848,10 +824,8 @@ class TestXArrayCopyRange:
 
     def test_copy_range_bad_type(self):
         t = XArray([1, 2, 3])
-        with pytest.raises(IndexError) as exception_info:
+        with pytest.raises(IndexError):
             _ = t[{1, 2, 3}]
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Invalid type to use for indexing.'
 
 
 # noinspection PyClassHasNoInit
@@ -1354,18 +1328,14 @@ class TestXArrayApply:
 
     def test_apply_type_err(self):
         t = XArray([1, 2, 3, None])
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.apply(lambda x: x * 2, skip_undefined=False)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Transformation failures: errs 1  err[0]: Error evaluating function on "None"'
 
     def test_apply_fun_err(self):
         t = XArray([1, 2, 3, None])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             # noinspection PyTypeChecker
             t.apply(1)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Input must be a function.'
 
 
 # noinspection PyClassHasNoInit
@@ -1447,10 +1417,8 @@ class TestXArrayFlatMap:
 
     def test_flat_map_type_err(self):
         t = XArray([[1], [1, 2], [1, 2, 3], [None]])
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.flat_map(lambda x: x * 2, skip_undefined=False)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Type conversion failures  errs: 1'
 
 
 # noinspection PyClassHasNoInit
@@ -1495,17 +1463,13 @@ class TestXArraySample:
 
     def test_sample_err_gt(self):
         t = XArray(range(10))
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.sample(2, seed=1)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Invalid sampling rate: 2.'
 
     def test_sample_err_lt(self):
         t = XArray(range(10))
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.sample(-0.5, seed=1)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Invalid sampling rate: -0.5.'
 
 
 # noinspection PyClassHasNoInit
@@ -1731,10 +1695,8 @@ class TestXArrayMax:
 
     def test_max_err(self):
         t = XArray(['a'])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.max()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Max: non numeric type.'
 
     def test_max_int(self):
         t = XArray([1, 2, 3])
@@ -1756,10 +1718,8 @@ class TestXArrayMin:
 
     def test_min_err(self):
         t = XArray(['a'])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.min()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Min: non numeric type.'
 
     def test_min_int(self):
         t = XArray([1, 2, 3])
@@ -1781,10 +1741,8 @@ class TestXArraySum:
 
     def test_sum_err(self):
         t = XArray(['a'])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.sum()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Sum: non numeric type.'
 
     def test_sum_int(self):
         t = XArray([1, 2, 3])
@@ -1818,10 +1776,8 @@ class TestXArrayMean:
 
     def test_mean_err(self):
         t = XArray(['a'])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.mean()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Mean: non numeric type.'
 
     def test_mean_int(self):
         t = XArray([1, 2, 3])
@@ -1843,10 +1799,8 @@ class TestXArrayStd:
 
     def test_std_err(self):
         t = XArray(['a'])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.std()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Std: non numeric type.'
 
     def test_std_int(self):
         t = XArray([1, 2, 3])
@@ -1870,10 +1824,8 @@ class TestXArrayVar:
 
     def test_var_err(self):
         t = XArray(['a'])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.var()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Var: non numeric type.'
 
     def test_var_int(self):
         t = XArray([1, 2, 3])
@@ -1967,10 +1919,8 @@ class TestXArrayDatetimeToStr:
 
     def test_datetime_to_str_bad_type(self):
         t = XArray([1, 2, 3])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.datetime_to_str('%Y %M %d')
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "Datetime_to_str expects XArray of datetime as input XArray."
 
 
 # noinspection PyClassHasNoInit
@@ -1997,10 +1947,8 @@ class TestXArrayStrToDatetime:
 
     def test_str_to_datetime_bad_type(self):
         t = XArray([1, 2, 3])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.str_to_datetime()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Str_to_datetime expects XArray of str as input XArray.'
 
 
 # noinspection PyClassHasNoInit
@@ -2477,18 +2425,14 @@ class TestXArrayAppend:
     def test_append_int_float_err(self):
         t = XArray([1, 2, 3])
         u = XArray([10., 20., 30.])
-        with pytest.raises(RuntimeError) as exception_info:
+        with pytest.raises(RuntimeError):
             t.append(u)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Data types in both XArrays have to be the same.'
 
     def test_append_int_str_err(self):
         t = XArray([1, 2, 3])
         u = XArray(['a', 'b', 'c'])
-        with pytest.raises(RuntimeError) as exception_info:
+        with pytest.raises(RuntimeError):
             t.append(u)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Data types in both XArrays have to be the same.'
 
 
 # noinspection PyClassHasNoInit
@@ -2498,10 +2442,8 @@ class TestXArrayUnique:
     """
     def test_unique_dict_err(self):
         t = XArray([{'a': 1, 'b': 2, 'c': 3}])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.unique()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Unique: cannot take unique of dict type.'
 
     def test_unique_int_noop(self):
         t = XArray([1, 2, 3])
@@ -2547,18 +2489,13 @@ class TestXArrayItemLength:
     """
     def test_item_length_int(self):
         t = XArray([1, 2, 3])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.item_length()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "Item_length() is only applicable for XArray of " + \
-                                    "type 'str', 'list', 'dict' and 'array'."
 
     def test_item_length_float(self):
         t = XArray([1.0, 2.0, 3.0])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.item_length()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "Item_length() is only applicable for XArray of type 'str', 'list', 'dict' and 'array'."
 
     def test_item_length_str(self):
         t = XArray(['a', 'bb', 'ccc'])
@@ -2649,48 +2586,38 @@ class TestXArraySplitDatetime:
 
     def test_split_datetime_bad_col_type(self):
         t = XArray([1, 2, 3])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.split_datetime('date')
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Only column of datetime type can be split.'
 
     # noinspection PyTypeChecker
     def test_split_datetime_bad_prefix_type(self):
         t = XArray([datetime.datetime(2011, 1, 1),
                     datetime.datetime(2011, 2, 2),
                     datetime.datetime(2011, 3, 3)])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.split_datetime(1)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Column_name_prefix' must be a string."
 
     def test_split_datetime_bad_limit_val(self):
         t = XArray([datetime.datetime(2011, 1, 1),
                     datetime.datetime(2011, 2, 2),
                    datetime. datetime(2011, 3, 3)])
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.split_datetime('date', limit='xx')
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Limit' values may be 'year', 'month', 'day', 'hour', 'minute', or 'second': xx"
 
     # noinspection PyTypeChecker
     def test_split_datetime_bad_limit_type(self):
         t = XArray([datetime.datetime(2011, 1, 1),
                     datetime.datetime(2011, 2, 2),
                     datetime.datetime(2011, 3, 3)])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.split_datetime('date', limit=1)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Limit' must be a list."
 
     def test_split_datetime_bad_limit_not_list(self):
         t = XArray([datetime.datetime(2011, 1, 1),
                     datetime.datetime(2011, 2, 2),
                     datetime.datetime(2011, 3, 3)])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.split_datetime('date', limit=datetime.datetime(2011, 1, 1))
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Limit' must be a list."
 
 
 # noinspection PyClassHasNoInit
@@ -2700,87 +2627,62 @@ class TestXArrayUnpackErrors:
     """
     def test_unpack_str(self):
         t = XArray(['a', 'b', 'c'])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.unpack()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Only XArray of dict/list/tuple/array type supports unpack: str.'
 
     # noinspection PyTypeChecker
     def test_unpack_bad_prefix(self):
         t = XArray([[1, 2, 3], [4, 5, 6]])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.unpack(column_name_prefix=1)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Column_name_prefix' must be a string."
 
     # noinspection PyTypeChecker
     def test_unpack_bad_limit_type(self):
         t = XArray([[1, 2, 3], [4, 5, 6]])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.unpack(limit=1)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Limit' must be a list."
 
     def test_unpack_bad_limit_val(self):
         t = XArray([[1, 2, 3], [4, 5, 6]])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.unpack(limit=['a', 1])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Limit' contains values that are different types."
 
     def test_unpack_bad_limit_dup(self):
         t = XArray([[1, 2, 3], [4, 5, 6]])
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.unpack(limit=[1, 1])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Limit' contains duplicate values."
 
     # noinspection PyTypeChecker
     def test_unpack_bad_column_types(self):
         t = XArray([[1, 2, 3], [4, 5, 6]])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.unpack(column_types=1)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Column_types' must be a list."
 
     # noinspection PyTypeChecker
     def test_unpack_bad_column_types_bool(self):
         t = XArray([[1, 2, 3], [4, 5, 6]])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.unpack(column_types=[True])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Column_types' contains unsupported types. Supported types are " + \
-                                    "['float', 'int', 'list', 'dict', 'str', 'array.array']."
 
     def test_unpack_column_types_limit_mismatch(self):
         t = XArray([[1, 2, 3], [4, 5, 6]])
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.unpack(limit=[1], column_types=[int, int])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "'Limit' and 'column_types' do not have the same length."
 
     def test_unpack_dict_column_types_no_limit(self):
         t = XArray([{'a': 1, 'b': 2}, {'c': 3, 'd': 4}])
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.unpack(column_types=[int, int])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "If 'column_types' is given, 'limit' has to be provided to unpack dict type."
 
     def test_unpack_empty_no_column_types(self):
         t = XArray([], dtype=list)
-        with pytest.raises(RuntimeError) as exception_info:
+        with pytest.raises(RuntimeError):
             t.unpack()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Cannot infer number of items from the XArray. XArray may be empty. ' + \
-                                    'Please explicitly provide column types.'
 
     def test_unpack_empty_list_column_types(self):
         t = XArray([[]], dtype=list)
-        with pytest.raises(RuntimeError) as exception_info:
+        with pytest.raises(RuntimeError):
             t.unpack()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Cannot infer number of items from the XArray. ' + \
-                                    'XArray may be empty. Please explicitly provide column types.'
 
 
 # noinspection PyClassHasNoInit
@@ -2943,19 +2845,13 @@ class TestXArraySort:
 
     def test_sort_list(self):
         t = XArray([[3, 4], [2, 3], [1, 2]])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.sort()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "Only xarray with type ('int', 'float', 'str', and " + \
-                                    "'datetime.datetime)' can be sorted."
 
     def test_sort_dict(self):
         t = XArray([{'c': 3}, {'b': 2}, {'a': 1}])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.sort()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "Only xarray with type ('int', 'float', 'str', " + \
-               "and 'datetime.datetime)' can be sorted."
 
     def test_sort_int_desc(self):
         t = XArray([1, 2, 3])
@@ -2980,10 +2876,8 @@ class TestXArrayDictTrimByKeys:
     """
     def test_dict_trim_by_keys_bad_type(self):
         t = XArray([3, 2, 1])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.dict_trim_by_keys(['a'])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "XArray dtype must be dict: <type 'int'>."
 
     def test_dict_trim_by_keys_include(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'x': 1}])
@@ -3003,10 +2897,8 @@ class TestXArrayDictTrimByValues:
     """
     def test_dict_trim_by_values_bad_type(self):
         t = XArray([3, 2, 1])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.dict_trim_by_values(1, 2)
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "XArray dtype must be dict: <type 'int'>"
 
     def test_dict_trim_by_values(self):
         t = XArray([{'a': 0, 'b': 1, 'c': 2, 'd': 3}, {'x': 1}])
@@ -3022,17 +2914,13 @@ class TestXArrayDictKeys:
     # noinspection PyArgumentList
     def test_dict_keys_bad_type(self):
         t = XArray([3, 2, 1])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.dict_keys(['a'])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'dict_keys() takes exactly 1 argument (2 given)'
 
     def test_dict_keys_bad_len(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'x': 1}])
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.dict_keys()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Rows are not the same length.'
 
     def test_dict_keys(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'x': 1, 'y': 2, 'z': 3}])
@@ -3050,17 +2938,13 @@ class TestXArrayDictValues:
     # noinspection PyArgumentList
     def test_values_bad_type(self):
         t = XArray([3, 2, 1])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.dict_values(['a'])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'dict_values() takes exactly 1 argument (2 given)'
 
     def test_values_bad_len(self):
         t = XArray([{'a': 0, 'b': 1, 'c': 2}, {'x': 10}])
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError):
             t.dict_values()
-        exception_message = exception_info.value.args[0]
-        assert exception_message == 'Rows are not the same length.'
 
     def test_values(self):
         t = XArray([{'a': 0, 'b': 1, 'c': 2}, {'x': 10, 'y': 20, 'z': 30}])
@@ -3077,10 +2961,8 @@ class TestXArrayDictHasAnyKeys:
     """
     def test_dict_has_any_keys_bad(self):
         t = XArray([3, 2, 1])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.dict_has_any_keys(['a'])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "XArray dtype must be dict: <type 'int'>"
 
     def test_dict_has_any_keys(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'x': 1}])
@@ -3095,10 +2977,8 @@ class TestXArrayDictHasAllKeys:
     """
     def test_dict_has_all_keys_bad(self):
         t = XArray([3, 2, 1])
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.dict_has_all_keys(['a'])
-        exception_message = exception_info.value.args[0]
-        assert exception_message == "XArray dtype must be dict: <type 'int'>"
 
     def test_dict_has_all_keys(self):
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'a': 1, 'b': 1}])
