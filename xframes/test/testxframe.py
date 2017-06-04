@@ -4307,7 +4307,7 @@ class TestXFramePackColumnsList:
         with pytest.raises(ValueError) as exception_info:
             t.pack_columns(columns=['id', 'val'], dtype=int)
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Resulting dtype has to be one of 'dict', 'array.array', or 'list type."
+        assert exception_message == "Resulting dtype has to be one of 'dict', 'array.array', 'list', or 'tuple' type."
 
     # noinspection PyTypeChecker
     def test_pack_columns_bad_new_col_name_type(self):

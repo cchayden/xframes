@@ -1,6 +1,10 @@
 # This file documents the manual steps
 #  having to do with interacting with pypi.
 
+# Run all unit tests:
+cd xframes/test
+./runtests
+
 # Register xframes with pypi
 ############################
 python setup.py register -r pypi
