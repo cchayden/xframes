@@ -8,9 +8,12 @@ here=`pwd`
 cd docs
 ./make-docs
 
+# Make readme
+./make-readme
+
 # Make zip file
 cd $here
 python setup.py sdist --formats=zip
 
-exit
+
 

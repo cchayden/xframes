@@ -8,6 +8,13 @@ You might also want to test hdfs (which required hdfs docker).
 
     cd xframes/test
     ./runtests
+    
+## Check in and push
+Push to the master branch.
+
+## Prepare for distribution
+
+    ./make-dist
 
 ## Register xframes with pypi
 
@@ -49,5 +56,8 @@ numbers, they do not share with the regular server.
 
 First, make an account with the server at pypitest.
 Second, change `-r pypi` to `-r pypitest` above.
+
+    python setup.py sdist upload -r pypitest
+
 
 Finally, on pip install, use `-i https://testpypi.python.org/pypi`
