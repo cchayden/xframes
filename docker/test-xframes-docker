@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# Run tests
+docker run -t xframes /bin/bash -c /notebooks/xframes/test/runtests
