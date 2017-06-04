@@ -16,7 +16,7 @@ class TextBuilder(object):
         self.seed = seed
 
     def train(self):
-        sc = CommonSparkContext.Instance().sc()
+        sc = CommonSparkContext().sc()
         rdd = self.corpus.to_spark_rdd()
         model = Word2Vec().setVectorSize(self.vector_size).setSeed(self.seed).fit(rdd)
         return TextModel(model)

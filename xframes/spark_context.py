@@ -87,10 +87,13 @@ def create_spark_config(env):
 
     default_context = {'spark.master': 'local[*]',
                        'spark.app.name': 'XFrames'}
-    # get values from [spark] section
+    # get values from [spark] section and from SparkInitContext
     config_context = env.get_config_items('spark')
     context = merge_dicts(default_context, config_context)
     context = merge_dicts(context, SparkInitContext.context)
+    app_name = os.environ.get('SPARK_APP_NAME', None)
+    if app_name is not None:
+        context['SPARK_APP_NAME'] = app_name
     return context
 
 
@@ -107,7 +110,7 @@ class CommonSparkContext(object):
 
         # This is placed here because otherwise it causes an error when used in a spark slave.
         from pyspark import SparkConf, SparkContext, SQLContext, HiveContext
-        # This reads from default.ini and then xframes/config.ini
+        # This reads from default.ini and then $XFRAMES_CONFIG_DIR/config.ini
         # if they exist.
         self._env = Environment.create()
         context = create_spark_config(self._env)
@@ -116,8 +119,6 @@ class CommonSparkContext(object):
         os.environ['HADOOP_USER_NAME'] = hdfs_user_name
         config_pairs = [(k, v) for k, v in context.iteritems()]
         self._config = (SparkConf().setAll(config_pairs))
-        if verbose:
-            print 'Spark Config: {}'.format(config_pairs)
 
         self._sc = SparkContext(conf=self._config)
         # Create these when needed
@@ -125,6 +126,11 @@ class CommonSparkContext(object):
         self._hivec = None
         self._streamingc = None
 
+        if verbose:
+            actual_config = self._config.getAll()
+            print('Spark Config:')
+            for cfg in actual_config:
+                print('  {}: {}'.format(cfg[0], cfg[1]))
         self.zip_path = []
         version = [int(n) for n in self._sc.version.split('.')]
         self.status_tracker = self._sc.statusTracker()
@@ -134,12 +140,13 @@ class CommonSparkContext(object):
             self.application_id = None
 
         if verbose:
-            print 'Spark Version: {}'.format(self._sc.version)
+            print('Spark Version: {}'.format(self._sc.version))
             if self.application_id:
-                print 'Application Id: {}'.format(self.application_id)
+                print('Application Id: {}'.format(self.application_id))
+            print('Application Name: {}'.format(self._sc.appName))
 
         if not context['spark.master'].startswith('local'):
-            zip_path = self.build_zip(get_xframes_home())
+            zip_path = self._build_zip(get_xframes_home())
             if zip_path:
                 self._sc.addPyFile(zip_path)
                 self.zip_path.append(zip_path)
@@ -169,7 +176,7 @@ class CommonSparkContext(object):
         if isinstance(dirs, basestring):
             dirs = [dirs]
         for path in dirs:
-            zip_path = self.build_zip(path)
+            zip_path = self._build_zip(path)
             if zip_path:
                 self._sc.addPyFile(zip_path)
                 self.zip_path.append(zip_path)
@@ -181,132 +188,46 @@ class CommonSparkContext(object):
             for zip_path in self.zip_path:
                 os.remove(zip_path)
 
-    def config(self):
-        """
-        Gets the configuration parameters used to initialize the spark context.
-
-        Returns
-        -------
-        dict : A dict of the properties used to initialize the spark context.
-        """
+    def _get_config(self):
         props = self._config.getAll()
         return {prop[0]: prop[1] for prop in props}
 
-    def env(self):
-        """
-        Gets the config environment.
-
-        Returns
-        -------
-        :class:`.Environment` : The environment.  This contains all the values from the configuration file(s).
-        """
-
+    def _get_env(self):
         return self._env
 
-    def sc(self):
-        """
-        Gets the spark context.
-
-        Returns
-        -------
-        :class:`~pyspark.SparkContext`
-            The spark context.  There is a single spark context per process.
-        """
-        return self._sc
-
-    def sqlc(self):
-        """
-        Gets the spark sql context.
-
-        Returns
-        -------
-        :class:`~pyspark.sql.SqlContext`
-            The spark sql context.
-        """
+    def _get_sqlc(self):
         from pyspark import SQLContext
         if self._sqlc is None:
             self._sqlc = SQLContext(self._sc)
-
         return self._sqlc
 
-    def hivec(self):
-        """
-        Gets the hive context.
-
-        Returns
-        -------
-        :class:`~pyspark.sql.HiveContext`
-            The hive context.
-        """
+    def _get_hivec(self):
         from pyspark import HiveContext
         if self._hivec is None:
             self._hivec = HiveContext(self._sc)
-
         return self._hivec
 
-    def streamingc(self, interval=1):
-        """
-        Gets the streaming context.
-
-        Parameters
-        ----------
-        interval : int, optional
-            The batch duration in seconds for the stream.  Default is one second.
-
-        Returns
-        -------
-        :class:`~pyspark.streaming.StreamingContext`
-            The streaming context.
-        """
+    def _get_streamingc(self, interval=1):
         from pyspark.streaming import StreamingContext
         if self._streamingc is None:
             self._streamingc = StreamingContext(self._sc, interval)
-
         return self._streamingc
 
-    def version(self):
-        """
-        Gets the spark version.
-
-        Returns
-        -------
-        list[int]
-            The spark version, as a list of integers.
-        """
+    def _get_version(self):
         return [int(n) for n in self._sc.version.split('.')]
 
-    def jobs(self):
-        """
-        Get the spark job ID and info for the active jobs.
-
-        This method would normally be called by another thread from the executing job.
-
-        Returns
-        -------
-        map(job_id: job_info}
-            A map of the active job IDs and their corresponding job info
-        """
+    def _get_jobs(self):
         return {job_id: self.status_tracker.getJobInfo(job_id) for job_id in self.status_tracker.getActiveJobIds()}
 
-    def cluster_mode(self):
-        """
-        Get the cluster mode of the spark cluster.
-
-        Returns
-        -------
-        boolean
-            True if spark is running in cluster mode.  Cluster mode means that spark is running on a platform separate
-            the program.  In practice, cluster mode means that file arguments must be located on
-            a network filesystem such as HDFS or NFS.
-        """
+    def _get_cluster_mode(self):
         return not self._config.get('spark.master').startswith('local')
 
     # noinspection PyBroadException
     @staticmethod
-    def build_zip(module_dir):
+    def _build_zip(module_dir):
         # This can fail at writepy if there is something wrong with the files
         #  in xframes.  Go ahead anyway, but things will probably fail if this job is
-        #  distributed
+        #  distributed.
         try:
             tf = NamedTemporaryFile(suffix='.zip', delete=False)
             z = PyZipFile(tf, 'w')
@@ -319,6 +240,29 @@ class CommonSparkContext(object):
             return None
 
     @staticmethod
+    def config(self):
+        """
+        Gets the configuration parameters used to initialize the spark context.
+
+        Returns
+        -------
+        dict : A dict of the properties used to initialize the spark context.
+        """
+        return CommonSparkContext()._get_config()
+
+    @staticmethod
+    def env(self):
+        """
+        Gets the config environment.
+
+        Returns
+        -------
+        :class:`.Environment` : The environment.  This contains all the values from the configuration file(s).
+        """
+        return CommonSparkContext()._get_env()
+
+
+    @staticmethod
     def spark_context():
         """
         Returns the spark context.
@@ -328,7 +272,7 @@ class CommonSparkContext(object):
         :class:`~pyspark.SparkContext`
             The SparkContext object from spark.
         """
-        return CommonSparkContext().sc()
+        return CommonSparkContext()._sc
 
     @staticmethod
     def spark_config():
@@ -352,7 +296,7 @@ class CommonSparkContext(object):
         :class:`~pyspark.sql.SQLContext'
             The SQLContext object from spark.
         """
-        return CommonSparkContext().sqlc()
+        return CommonSparkContext()._get_sqlc()
 
     @staticmethod
     def hive_context():
@@ -364,7 +308,7 @@ class CommonSparkContext(object):
         :class:`~pyspark.streaming.HiveContext`
             The Hive object from spark.
         """
-        return CommonSparkContext().hivec()
+        return CommonSparkContext()._get_hivec()
 
     @staticmethod
     def streaming_context(interval=1):
@@ -381,7 +325,7 @@ class CommonSparkContext(object):
         :class:`~pyspark.streaming.StreamingContext`
             The streaming context.
         """
-        return CommonSparkContext().streamingc(interval)
+        return CommonSparkContext()._get_streamingc(interval)
 
     @staticmethod
     def spark_version():
@@ -393,10 +337,24 @@ class CommonSparkContext(object):
         list[int]
             The spark version, as a list of integers.
         """
-        return CommonSparkContext().version()
+        return CommonSparkContext()._get_version()
 
     @staticmethod
-    def spark_cluster_mode():
+    def jobs():
+        """
+        Get the spark job ID and info for the active jobs.
+
+        This method would normally be called by another thread from the executing job.
+
+        Returns
+        -------
+        map(job_id: job_info}
+            A map of the active job IDs and their corresponding job info
+        """
+        return CommonSparkContext()._get_jobs()
+
+    @staticmethod
+    def cluster_mode():
         """
         Gets the cluster mode
 
@@ -407,6 +365,4 @@ class CommonSparkContext(object):
             the program.  In practice, cluster mode means that file arguments must be located on
             a network filesystem such as HDFS or NFS.
         """
-        env = Environment.create()
-        config = create_spark_config(env)
-        return not config.get('spark.master').startswith('local')
+        return CommonSparkContext()._get_cluster_mode()

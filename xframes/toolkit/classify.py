@@ -208,7 +208,7 @@ class ClassificationModel(Model):
             and the column names.  These are stored with suffix '.model', '.ratings', and
             '.metadata'.
         """
-        sc = CommonSparkContext.Instance().sc
+        sc = CommonSparkContext().sc()
         delete_file_or_dir(path)
         os.makedirs(path)
         model_path, metadata_path = self._file_paths(path)
@@ -239,7 +239,7 @@ class ClassificationModel(Model):
         out : A classification model.
             A model that can be used to predict ratings.
         """
-        sc = CommonSparkContext.Instance().sc
+        sc = CommonSparkContext().sc()
         model_path, metadata_path = cls._file_paths(path)
         
         # load metadata

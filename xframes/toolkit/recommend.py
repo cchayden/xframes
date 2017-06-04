@@ -168,7 +168,7 @@ class MatrixFactorizationModel(RecommenderModel):
             and the column names.  These are stored with suffix '.model', '.ratings', and
             '.metadata'.
         """
-        sc = CommonSparkContext.Instance().sc()
+        sc = CommonSparkContext().sc()
         delete_file_or_dir(path)
         os.makedirs(path)
         model_path, ratings_path, metadata_path = self._file_paths(path)
@@ -200,7 +200,7 @@ class MatrixFactorizationModel(RecommenderModel):
         out : MatrixFactorizationModel
             A model that can be used to predict ratings.
         """
-        sc = CommonSparkContext.Instance().sc()
+        sc = CommonSparkContext().sc()
         model_path, ratings_path, metadata_path = cls._file_paths(path)
         # load model
         model = recommendation.MatrixFactorizationModel.load(sc, model_path)

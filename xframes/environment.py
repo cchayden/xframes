@@ -13,15 +13,13 @@ class ConfigError(Exception):
     pass
 
 
-def get_xframes_home():
+def _get_xframes_home():
     import xframes
     return os.path.dirname(xframes.__file__)
 
 
-def get_xframes_config():
-    if 'XFRAMES_CONFIG_DIR' in os.environ:
-        return os.environ['XFRAMES_CONFIG_DIR']
-    return None
+def _get_xframes_config():
+    return os.environ.get('XFRAMES_CONFIG_DIR', None)
 
 
 class Environment(object):
@@ -47,10 +45,10 @@ class Environment(object):
             The environment resulting from the ini file(s).
 
         """
-        files_to_read = [os.path.join(get_xframes_home(), 'default.ini')]
+        files_to_read = [os.path.join(_get_xframes_home(), 'default.ini')]
         if config_files:
             files_to_read.append(config_files)
-        config_dir = get_xframes_config()
+        config_dir = _get_xframes_config()
         if config_dir:
             files_to_read.append(os.path.join(config_dir, 'config.ini'))
         env = Environment()
