@@ -2846,8 +2846,8 @@ class XFrame(object):
 
     def remove_column(self, name):
         """
-        Remove a column or more columns from this XFrame. This
-        operation returns a new XFrame with the given column removed.
+        Remove one or more columns from this XFrame. This
+        operation returns a new XFrame with the given column or columns removed.
 
         Parameters
         ----------

@@ -16,7 +16,7 @@ Push to the master branch.
 
     ./make-dist
 
-## Register xframes with pypi
+## Register xframes with pypi (do this only the first time).
 
     python setup.py register -r pypi
 
@@ -24,6 +24,12 @@ Push to the master branch.
 Edit xframes/version.py and increment the version appropriately.
 
     python setup.py sdist upload -r pypi
+    
+## Generate documentation
+Go to [readthedocs.org](http://readthedocs.org/projects/xframes/builds/).
+Select "Build Version".
+Verify that the expected changes are reflected in the documentation.
+
 
 
 ## Setting up .pypirc
