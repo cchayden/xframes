@@ -12,13 +12,13 @@ RUN apt-get update --fix-missing
 RUN apt-get install -y emacs24
 USER $NB_USER
 
-RUN pip2 install xframes
+COPY xframes /base/xframes
+COPY xframes/conf /base/conf
+COPY server.sh /usr/local/bin
 
 # Setting Environment Variables
 ENV LIB=/base
 ENV SPARK_CONF_DIR=/base/conf
 ENV XFRAMES_CONFIG_DIR=/base/conf
 
-COPY conf /base/conf
-
-CMD ["start-notebook.sh", "--NotebookApp.token=''"]
+CMD server.sh

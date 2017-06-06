@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 
 # build
+rm -rf xframes
+cp -r ../xframes .
 docker build -t xframes .
+rm -rf xframes
