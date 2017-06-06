@@ -25,6 +25,8 @@ Edit xframes/version.py and increment the version appropriately.
 
     python setup.py sdist upload -r pypi
     
+## Add release tag in git.
+
 ## Generate documentation
 Go to [readthedocs.org](http://readthedocs.org/projects/xframes/builds/).
 Select "Build Version".
