@@ -8,7 +8,6 @@ and is stored as Spark RDDs.
 
 import array
 from textwrap import wrap
-import inspect
 import time
 import itertools
 # noinspection PyPackageRequirements
@@ -1793,11 +1792,11 @@ class XFrame(object):
                     lambda: 10)
         """
 
-        if not inspect.isfunction(row_fn):
+        if not callable(row_fn):
             raise TypeError('Row_fn must be a function.')
-        if init_fn is not None and not inspect.isfunction(init_fn):
+        if init_fn is not None and not callable(init_fn):
             raise TypeError('Init_fn must be a function.')
-        if final_fn is not None and not inspect.isfunction(final_fn):
+        if final_fn is not None and not callable(final_fn):
             raise TypeError('Final_fn must be a function.')
         if isinstance(use_columns, basestring):
             use_columns = [use_columns]
@@ -1854,7 +1853,7 @@ class XFrame(object):
         Rows: 3
         ['134', '235', '361']
         """
-        if not inspect.isfunction(fn):
+        if not callable(fn):
             raise TypeError('Fn must be a function.')
         if isinstance(use_columns, basestring):
             use_columns = [use_columns]
@@ -1936,7 +1935,7 @@ class XFrame(object):
         if fn is None:
             def fn(row):
                 return row[col]
-        elif not inspect.isfunction(fn):
+        elif not callable(fn):
             raise TypeError('Input must be a function.')
         if isinstance(use_columns, basestring):
             use_columns = [use_columns]
@@ -2016,7 +2015,7 @@ class XFrame(object):
         if fn is None:
             def fn(row):
                 return [row[col] for col in cols]
-        elif not inspect.isfunction(fn):
+        elif not callable(fn):
             raise TypeError('Input must be a function: {}: {}.'.format(fn, type(fn).__name__))
         if dtypes is None:
             rows = self._impl.head_as_list(10)
@@ -2285,7 +2284,7 @@ class XFrame(object):
         +--------+--------+
         [6 rows x 2 columns]
         """
-        if not inspect.isfunction(fn):
+        if not callable(fn):
             raise TypeError('Input must be a function')
         if not seed:
             seed = int(time.time())

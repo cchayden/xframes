@@ -4,7 +4,6 @@ ability to process streaming operations.
 """
 
 import array
-import inspect
 import types
 import copy
 
@@ -596,7 +595,7 @@ class XStream(object):
         xframes.XFrame.flat_map
             Corresponding function on individual frame.
         """
-        if not inspect.isfunction(fn):
+        if callable(fn):
             raise TypeError('Input must be a function')
 
         # determine the column_types
@@ -662,7 +661,7 @@ class XStream(object):
             The stream of XFrame transformed by fn.  Each element of the XArray is of
             type `dtype`
         """
-        if not inspect.isfunction(fn):
+        if not callable(fn):
             raise TypeError('Input must be a function.')
         if not type(dtype) is type:
             raise TypeError('Dtype must be a type')

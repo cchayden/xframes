@@ -7,7 +7,6 @@ The data is immutable, homogeneous, and is stored in a Spark RDD.
 """
 
 
-import inspect
 import math
 import time
 import array
@@ -1230,7 +1229,7 @@ class XArray(object):
         [2, 4, 6]
 
         """
-        if not inspect.isfunction(fn):
+        if not callable(fn):
             raise TypeError('Input must be a function.')
 
         if dtype is None:
@@ -1292,7 +1291,7 @@ class XArray(object):
         if fn is None:
             def fn(x):
                 return x
-        if not inspect.isfunction(fn):
+        if not callable(fn):
             raise TypeError('Input must be a function.')
 
         if dtype is None:
@@ -1340,7 +1339,7 @@ class XArray(object):
         [1, 2]
 
         """
-        if not inspect.isfunction(fn):
+        if not callable(fn):
             raise TypeError('Input must be a function.')
         if not seed:
             seed = time.time()
