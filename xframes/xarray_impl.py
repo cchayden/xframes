@@ -8,7 +8,7 @@ import pickle
 import ast
 import csv
 import copy
-import StringIO
+from io import StringIO
 import random
 import datetime
 from dateutil import parser as date_parser

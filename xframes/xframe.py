@@ -213,7 +213,7 @@ class XFrame(object):
             # special case if all are regular lists
             all_list = True
             list_len = None
-            for val in data.itervalues():
+            for val in data.values():
                 if not isinstance(val, list):
                     all_list = False
                     break
@@ -224,7 +224,7 @@ class XFrame(object):
             if all_list:
                 column_names = []
                 cols = []
-                for key, val in iter(sorted(data.iteritems())):
+                for key, val in iter(sorted(data.items())):
                     column_names.append(key)
                     cols.append(val)
                 rows = [row for row in zip(*cols)]
@@ -1249,7 +1249,8 @@ class XFrame(object):
                 else:
                     s = s[1:-1]
             if len(s) <= max_column_width:
-                return unicode(s, errors='replace')
+#                return unicode(s, errors='replace')
+                return str(s)
             else:
                 # if wrap_str is true, wrap the text and take at most max_wrap_rows
                 if wrap_str:
@@ -1377,7 +1378,7 @@ class XFrame(object):
             footer = self._create_footer(False, max_rows_to_display)
         else:
             footer = ''
-        print '\n'.join([str(tb) for tb in row_of_tables]) + '\n' + footer
+        print('\n'.join([str(tb) for tb in row_of_tables]) + '\n' + footer)
 
     def __str__(self, num_rows=10, footer=True):
         """

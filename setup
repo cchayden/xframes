@@ -4,7 +4,7 @@
 # source setup
 
 # Do this if operating in a virtual environment.
-#workon xframes-venv
+workon xframes
 #source venv/bin/activate
 
 # XFRAMES_HOME is used to find config.ini and xframes package
@@ -18,6 +18,8 @@ export SPARK_HOME=~/tools/spark
 # spark-1.6
 #export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.9-src.zip
 # Spark 2.0
+#export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip
+# Spark 2.4
 export PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip
 
 # It is a good idea to set the spark conf directory.

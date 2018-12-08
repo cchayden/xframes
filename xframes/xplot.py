@@ -405,44 +405,44 @@ class XPlot(object):
         title = title or table_name
         column_name = column_name or ''
         table_name = table_name or ''
-        print 'Table Name:  ', table_name
-        print 'Column Name: ', column_name
-        print 'Column Type: ', column.dtype().__name__
+        print('Table Name:  ', table_name)
+        print('Column Name: ', column_name)
+        print('Column Type: ', column.dtype().__name__)
         sk = column.sketch_summary()
-        print 'Rows:        ', sk.size()
+        print('Rows:        ', sk.size())
         unique_items = sk.num_unique()
-        print 'Unique Items:', unique_items
-        print 'Approximate Frequent Items:'
+        print('Unique Items:', unique_items)
+        print('Approximate Frequent Items:')
         fi = sk.frequent_items()
         topk = topk or 15
         if len(fi) == 0:
-            print '    None'
+            print('    None')
             top = None
         else:
             sorted_fi = sorted(fi.iteritems(), key=operator.itemgetter(1), reverse=True)
             top = [x for x in sorted_fi[:topk] if x[1] > 1]
             for key in top:
-                print '   {:10}  {:10}'.format(key[1], key[0])
+                print('   {:10}  {:10}'.format(key[1], key[0]))
         col_type = column.dtype()
         if col_type is int or col_type is float:
             # number: show a histogram
-            print 'Num Undefined:', sk.num_undefined()
-            print 'Min:          ', sk.min()
-            print 'Max:          ', sk.max()
-            print 'Mean:         ', sk.mean()
+            print('Num Undefined:', sk.num_undefined())
+            print('Min:          ', sk.min())
+            print('Max:          ', sk.max())
+            print('Mean:         ', sk.mean())
             if unique_items > 1:
-                print 'StDev:        ', sk.std()
-                print 'Distribution Plot'
+                print('StDev:        ', sk.std())
+                print('Distribution Plot')
                 upper_cutoff = cutoff or 1.0
                 self.histogram(column, title=title, bins=bins, sketch=sk, upper_cutoff=upper_cutoff)
 
         if col_type is datetime.datetime:
             # datetime: show a histogram
-            print 'Num Undefined:', sk.num_undefined()
-            print 'Min:          ', sk.min()
-            print 'Max:          ', sk.max()
+            print('Num Undefined:', sk.num_undefined())
+            print('Min:          ', sk.min())
+            print('Max:          ', sk.max())
             if unique_items > 1:
-                print 'Distribution Plot'
+                print('Distribution Plot')
                 upper_cutoff = cutoff or 1.0
                 self.histogram(column, title=title, bins=bins, sketch=sk, upper_cutoff=upper_cutoff)
 

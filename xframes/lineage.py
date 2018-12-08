@@ -185,7 +185,7 @@ class Lineage(object):
         -------
             out : Lineage
         """
-        assert isinstance(origin, basestring)
+        assert isinstance(origin, str)
         assert isinstance(column_names, list)
         if origin is None:
             table_lineage = frozenset()

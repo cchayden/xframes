@@ -117,7 +117,7 @@ class CommonSparkContext(object):
         verbose = self._env.get_config('xframes', 'verbose', 'false').lower() == 'true'
         hdfs_user_name = self._env.get_config('webhdfs', 'user', 'hdfs')
         os.environ['HADOOP_USER_NAME'] = hdfs_user_name
-        config_pairs = [(k, v) for k, v in context.iteritems()]
+        config_pairs = [(k, v) for k, v in context.items()]
         self._config = (SparkConf().setAll(config_pairs))
 
         self._sc = SparkContext(conf=self._config)
@@ -134,7 +134,7 @@ class CommonSparkContext(object):
         self.zip_path = []
         version = [int(n) for n in self._sc.version.split('.')]
         self.status_tracker = self._sc.statusTracker()
-        if cmp(version, [1, 4, 1]) >= 0:
+        if version > [1, 4, 1]:
             self.application_id = self._sc.applicationId
         else:
             self.application_id = None

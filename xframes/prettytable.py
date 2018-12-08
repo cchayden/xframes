@@ -38,9 +38,7 @@ import textwrap
 import itertools
 import unicodedata
 
-itermap = itertools.imap
-iterzip = itertools.izip
-uni_chr = unichr
+uni_chr = chr
 
 from cgi import escape
 
@@ -146,10 +144,10 @@ class PrettyTable(object):
         self._hrule = None
 
     def _unicode(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             value = str(value)
-        if not isinstance(value, unicode):
-            value = unicode(value, self.encoding, 'strict')
+#        if not isinstance(value, unicode):
+#            value = unicode(value, self.encoding, 'strict')
         return value
 
     def _justify(self, text, width, align):
@@ -197,10 +195,11 @@ class PrettyTable(object):
         return newtable
 
     def __str__(self):
-        return self.__unicode__().encode(self.encoding)
-
-    def __unicode__(self):
         return self.get_string()
+#        return self.__unicode__().encode(self.encoding)
+
+#    def __unicode__(self):
+#        return self.get_string()
 
     ##############################
     # ATTRIBUTE VALIDATORS       #
@@ -1073,7 +1072,7 @@ def _char_block_width(char):
 
 
 def _str_block_width(val):
-    return sum(itermap(_char_block_width, itermap(ord, val)))
+    return sum(map(_char_block_width, map(ord, val)))
 
 ##############################
 # TABLE FACTORIES            #

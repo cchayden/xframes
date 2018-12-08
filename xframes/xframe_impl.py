@@ -7,7 +7,7 @@ import random
 import array
 import pickle
 import csv
-import StringIO
+from io import StringIO
 import ast
 import shutil
 import re
@@ -621,7 +621,7 @@ class XFrameImpl(TracedObject):
         self._entry(path=path, **params)
 
         def to_csv(row, **params):
-            sio = StringIO.StringIO()
+            sio = StringIO()
             writer = csv.writer(sio, **params)
             try:
                 writer.writerow(row)
@@ -1855,7 +1855,7 @@ class XFrameImpl(TracedObject):
             return [aggregator(rows, cols)
                     for aggregator, cols in zip(aggregators, group_cols)]
         aggregators = [prop.agg_function for prop in group_properties]
-        aggregates = grouped.map(lambda (x, y): (x, build_aggregates(y, aggregators, group_cols)))
+        aggregates = grouped.map(lambda x, y: (x, build_aggregates(y, aggregators, group_cols)))
 
         def concatenate(old_vals, new_vals):
             return old_vals + new_vals

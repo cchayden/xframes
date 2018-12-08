@@ -3,13 +3,13 @@ This module defines top level utility functions for XFrames.
 """
 
 import urllib
-import urllib2
+from urllib.request import urlopen
 import os
 import re
 from zipfile import ZipFile
 import bz2 as _bz2
 import tarfile
-import ConfigParser
+import configparser
 import itertools
 import shutil
 import random
@@ -226,7 +226,7 @@ def get_newest_version(timeout=5, url=XFRAMES_CURRENT_VERSION_URL):
     url: string, optional
         The URL to go to to check the current version.
     """
-    request = urllib2.urlopen(url=url, timeout=timeout)
+    request = urlopen(url=url, timeout=timeout)
     version = request.read()
     return version
 
@@ -248,7 +248,7 @@ def perform_version_check(configfile=(os.path.join(os.path.expanduser("~"), ".xf
     skip_version_check = False
     try:
         if os.path.isfile(configfile):
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read(configfile)
             section = 'Product'
             key = 'skip_version_check'
@@ -334,7 +334,7 @@ def get_archive_type(path):
 
     try:
         ini_path = os.path.join(path, 'dir_archive.ini')
-        parser = ConfigParser.SafeConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(ini_path)
 
         contents = parser.get('metadata', 'contents')

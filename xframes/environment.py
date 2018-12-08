@@ -4,7 +4,7 @@
 #   Provides a structure for maintaining an application environment.
 #   The environment is read from a set of configuration files.
 
-import ConfigParser
+import configparser
 import os
 import logging
 
@@ -27,7 +27,7 @@ class Environment(object):
         """ Create an empty environment. """
         self._files_to_read = None
         self._files_read = None
-        self.cfg = ConfigParser.SafeConfigParser()
+        self.cfg = configparser.ConfigParser()
 
     @staticmethod
     def create(config_files=None):
@@ -80,17 +80,17 @@ class Environment(object):
 
         """
         try:
-            res = self.cfg.get(section, item, False)
+            res = self.cfg.get(section, item, fallback=default)
             return res
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+        except (configparser.NoSectionError, configparser.NoOptionError) as e:
             if default is not None:
                 return default
-            logging.warn("FAILED -- missing section or option: {} {}".format(section, item))
-            logging.warn(e)
+            logging.warning("FAILED -- missing section or option: {} {}".format(section, item))
+            logging.warning(e)
             return None
         except ConfigError as e:
-            logging.warn("FAILED -- missing config file")
-            logging.warn(e)
+            logging.warning("FAILED -- missing config file")
+            logging.warning(e)
             return None
 
     def get_config_items(self, section):
@@ -111,5 +111,5 @@ class Environment(object):
         try:
             items = self.cfg.items(section, raw=True)
             return {item[0]: item[1] for item in items}
-        except (ConfigError, ConfigParser.NoSectionError):
+        except (ConfigError, configparser.NoSectionError):
             return {}

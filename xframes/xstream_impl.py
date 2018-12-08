@@ -600,7 +600,7 @@ class XStreamImpl(TracedObject):
         def print_rdd_rows(rdd):
             xf = XFrame.from_rdd(rdd, column_names=column_names)
             if label:
-                print label
+                print(label)
             xf.print_rows(num_rows, num_columns, max_column_width, max_row_width,
                           wrap_text, max_wrap_rows, footer)
 
@@ -609,5 +609,5 @@ class XStreamImpl(TracedObject):
     def print_count(self, label):
         label = label or ''
         def print_rdd(rdd):
-            print '{} {}'.format(label, rdd.count())
+            print('{} {}'.format(label, rdd.count()))
         self._dstream.foreachRDD(print_rdd)

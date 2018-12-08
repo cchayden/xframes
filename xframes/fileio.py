@@ -1,7 +1,7 @@
 import os
-import urlparse
+import urllib.parse as urlparse
 from tempfile import NamedTemporaryFile
-import thread
+from threading import Lock
 from random import Random
 import errno
 
@@ -101,7 +101,7 @@ def _make_hdfs_connection(parsed_uri):
 
 
 # This code was adapted from the NamedTemporaryFile code in package tempfile
-_allocate_lock = thread.allocate_lock
+_allocate_lock = Lock
 _once_lock = _allocate_lock()
 
 
@@ -174,13 +174,13 @@ def _named_temp_file(parsed_uri, directory=None, prefix=None, suffix=None):
     tmp_max = 10000
     names = _get_candidate_names()
 
-    for seq in xrange(tmp_max):
+    for seq in range(tmp_max):
         name = names.next()
         hdfs_path = '/'.join([hdfs_prefix, directory, prefix + name + suffix])
         try:
             if not is_file(hdfs_path):
                 return hdfs_path
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.EEXIST:
                 continue  # try again
             raise
