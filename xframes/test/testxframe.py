@@ -134,24 +134,24 @@ class TestXFrameConstructor:
     def test_construct_auto_pandas_dataframe(self):
         df = pandas.DataFrame({'id': [1, 2, 3], 'val': [10.0, 20.0, 30.0]})
         res = XFrame(df)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, float]
-        assert res[0] == {'id': 1, 'val': 10.0}
-        assert res[1] == {'id': 2, 'val': 20.0}
-        assert res[2] == {'id': 3, 'val': 30.0}
+        assert 3 ==len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, float] == res.column_types()
+        assert {'id': 1, 'val': 10.0} == res[0]
+        assert {'id': 2, 'val': 20.0} == res[1]
+        assert {'id': 3, 'val': 30.0} == res[2]
 
     def test_construct_auto_str_xframe(self):
         # construct an XFrame given a file with unrecognized file extension
         path = 'files/test-frame'
         res = XFrame(path)
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_construct_xarray(self):
         # construct and XFrame given an XArray

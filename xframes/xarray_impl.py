@@ -211,7 +211,7 @@ class XArrayImpl(TracedObject):
         if os.path.isdir(path):
             res = XRdd(sc.pickleFile(path))
             metadata_path = os.path.join(path, '_metadata')
-            with fileio.open_file(metadata_path) as f:
+            with fileio.open_file(metadata_path, 'rb') as f:
                 dtype = pickle.load(f)
         else:
             res = XRdd(sc.textFile(path, use_unicode=True))
@@ -1302,7 +1302,7 @@ class XArrayImpl(TracedObject):
         if not issubclass(self.dtype(), dict):
             raise TypeError('XArray dtype must be dict: {}'.format(self.dtype))
 
-        res = self._rdd.map(lambda item: item.keys())
+        res = self._rdd.map(lambda item: list(item.keys()))
         column_types = infer_types(res)
         column_names = ['X.{}'.format(i) for i in range(len(column_types))]
         return self._rv_frame(res, column_names, column_types)
@@ -1316,7 +1316,7 @@ class XArrayImpl(TracedObject):
         if not issubclass(self.dtype(), dict):
             raise TypeError('XArray dtype must be dict: {}'.format(self.dtype))
 
-        res = self._rdd.map(lambda item: item.values())
+        res = self._rdd.map(lambda item: list(item.values()))
         column_types = infer_types(res)
         column_names = ['X.{}'.format(i) for i in range(len(column_types))]
         return self._rv_frame(res, column_names, column_types)

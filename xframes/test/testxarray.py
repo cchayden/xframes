@@ -2568,8 +2568,10 @@ class TestXArrayDictKeys:
         t = XArray([{'a': 0, 'b': 0, 'c': 0}, {'x': 1, 'y': 2, 'z': 3}])
         res = t.dict_keys()
         assert len(res) == 2
-        assert res[0] == {'X.0': 'a', 'X.1': 'c', 'X.2': 'b'}
-        assert res[1] == {'X.0': 'y', 'X.1': 'x', 'X.2': 'z'}
+        assert sorted(list(res[0].keys())) == ['X.0', 'X.1', 'X.2']
+        assert sorted(list(res[0].values())) == ['a', 'b', 'c']
+        assert sorted(list(res[1].keys())) == ['X.0', 'X.1', 'X.2']
+        assert sorted(list(res[1].values())) == ['x', 'y', 'z']
 
 
 # noinspection PyClassHasNoInit
@@ -2592,8 +2594,10 @@ class TestXArrayDictValues:
         t = XArray([{'a': 0, 'b': 1, 'c': 2}, {'x': 10, 'y': 20, 'z': 30}])
         res = t.dict_values()
         assert len(res) == 2
-        assert res[0] == {'X.0': 0, 'X.1': 2, 'X.2': 1}
-        assert res[1] == {'X.0': 20, 'X.1': 10, 'X.2': 30}
+        assert sorted(list(res[0].keys())) == ['X.0', 'X.1', 'X.2']
+        assert sorted(list(res[0].values())) == [0, 1, 2]
+        assert sorted(list(res[1].keys())) == ['X.0', 'X.1', 'X.2']
+        assert sorted(list(res[1].values())) == [10, 20, 30]
 
 
 # noinspection PyClassHasNoInit

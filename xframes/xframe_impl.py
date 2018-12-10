@@ -209,7 +209,7 @@ class XFrameImpl(TracedObject):
         # read metadata from the same directory
         metadata_path = os.path.join(path, '_metadata')
         check_input_uri(metadata_path)
-        with fileio.open_file(metadata_path) as f:
+        with fileio.open_file(metadata_path, 'rb') as f:
             names, types = pickle.load(f)
         return cls(res, names, types)
 
@@ -317,7 +317,7 @@ class XFrameImpl(TracedObject):
                 'quote_char': 'quotechar',
                 'skip_initial_space': 'skipinitialspace'
             }
-            for pc, rc in parm_map.iteritems():
+            for pc, rc in parm_map.items():
                 if pc in config:
                     params[rc] = config[pc]
             return params
@@ -403,7 +403,7 @@ class XFrameImpl(TracedObject):
 
         # use first row, if available, to make column names
         first_raw = raw.first()
-        res = read_csv_stream([first_raw], params, num_columns=None).next()
+        res = read_csv_stream([first_raw], params, num_columns=None).__next__()
         if res[0] != 'data':
             errs['header'] = XArrayImpl(rdd=sc.parallelize([res[1]]), elem_type=str)
             return errs, XFrameImpl()
@@ -454,7 +454,7 @@ class XFrameImpl(TracedObject):
             # all cols are str, except the one(s) mentioned
             types = [str for _ in first]
             # change generated hint key to actual column name
-            type_hints = {map_col(col): typ for col, typ in type_hints.iteritems()}
+            type_hints = {map_col(col): typ for col, typ in type_hints.items()}
             for col in names:
                 if col in type_hints:
                     types[names.index(col)] = type_hints[col]
@@ -1405,7 +1405,7 @@ class XFrameImpl(TracedObject):
 
         def stack_row(row):
             res = []
-            for key, val in row[index].iteritems():
+            for key, val in row[index].items():
                 if drop_na and is_missing_or_empty(val):
                     continue
                 res.append(subs_row(row, index, key, val))
@@ -1864,7 +1864,7 @@ class XFrameImpl(TracedObject):
             # inner, left, right, full
             left_key_indexes = []
             right_key_indexes = []
-            for left_key, right_key in join_keys.iteritems():
+            for left_key, right_key in join_keys.items():
                 if left_key not in self.col_names:
                     raise ValueError("Key '{}' is not a column name.".format(left_key))
                 left_index = self.col_names.index(left_key)

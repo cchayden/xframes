@@ -90,7 +90,7 @@ class XFrame(object):
         data : array | pandas.DataFrame | spark.rdd | spark.DataFrame | string | dict, optional
             The actual interpretation of this field is dependent on the `format`
             parameter. If `data` is an array, Pandas DataFrame or Spark RDD, the contents are
-            stored in the XFrame. If `data` is an object supporting iteritems, then is is handled
+            stored in the XFrame. If `data` is an object supporting items, then is is handled
             like a dictionary.  If `data` is an object supporting iteration, then the values
             are iterated to form the XFrame.  If `data` is a string, it is interpreted as a
             file. Files can be read from local file system or urls (hdfs://, s3://, or other
@@ -232,18 +232,18 @@ class XFrame(object):
                 return XFrameImpl.load_from_tuple_list(rows, column_names, column_types)
             # General case
             xf = XFrameImpl()
-            for key, val in iter(sorted(data.iteritems())):
+            for key, val in iter(sorted(data.items())):
                 if isinstance(val, XArray):
                     xf = xf.add_column(val.impl(), key)
                 else:
                     xf = xf.add_column(XArray(val).impl(), key)
             return xf
 
-        def construct_iteritems(data):
+        def construct_items(data):
             if data is None:
                 raise ValueError('Empty iterable')
             xf = XFrameImpl()
-            for key, val in iter(sorted(data.iteritems())):
+            for key, val in iter(sorted(data.items())):
                 if not hasattr(val, '__iter__'):
                     raise TypeError('Iterator values must be iterable.')
                 xf = xf.add_column(XArray(val).impl(), key)
@@ -274,8 +274,8 @@ class XFrame(object):
             self._impl = XFrameImpl.from_xarray(XArray(data).impl())
         elif _format == 'dict':
             self._impl = construct_dict(data)
-        elif _format == 'iteritems':
-            self._impl = construct_iteritems(data)
+        elif _format == 'items':
+            self._impl = construct_items(data)
         elif _format == 'csv':
             self._impl = construct_csv(data, ',')
         elif _format == 'tsv':
@@ -325,10 +325,8 @@ class XFrame(object):
             return 'dict'
         if isinstance(data, array.array):
             return 'array'
-        if hasattr(data, 'iteritems'):
-            return 'iteritems'
-        if hasattr(data, '__iter__'):
-            return 'iter'
+        if hasattr(data, 'items'):
+            return 'items'
         if data is None:
             return 'empty'
         if isinstance(data, pyspark.sql.DataFrame):
@@ -349,6 +347,8 @@ class XFrame(object):
                 return 'csv'
             else:
                 return 'xframe'
+        if hasattr(data, '__iter__'):
+            return 'iter'
         raise ValueError('Cannot infer input type for data {}.'.format(data))
 
     @classmethod
@@ -636,7 +636,7 @@ class XFrame(object):
             else:
                 raise
 
-        return cls(impl=impl), {f: XArray(impl=es) for f, es in errors.iteritems() if es.size() != 0}
+        return cls(impl=impl), {f: XArray(impl=es) for f, es in errors.items() if es.size() != 0}
 
     @classmethod
     def read_csv_with_errors(cls,
@@ -2284,7 +2284,7 @@ class XFrame(object):
             rows = self._impl.head_as_list(10)
             names = self._impl.column_names()
             if use_columns:
-                rows = [{k: v for k, v in row.iteritems() if k in use_columns} for row in rows]
+                rows = [{k: v for k, v in row.items() if k in use_columns} for row in rows]
                 names = [name for name in names if name in use_columns]
             results = [fn(dict(zip(names, row))) for row in rows]
             if not (results is None or isinstance(results, list)):
@@ -3402,7 +3402,7 @@ class XFrame(object):
                 operation = [operation]
             if isinstance(operation, dict):
                 # now sweep the dict and add to group_columns and group_properties
-                for key, val in operation.iteritems():
+                for key, val in operation.items():
                     if not isinstance(val, tuple) and not callable(val):
                         raise TypeError("Unexpected type in aggregator definition of output column: '{}'"
                                         .format(key))
