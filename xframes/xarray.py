@@ -143,12 +143,12 @@ class XArray(object):
             self._impl = XArrayImpl.load_from_iterable(data, dtype, ignore_cast_failure)
         elif isinstance(data, (list, array.array)):
             self._impl = XArrayImpl.load_from_iterable(data, dtype, ignore_cast_failure)
-        elif hasattr(data, '__iter__'):
-            self._impl = XArrayImpl.load_from_iterable(data, dtype, ignore_cast_failure)
         elif isinstance(data, str):
             internal_url = make_internal_url(data)
             check_input_uri(internal_url)
             self._impl = XArrayImpl.load_autodetect(internal_url, dtype)
+        elif hasattr(data, '__iter__'):
+            self._impl = XArrayImpl.load_from_iterable(data, dtype, ignore_cast_failure)
         else:
             raise TypeError('Unexpected data source: {}. '
                             "Possible data source types are: 'list', "
@@ -859,7 +859,7 @@ class XArray(object):
         Rows: 2
         [{'quick': 1, 'brown': 1, 'jumps': 1, 'fox': 1, 'the': 1}, {'word': 5}]
         """
-        if not isinstance(self.dtype(), basestring):
+        if not isinstance(self.dtype(), str):
             raise TypeError('Only XArray of string type is supported for counting bag of words.')
 
         # construct options, will extend over time
@@ -1675,7 +1675,7 @@ class XArray(object):
         ----------
         xframes.XArray.datetime_to_str
         """
-        if not issubclass(self.dtype(), basestring):
+        if not issubclass(self.dtype(), str):
             raise TypeError("'Str_to_datetime' expects XArray of str as input XArray.")
 
         return XArray(impl=self._impl.str_to_datetime(str_format))
@@ -1965,7 +1965,7 @@ class XArray(object):
             if len(value_types) != 1:
                 raise ValueError("'Sub_sketch_keys' member values need to have the same type.")
             value_type = value_types.pop()
-            if issubclass(self.dtype(), dict) and not isinstance(value_type, basestring):
+            if issubclass(self.dtype(), dict) and not isinstance(value_type, str):
                 raise TypeError("Only string value(s) can be passed to 'sub_sketch_keys' " +
                                 'for XArray of dictionary type. ' +
                                 'For dictionary types, sketch summary is ' +

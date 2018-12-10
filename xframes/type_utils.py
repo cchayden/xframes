@@ -19,6 +19,7 @@ from pyspark.sql.types import StringType, BooleanType, \
     ArrayType, MapType, TimestampType, NullType
 import pyspark
 
+
 # Type utilities
 def possible_date(dt_str):
     """
@@ -126,9 +127,9 @@ def infer_types(rdd):
 
 def is_numeric_type(typ):
     if HAS_NUMPY:
-        numeric_types = (float, int, long, numpy.float64, numpy.int64)
+        numeric_types = (float, int, numpy.float64, numpy.int64)
     else:
-        numeric_types = (float, int, long)
+        numeric_types = (float, int)
     if typ is None:
         return False
     return issubclass(typ, numeric_types)
@@ -292,7 +293,7 @@ def is_xframe_type(typ):
         return True
     if issubclass(typ, pyspark.sql.DataFrame):
         return True
-    if issubclass(typ, basestring):
+    if issubclass(typ, str):
         return True
     if is_numeric_type(typ):
         return True
@@ -390,7 +391,7 @@ def hint_to_schema_type(hint):
 def to_schema_type(typ, elem):
     if typ is None:
         return hint_to_schema_type('None')
-    if issubclass(typ, basestring):
+    if issubclass(typ, str):
         return hint_to_schema_type('str')
     if issubclass(typ, bool):
         return hint_to_schema_type('bool')
@@ -427,12 +428,12 @@ def to_schema_type(typ, elem):
 def safe_cast_val(val, typ):
     if val is None:
         return None
-    if isinstance(val, basestring) and len(val) == 0:
+    if isinstance(val, str) and len(val) == 0:
         if issubclass(typ, int):
             return 0
         if issubclass(typ, float):
             return 0.0
-        if issubclass(typ, basestring):
+        if issubclass(typ, str):
             return ''
         if issubclass(typ, dict):
             return {}

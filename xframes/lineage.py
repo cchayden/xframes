@@ -92,7 +92,7 @@ class Lineage(object):
             out : Lineage
         """
         assert isinstance(xa_lineage, Lineage)
-        assert isinstance(column_name, basestring)
+        assert isinstance(column_name, str)
         table_lineage = xa_lineage.table_lineage
         column_lineage = {column_name: xa_lineage.column_lineage[Lineage.XARRAY]}
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
@@ -140,7 +140,7 @@ class Lineage(object):
         -------
         out : Lineage
         """
-        assert isinstance(column_name, basestring)
+        assert isinstance(column_name, str)
         table_lineage = self.table_lineage
         column_lineage = {Lineage.XARRAY: self.column_lineage[column_name]}
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
@@ -159,7 +159,7 @@ class Lineage(object):
         -------
             out : Lineage
         """
-        assert origin is None or isinstance(origin, basestring)
+        assert origin is None or isinstance(origin, str)
         if origin is None:
             table_lineage = frozenset()
             column_lineage = {Lineage.XARRAY: frozenset()}
@@ -214,7 +214,7 @@ class Lineage(object):
         """
         from xframes.xarray_impl import XArrayImpl
         assert isinstance(col, XArrayImpl)
-        assert isinstance(name, basestring)
+        assert isinstance(name, str)
         table_lineage = self.table_lineage | col.lineage.table_lineage
         column_lineage = copy.copy(self.column_lineage)
         column_lineage[name] = col.lineage.column_lineage[Lineage.XARRAY]
@@ -242,7 +242,7 @@ class Lineage(object):
         for col in cols:
             assert isinstance(col, XArrayImpl)
         for name in names:
-            assert isinstance(name, basestring)
+            assert isinstance(name, str)
         table_lineage = self.table_lineage
         for col in cols:
             table_lineage |= col.lineage.table_lineage
@@ -264,7 +264,7 @@ class Lineage(object):
         -------
             out : Lineage
         """
-        assert isinstance(name, basestring)
+        assert isinstance(name, str)
         table_lineage = self.table_lineage | {Lineage.CONST}
         column_lineage = copy.copy(self.column_lineage)
         column_lineage[name] = frozenset([(Lineage.CONST, name)])
@@ -283,7 +283,7 @@ class Lineage(object):
         -------
             out : Lineage
         """
-        assert isinstance(name, basestring)
+        assert isinstance(name, str)
         table_lineage = self.table_lineage | {Lineage.INDEX}
         column_lineage = copy.copy(self.column_lineage)
         column_lineage[name] = frozenset([(Lineage.INDEX, name)])
@@ -393,7 +393,7 @@ class Lineage(object):
         """
         from xframes.xarray_impl import XArrayImpl
         assert isinstance(col, XArrayImpl)
-        assert isinstance(column_name, basestring)
+        assert isinstance(column_name, str)
         table_lineage = self.table_lineage | col.lineage.table_lineage
         column_lineage = copy.copy(self.column_lineage)
         column_lineage[column_name] = col.lineage.column_lineage[Lineage.XARRAY]
@@ -412,7 +412,7 @@ class Lineage(object):
         -------
             out : Lineage
         """
-        assert isinstance(name, basestring)
+        assert isinstance(name, str)
         table_lineage = copy.copy(self.table_lineage)
         column_lineage = {k: v for k, v in self.column_lineage.iteritems() if k != name}
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
@@ -527,7 +527,7 @@ class Lineage(object):
         -------
             out : Lineage
         """
-        assert isinstance(column_name, basestring)
+        assert isinstance(column_name, str)
         assert isinstance(new_column_names, list)
         table_lineage = self.table_lineage
         column_lineage_value = self.column_lineage[column_name]
@@ -624,7 +624,7 @@ class Lineage(object):
         -------
             out : Lineage
         """
-        assert isinstance(path, basestring)
+        assert isinstance(path, str)
         with fileio.open_file(path) as f:
             table_lineage, column_lineage = pickle.load(f)
         return Lineage(table_lineage=table_lineage, column_lineage=column_lineage)
@@ -638,7 +638,7 @@ class Lineage(object):
         path : str
             The path to the lineage file.
         """
-        assert isinstance(path, basestring)
+        assert isinstance(path, str)
         with fileio.open_file(path, 'w') as f:
             # TODO detect filesystem errors
             lineage_fields = [self.table_lineage, self.column_lineage]

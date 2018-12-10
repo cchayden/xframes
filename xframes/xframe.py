@@ -250,7 +250,7 @@ class XFrame(object):
             return xf
 
         def construct_csv(path, delimiter):
-            if not isinstance(path, basestring):
+            if not isinstance(path, str):
                 raise ValueError('Path is not a string: {}'.format(type(path).__name__))
             url = make_internal_url(path)
             tmpxf = XFrame.read_csv(url, delimiter=delimiter, header=True, verbose=verbose)
@@ -283,7 +283,7 @@ class XFrame(object):
         elif _format == 'psv':
             self._impl = construct_csv(data, '|')
         elif _format == 'parquet':
-            if not isinstance(data, basestring):
+            if not isinstance(data, str):
                 raise ValueError('Parquet path is not a string: {}'.format(type(data).__name__))
             url = make_internal_url(data)
             tmpxf = XFrame.read_parquet(url)
@@ -299,7 +299,7 @@ class XFrame(object):
                 raise ValueError('Empty Spark Dataframe')
             self._impl = XFrameImpl.load_from_spark_dataframe(data)
         elif _format == 'hive':
-            if not isinstance(data, basestring):
+            if not isinstance(data, str):
                 raise ValueError('Hive path is not a string: {}'.format(type(data).__name__))
             self._impl = XFrameImpl.load_from_hive(data)
         elif _format == 'rdd':
@@ -335,7 +335,7 @@ class XFrame(object):
             return 'spark.dataframe'
         if isinstance(data, pyspark.RDD):
             return 'rdd'
-        if isinstance(data, basestring):
+        if isinstance(data, str):
             if data.endswith(('.csv', '.csv.gz')):
                 return 'csv'
             if data.endswith(('.tsv', '.tsv.gz')):
@@ -374,7 +374,7 @@ class XFrame(object):
         if not isinstance(column_names, list):
             raise TypeError('Column_names must be a list.')
         for name in column_names:
-            if not isinstance(name, basestring):
+            if not isinstance(name, str):
                 raise TypeError('Column_names must be strings.')
         for typ in column_types:
             if not isinstance(typ, type):
@@ -566,7 +566,7 @@ class XFrame(object):
         parsing_config['quote_char'] = quote_char
         parsing_config['skip_initial_space'] = skip_initial_space
         parsing_config['store_errors'] = store_errors
-        if isinstance(na_values, basestring):
+        if isinstance(na_values, str):
             na_values = [na_values]
         if na_values is not None and len(na_values) > 0:
             parsing_config['na_values'] = na_values
@@ -1799,7 +1799,7 @@ class XFrame(object):
             raise TypeError('Init_fn must be a function.')
         if final_fn is not None and not callable(final_fn):
             raise TypeError('Final_fn must be a function.')
-        if isinstance(use_columns, basestring):
+        if isinstance(use_columns, str):
             use_columns = [use_columns]
         if not seed:
             seed = int(time.time())
@@ -1856,7 +1856,7 @@ class XFrame(object):
         """
         if not callable(fn):
             raise TypeError('Fn must be a function.')
-        if isinstance(use_columns, basestring):
+        if isinstance(use_columns, str):
             use_columns = [use_columns]
         rows = self._impl.head_as_list(10)
         names = self._impl.column_names()
@@ -1938,7 +1938,7 @@ class XFrame(object):
                 return row[col]
         elif not callable(fn):
             raise TypeError('Input must be a function.')
-        if isinstance(use_columns, basestring):
+        if isinstance(use_columns, str):
             use_columns = [use_columns]
         rows = self._impl.head_as_list(10)
         if use_columns:
@@ -2074,7 +2074,7 @@ class XFrame(object):
             return str
 
         def classify_type(s):
-            if not isinstance(s, basestring):
+            if not isinstance(s, str):
                 return 'Expected str, got {}: {}'.format(type(s).__name__, s)
             if len(s) == 0:
                 return ''
@@ -2289,7 +2289,7 @@ class XFrame(object):
             raise TypeError('Input must be a function')
         if not seed:
             seed = int(time.time())
-        if isinstance(use_columns, basestring):
+        if isinstance(use_columns, str):
             use_columns = [use_columns]
 
         # determine the column_types
@@ -2886,7 +2886,7 @@ class XFrame(object):
         +----+
         [3 rows x 1 columns]
         """
-        if isinstance(name, basestring):
+        if isinstance(name, str):
             column_names = [name]
         else:
             column_names = name
@@ -4035,7 +4035,7 @@ class XFrame(object):
             # If we were given a single element, put into a set.
             # If iterable, then convert to a set.
 
-            if isinstance(values, basestring):
+            if isinstance(values, str):
                 # Strings are iterable, but we don't want a set of characters.
                 values = {values}
             elif not hasattr(values, '__iter__'):
@@ -4719,7 +4719,7 @@ class XFrame(object):
         +------+-----------------------------+
         [4 rows x 2 columns]
         """
-        if not isinstance(column, basestring) and len(column) != 2:
+        if not isinstance(column, str) and len(column) != 2:
             raise TypeError("'Column' parameter has to be either a string or a list of two strings.")
 
         if new_column_name is None:
@@ -5132,7 +5132,7 @@ class XFrame(object):
         [3 rows x 2 columns]
         """
         # Normal error checking
-        if not isinstance(column, basestring):
+        if not isinstance(column, str):
             raise TypeError("Must give column name as a 'str'. Found '{}': {}.".format(type(column).__name__, column))
         ret = self.select_columns(self.column_names())
         ret[column] = ret[column].fillna(value)

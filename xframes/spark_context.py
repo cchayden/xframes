@@ -11,6 +11,7 @@ import logging
 from xframes.environment import Environment
 from xframes.xrdd import XRdd
 
+
 def get_xframes_home():
     import xframes
     return os.path.dirname(xframes.__file__)
@@ -20,6 +21,14 @@ def get_xframes_home():
 # This is used as a metaclass for CommonSparkContext, so that only one
 #  instance is created.
 class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class Singleton1(type):
     def __init__(cls, name, bases, dictionary):
         super(Singleton, cls).__init__(name, bases, dictionary)
         cls.instance = None
@@ -97,8 +106,8 @@ def create_spark_config(env):
     return context
 
 
-class CommonSparkContext(object):
-    __metaclass__ = Singleton
+class CommonSparkContext(metaclass=Singleton):
+#    __metaclass__ = Singleton
 
     def __init__(self):
         """
@@ -173,7 +182,7 @@ class CommonSparkContext(object):
         props = self.config()
         if props.get('spark.master', 'local').startswith('local'):
             return
-        if isinstance(dirs, basestring):
+        if isinstance(dirs, str):
             dirs = [dirs]
         for path in dirs:
             zip_path = self._build_zip(path)

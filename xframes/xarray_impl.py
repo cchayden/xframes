@@ -191,7 +191,7 @@ class XArrayImpl(TracedObject):
         Load RDD from const value.
         """
         cls._entry(value=value, size=size)
-        values = [value for _ in xrange(0, size)]
+        values = [value for _ in range(0, size)]
         sc = CommonSparkContext.spark_context()
         return cls(XRdd(sc.parallelize(values)), type(value), Lineage.init_array_lineage(Lineage.CONST))
 
@@ -221,7 +221,7 @@ class XArrayImpl(TracedObject):
             if fileio.exists(lineage_path):
                 lineage = Lineage.load(lineage_path)
         else:
-            res = XRdd(sc.textFile(path, use_unicode=False))
+            res = XRdd(sc.textFile(path, use_unicode=True))
             dtype = infer_type(res)
 
         if dtype != str:

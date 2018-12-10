@@ -236,7 +236,7 @@ If running in a notebook, you could run the notebook server and run the test pro
   ipython notebook
 
 
-Configurating Spark
+Configuring Spark
 -------------------
 
 Spark has a large number of configuration parameters, described at:
