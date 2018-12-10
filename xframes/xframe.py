@@ -1267,7 +1267,7 @@ class XFrame(object):
                 else:
                     ret = s[:max_column_width]
                     ret = ret[:-4] + ' ...'
-                return unicode(ret, errors='replace')
+                return ret
                 # end of truncate_str
 
         columns = self.column_names()[:max_columns]

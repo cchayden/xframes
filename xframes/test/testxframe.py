@@ -599,22 +599,22 @@ class TestXFrameReadText:
     def test_read_text(self):
         path = 'files/test-frame-text.txt'
         res = XFrame.read_text(path)
-        assert len(res) == 3
-        assert res.column_names() == ['text']
-        assert res.column_types() == [str]
-        assert res[0] == {'text': 'This is a test'}
-        assert res[1] == {'text': 'of read_text.'}
-        assert res[2] == {'text': 'Here is another sentence.'}
+        assert 3 == len(res)
+        assert ['text'] == res.column_names()
+        assert [str] == res.column_types()
+        assert {'text': 'This is a test'} == res[0]
+        assert {'text': 'of read_text.'} == res[1]
+        assert {'text': 'Here is another sentence.'} == res[2]
 
     def test_read_text_delimited(self):
         path = 'files/test-frame-text.txt'
         res = XFrame.read_text(path, delimiter='.')
-        assert len(res) == 3
-        assert res.column_names() == ['text']
-        assert res.column_types() == [str]
-        assert res[0] == {'text': 'This is a test of read_text'}
-        assert res[1] == {'text': 'Here is another sentence'}
-        assert res[2] == {'text': ''}
+        assert 3 == len(res)
+        assert ['text'] == res.column_names()
+        assert [str] == res.column_types()
+        assert {'text': 'This is a test of read_text'} == res[0]
+        assert {'text': 'Here is another sentence'} == res[1]
+        assert {'text': ''} == res[2]
 
     def test_read_text_file_not_exist(self):
         path = 'files/does-not-exist.txt'

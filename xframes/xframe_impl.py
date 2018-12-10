@@ -355,7 +355,8 @@ class XFrameImpl(TracedObject):
                     if isinstance(line, str):
                         yield line
                     else:
-                        yield line.encode('utf-8')
+#                        yield line.encode('utf-8')
+                        yield line
 
             def unquote(field):
                 if field is None or len(field) == 0:
@@ -530,7 +531,7 @@ class XFrameImpl(TracedObject):
         sc = CommonSparkContext.spark_context()
         if delimiter is None:
             rdd = sc.textFile(path)
-            res = rdd.map(lambda line: (line.encode('utf-8'), ))
+            res = rdd.map(lambda line: (line, ))
         else:
             conf = {'textinputformat.record.delimiter': delimiter}
             rdd = sc.newAPIHadoopFile(path,
@@ -1798,7 +1799,7 @@ class XFrameImpl(TracedObject):
             return [aggregator(rows, cols)
                     for aggregator, cols in zip(aggregators, group_cols)]
         aggregators = [prop.agg_function for prop in group_properties]
-        aggregates = grouped.map(lambda x, y: (x, build_aggregates(y, aggregators, group_cols)))
+        aggregates = grouped.map(lambda pair: (pair[0], build_aggregates(pair[1], aggregators, group_cols)))
 
         def concatenate(old_vals, new_vals):
             return old_vals + new_vals
