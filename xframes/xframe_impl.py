@@ -586,7 +586,7 @@ class XFrameImpl(TracedObject):
 
         metadata_path = os.path.join(path, '_metadata')
         metadata = [self.col_names, self.column_types]
-        with fileio.open_file(metadata_path, 'w') as f:
+        with fileio.open_file(metadata_path, 'wb') as f:
             # TODO detect filesystem errors
             pickle.dump(metadata, f)
 

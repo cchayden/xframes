@@ -65,16 +65,16 @@ class TestXFrameConstructor:
     def test_construct_auto_dataframe(self):
         path = 'files/test-frame-auto.csv'
         res = XFrame(path)
-        assert len(res) == 3
-        assert res.column_names() == ['val_int', 'val_int_signed', 'val_float', 'val_float_signed',
-                                      'val_str', 'val_list', 'val_dict']
-        assert res.column_types() == [int, int, float, float, str, list, dict]
-        assert res[0] == {'val_int': 1, 'val_int_signed': -1, 'val_float': 1.0, 'val_float_signed': -1.0,
-                          'val_str': 'a', 'val_list': ['a'], 'val_dict': {1: 'a'}}
-        assert res[1] == {'val_int': 2, 'val_int_signed': -2, 'val_float': 2.0, 'val_float_signed': -2.0,
-                          'val_str': 'b', 'val_list': ['b'], 'val_dict': {2: 'b'}}
-        assert res[2] == {'val_int': 3, 'val_int_signed': -3, 'val_float': 3.0, 'val_float_signed': -3.0,
-                          'val_str': 'c', 'val_list': ['c'], 'val_dict': {3: 'c'}}
+        assert 3 == len(res)
+        assert ['val_int', 'val_int_signed', 'val_float', 'val_float_signed',
+                'val_str', 'val_list', 'val_dict'] == res.column_names()
+        assert [int, int, float, float, str, list, dict] == res.column_types()
+        assert {'val_int': 1, 'val_int_signed': -1, 'val_float': 1.0, 'val_float_signed': -1.0,
+                'val_str': 'a', 'val_list': ['a'], 'val_dict': {1: 'a'}} == res[0]
+        assert {'val_int': 2, 'val_int_signed': -2, 'val_float': 2.0, 'val_float_signed': -2.0,
+                'val_str': 'b', 'val_list': ['b'], 'val_dict': {2: 'b'}} == res[1]
+        assert {'val_int': 3, 'val_int_signed': -3, 'val_float': 3.0, 'val_float_signed': -3.0,
+                'val_str': 'c', 'val_list': ['c'], 'val_dict': {3: 'c'}} == res[2]
 
     def test_construct_auto_str_csv(self):
         path = 'files/test-frame.csv'
@@ -178,22 +178,22 @@ class TestXFrameConstructor:
         # construct an XFrame from an object that has iteritems
         class MyIterItem(object):
             @staticmethod
-            def iteritems():
+            def items():
                 return iter([('id', [1, 2, 3]), ('val', ['a', 'b', 'c'])])
 
         t = XFrame(MyIterItem())
-        assert len(t) == 3
-        assert t.column_names() == ['id', 'val']
+        assert 3 == len(t)
+        assert ['id', 'val'] == t.column_names()
         assert t.column_types() == [int, str]
-        assert t[0] == {'id': 1, 'val': 'a'}
-        assert t[1] == {'id': 2, 'val': 'b'}
-        assert t[2] == {'id': 3, 'val': 'c'}
+        assert {'id': 1, 'val': 'a'} == t[0]
+        assert {'id': 2, 'val': 'b'} == t[1]
+        assert {'id': 3, 'val': 'c'} == t[2]
 
     def test_construct_iteritems_bad(self):
         # construct an XFrame from an object that has iteritems
         class MyIterItem(object):
             @staticmethod
-            def iteritems():
+            def items():
                 return iter([('id', 1), ('val', 'a')])
 
         with pytest.raises(TypeError) as exception_info:
@@ -225,7 +225,6 @@ class TestXFrameConstructor:
             _ = XFrame(MyIter())
         exception_message = exception_info.value.args[0]
         assert exception_message == 'Cannot determine types.'
-
 
     def test_construct_empty(self):
         # construct an empty XFrame
@@ -268,7 +267,7 @@ class TestXFrameConstructor:
         with pytest.raises(ValueError) as exception_info:
             _ = XFrame([1, 2, xa], format='array')
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Cannot create XFrame from mix of regular values and XArrays.'
+        assert 'Cannot create XFrame from mix of regular values and XArrays.' == exception_message
 
     def test_construct_array_mixed_types(self):
         # construct an XFrame from
@@ -276,31 +275,31 @@ class TestXFrameConstructor:
         with pytest.raises(TypeError) as exception_info:
             _ = XFrame([1, 2, 'a'], format='array')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Infer_type_of_list: mixed types in list: <type 'str'> <type 'int'>"
+        assert "Infer_type_of_list: mixed types in list: <class 'str'> <class 'int'>" == exception_message
 
     def test_construct_unknown_format(self):
         # test unknown format
         with pytest.raises(ValueError) as exception_info:
             _ = XFrame([1, 2, 'a'], format='bad-format')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Unknown input type: 'bad-format'."
+        assert "Unknown input type: 'bad-format'." == exception_message
 
     def test_construct_array_empty(self):
         # construct an XFrame from an empty array
         t = XFrame([], format='array')
-        assert len(t) == 0
+        assert 0 == len(t)
 
     def test_construct_array_xarray(self):
         # construct an XFrame from an xarray
         xa1 = XArray([1, 2, 3])
         xa2 = XArray(['a', 'b', 'c'])
         t = XFrame([xa1, xa2], format='array')
-        assert len(t) == 3
-        assert t.column_names() == ['X.0', 'X.1']
-        assert t.column_types() == [int, str]
-        assert t[0] == {'X.0': 1, 'X.1': 'a'}
-        assert t[1] == {'X.0': 2, 'X.1': 'b'}
-        assert t[2] == {'X.0': 3, 'X.1': 'c'}
+        assert 3 == len(t)
+        assert ['X.0', 'X.1'] == t.column_names()
+        assert [int, str] == t.column_types()
+        assert {'X.0': 1, 'X.1': 'a'} == t[0]
+        assert {'X.0': 2, 'X.1': 'b'} == t[1]
+        assert {'X.0': 3, 'X.1': 'c'} == t[2]
 
     def test_construct_dict_int(self):
         # construct an XFrame from a dict of int
@@ -1538,7 +1537,7 @@ class TestXFrameSaveBinary:
         t = XFrame({'id': [30, 20, 10], 'val': ['a', 'b', 'c']})
         path = 'tmp/frame'
         t.save(path, format='binary')
-        with open(os.path.join(path, '_metadata')) as f:
+        with open(os.path.join(path, '_metadata'), 'rb') as f:
             metadata = pickle.load(f)
             assert metadata == [['id', 'val'], [int, str]]
         # TODO find some way to check the data
@@ -1586,44 +1585,44 @@ class TestXFrameSaveParquet:
         path = 'tmp/frame-parquet'
         t.save(path, format='parquet')
         res = XFrame(path + '.parquet')
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_save_as_parquet(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         path = 'tmp/frame-parquet'
         t.save_as_parquet(path)
         res = XFrame(path, format='parquet')
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_save_rename(self):
         t = XFrame({'id col': [1, 2, 3], 'val,col': ['a', 'b', 'c']})
         path = 'tmp/frame-parquet'
         t.save(path, format='parquet')
         res = XFrame(path + '.parquet')
-        assert res.column_names() == ['id_col', 'val_col']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id_col': 1, 'val_col': 'a'}
-        assert res[1] == {'id_col': 2, 'val_col': 'b'}
-        assert res[2] == {'id_col': 3, 'val_col': 'c'}
+        assert ['id_col', 'val_col'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id_col': 1, 'val_col': 'a'} == res[0]
+        assert {'id_col': 2, 'val_col': 'b'} == res[1]
+        assert {'id_col': 3, 'val_col': 'c'} == res[2]
 
     def test_save_as_parquet_rename(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         path = 'tmp/frame-parquet'
         t.save_as_parquet(path, column_names=['id1', 'val1'])
         res = XFrame(path, format='parquet')
-        assert res.column_names() == ['id1', 'val1']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id1': 1, 'val1': 'a'}
-        assert res[1] == {'id1': 2, 'val1': 'b'}
-        assert res[2] == {'id1': 3, 'val1': 'c'}
+        assert ['id1', 'val1'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id1': 1, 'val1': 'a'} == res[0]
+        assert {'id1': 2, 'val1': 'b'} == res[1]
+        assert {'id1': 3, 'val1': 'c'} == res[2]
 
     def test_save_not_exist(self):
         t = XFrame({'id': [30, 20, 10], 'val': ['a', 'b', 'c']})
@@ -1906,23 +1905,23 @@ class TestXFrameRemoveColumns:
     def test_remove_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
         res = t.remove_columns(['new1', 'new2'])
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert len(t.column_names()) == 4
-        assert len(res.column_names()) == 2
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert 4 == len(t.column_names())
+        assert 2 == len(res.column_names())
 
     def test_remove_column_not_iterable(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(TypeError) as exception_info:
             t.remove_columns('xx')
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column_names must be an iterable.'
+        assert 'Column_names must be an iterable.' == exception_message
 
     def test_remove_column_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(KeyError) as exception_info:
             t.remove_columns(['xx'])
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Cannot find column 'xx'."
+        assert "Cannot find column 'xx'." == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -1972,21 +1971,21 @@ class TestXFrameReorderColumns:
         with pytest.raises(TypeError) as exception_info:
             t.reorder_columns('val')
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Keylist must be an iterable.'
+        assert 'Keylist must be an iterable.' == exception_message
 
     def test_reorder_columns_bad_col(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         with pytest.raises(KeyError) as exception_info:
             t.reorder_columns(['val', 'y', 'id'])
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Cannot find column 'y'."
+        assert "Cannot find column 'y'." == exception_message
 
     def test_reorder_columns_incomplete(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         with pytest.raises(KeyError) as exception_info:
             t.reorder_columns(['val', 'id'])
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Column 'x' not assigned'."
+        assert "Column 'x' not assigned'." == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -2107,8 +2106,8 @@ class TestXFrameSetitem:
     def test_setitem_str_const_replace(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t['val'] = 'x'
-        assert t.column_names() == ['id', 'val']
-        assert t[1] == {'id': 2, 'val': 'x'}
+        assert ['id', 'val'] == t.column_names()
+        assert {'id': 2, 'val': 'x'} == t[1]
 
     def test_setitem_list(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2314,8 +2313,8 @@ class TestXFrameAppend:
         with pytest.raises(RuntimeError) as exception_info:
             t1.append(t2)
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Column val type is not the same in two XFrames, " + \
-                                    "one is <type 'str'> the other is [<type 'int'>, <type 'float'>]."
+        assert "Column val type is not the same in two XFrames, " \
+               "one is <type 'str'> the other is [<class 'int'>, <class 'float'>]." == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -2678,12 +2677,12 @@ class TestXFrameGroupbyAggregators:
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', SELECT_ONE('another'))
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'select-one']
+        assert 3 == len(res)
+        assert ['id', 'select-one'] == res.column_names()
         assert res.column_types() == [int, int]
-        assert res[0] == {'id': 1, 'select-one': 60}
-        assert res[1] == {'id': 2, 'select-one': 50}
-        assert res[2] == {'id': 3, 'select-one': 30}
+        assert {'id': 1, 'select-one': 60} == res[0]
+        assert {'id': 2, 'select-one': 50} == res[1]
+        assert {'id': 3, 'select-one': 30} == res[2]
 
     def test_groupby_select_one_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2691,12 +2690,12 @@ class TestXFrameGroupbyAggregators:
                     'another': [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]})
         res = t.groupby('id', SELECT_ONE('another'))
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'select-one']
-        assert res.column_types() == [int, float]
-        assert res[0] == {'id': 1, 'select-one': 60.0}
-        assert res[1] == {'id': 2, 'select-one': 50.0}
-        assert res[2] == {'id': 3, 'select-one': 30.0}
+        assert 3 == len(res)
+        assert ['id', 'select-one'] == res.column_names()
+        assert [int, float] == res.column_types()
+        assert {'id': 1, 'select-one': 60.0} == res[0]
+        assert {'id': 2, 'select-one': 50.0} == res[1]
+        assert {'id': 3, 'select-one': 30.0} == res[2]
 
     def test_groupby_select_one_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3527,26 +3526,26 @@ class TestXFrameFilterby:
     def test_filterby_list_exclude(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         res = t.filterby([1, 3], 'id', exclude=True).sort('id')
-        assert len(res) == 2
-        assert res[0] == {'id': 2, 'val': 'b'}
-        assert res[1] == {'id': 4, 'val': 'd'}
-        assert list(res['id']) == [2, 4]
+        assert 2 == len(res)
+        assert {'id': 2, 'val': 'b'} == res[0]
+        assert {'id': 4, 'val': 'd'} == res[1]
+        assert [2, 4] == list(res['id'])
 
     def test_filterby_bad_column_type_list(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         with pytest.raises(TypeError) as exception_info:
             t.filterby([1, 3], 'val')
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Value type (int) does not match column type (str).'
+        assert 'Value type (int) does not match column type (str).' == exception_message
 
     def test_filterby_xarray_exclude(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         a = XArray([1, 3])
         res = t.filterby(a, 'id', exclude=True).sort('id')
-        assert len(res) == 2
-        assert res[0] == {'id': 2, 'val': 'b'}
-        assert res[1] == {'id': 4, 'val': 'd'}
-        assert list(res['id']) == [2, 4]
+        assert 2 == len(res)
+        assert {'id': 2, 'val': 'b'} == res[0]
+        assert {'id': 4, 'val': 'd'} == res[1]
+        assert [2, 4] == list(res['id'])
 
     # noinspection PyTypeChecker
     def test_filterby_bad_column_name_type(self):
@@ -3554,14 +3553,14 @@ class TestXFrameFilterby:
         with pytest.raises(TypeError) as exception_info:
             t.filterby([1, 3], 1)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column_name must be a string.'
+        assert 'Column_name must be a string.' == exception_message
 
     def test_filterby_bad_column_name(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         with pytest.raises(KeyError) as exception_info:
             t.filterby([1, 3], 'xx')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Column 'xx' not in XFrame."
+        assert "Column 'xx' not in XFrame." == exception_message
 
     def test_filterby_bad_column_type_xarray(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
@@ -3569,15 +3568,15 @@ class TestXFrameFilterby:
         with pytest.raises(TypeError) as exception_info:
             t.filterby(a, 'val')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Type of given values ('<type 'int'>') does not match " + \
-                                    "type of column 'val' ('<type 'str'>') in XFrame."
+        assert "Type of given values ('<class 'int'>') does not match " + \
+               "type of column 'val' ('<class 'str'>') in XFrame." == exception_message
 
     def test_filterby_bad_list_empty(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
         with pytest.raises(ValueError) as exception_info:
             t.filterby([], 'id').sort('id')
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Value list is empty.'
+        assert 'Value list is empty.' == exception_message
 
     def test_filterby_bad_xarray_empty(self):
         t = XFrame({'id': [1, 2, 3, 4], 'val': ['a', 'b', 'c', 'd']})
@@ -3585,8 +3584,8 @@ class TestXFrameFilterby:
         with pytest.raises(TypeError) as exception_info:
             t.filterby(a, 'val')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Type of given values ('None') does not match " + \
-                                    "type of column 'val' ('<type 'str'>') in XFrame."
+        assert "Type of given values ('None') does not match " + \
+               "type of column 'val' ('<type 'str'>') in XFrame." == exception_message
 
 
 # noinspection PyClassHasNoInit

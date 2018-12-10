@@ -413,14 +413,14 @@ def to_schema_type(typ, elem):
     if issubclass(typ, dict):
         if elem is None or len(elem) == 0:
             raise ValueError('Schema type cannot be determined.')
-        key_type = to_schema_type(type(elem.keys()[0]), None)
+        key_type = to_schema_type(type(list(elem.keys())[0]), None)
         if key_type is None:
             raise TypeError('Key type cannot be determined')
-        val_type = to_schema_type(type(elem.values()[0]), None)
+        val_type = to_schema_type(type(list(elem.values())[0]), None)
         if val_type is None:
             raise TypeError('Value type cannot be determined.')
         return MapType(key_type, val_type)
-    if issubclass(typ, types.NoneType):
+    if issubclass(typ, type(None)):
         return None
     return hint_to_schema_type('str')
 
