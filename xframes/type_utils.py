@@ -150,9 +150,9 @@ def is_sortable_type(typ):
     if typ is None:
         return False
     if HAS_NUMPY:
-        sortable_types = (str, float, int, long, numpy.float64, numpy.int64, datetime.datetime)
+        sortable_types = (str, float, int, numpy.float64, numpy.int64, datetime.datetime)
     else:
-        sortable_types = (str, float, int, long, datetime.datetime)
+        sortable_types = (str, float, int, datetime.datetime)
     return issubclass(typ, sortable_types)
 
 
@@ -397,7 +397,7 @@ def to_schema_type(typ, elem):
         return hint_to_schema_type('bool')
     if issubclass(typ, float):
         return hint_to_schema_type('float')
-    if issubclass(typ, (int, long)):
+    if issubclass(typ, int):
         # Some integers cannot be stored in long, but we cannot tell this
         #  from the column type.  Let it fail in spark.
         return hint_to_schema_type('int')

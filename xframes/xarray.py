@@ -354,7 +354,7 @@ class XArray(object):
         return self._impl.to_rdd(number_of_partitions)
 
     @classmethod
-    def from_rdd(cls, rdd, dtype, lineage=None):
+    def from_rdd(cls, rdd, dtype):
         """
         Convert a Spark RDD into an XArray
 
@@ -366,16 +366,13 @@ class XArray(object):
         dtype : type
             The values in `rdd` should have the data type `dtype`.
 
-        lineage: dict, optional
-            The lineage to apply to the rdd.
-
         Returns
         -------
         class:`.XArray`
             This incorporates the given RDD.
 
         """
-        return cls(impl=XArrayImpl.from_rdd(rdd, dtype, lineage=lineage))
+        return cls(impl=XArrayImpl.from_rdd(rdd, dtype))
 
     def __repr__(self):
         """
@@ -473,7 +470,18 @@ class XArray(object):
         else:
             return XArray(impl=self._impl.left_scalar_operator(other, '*'))
 
-    def __div__(self, other):
+    def __floordiv__(self, other):
+        """
+        If other is a scalar value, divides each element of the current array
+        by the value, returning the result. If other is an XArray, performs
+        an element-wise division of the two arrays.
+        """
+        if isinstance(other, XArray):
+            return XArray(impl=self._impl.vector_operator(other._impl, '//'))
+        else:
+            return XArray(impl=self._impl.left_scalar_operator(other, '//'))
+
+    def __truediv__(self, other):
         """
         If other is a scalar value, divides each element of the current array
         by the value, returning the result. If other is an XArray, performs
@@ -557,7 +565,14 @@ class XArray(object):
         """
         return XArray(impl=self._impl.right_scalar_operator(other, '*'))
 
-    def __rdiv__(self, other):
+    def __rfloordiv__(self, other):
+        """
+        Divides a scalar value by each element in the array
+        Returned array has the same type as the array on the right hand side
+        """
+        return XArray(impl=self._impl.right_scalar_operator(other, '//'))
+
+    def __rtruediv__(self, other):
         """
         Divides a scalar value by each element in the array
         Returned array has the same type as the array on the right hand side
@@ -709,20 +724,6 @@ class XArray(object):
 
         """
         return self._impl.dtype()
-
-    def lineage(self):
-        """
-        The lineage: the files that went into building this array.
-
-        Returns
-        -------
-        dict
-            * key 'table': set[filename]
-                The files that were used to build the XArray
-            * key 'column': dict{column_name: set[filename]}
-                The set of files that were used to build each column
-        """
-        return self._impl.lineage_as_dict()
 
     def head(self, n=10):
         """
@@ -1010,11 +1011,11 @@ class XArray(object):
 
         Parameters
         ----------
-        lower : int or long or float, optional
+        lower : int or float, optional
             The lowest dictionary value that would be retained in the result. If
             not given, lower bound is not applied.
 
-        upper : int or long or float, optional
+        upper : int or float, optional
             The highest dictionary value that would be retained in the result.
             If not given, upper bound is not applied.
 

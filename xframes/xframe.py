@@ -1514,20 +1514,6 @@ class XFrame(object):
         """
         return copy.copy(self._impl.dtype())
 
-    def lineage(self):
-        """
-        The table lineage: the files that went into building this table.
-
-        Returns
-        -------
-        dict
-            * key 'table': set[filename]
-                The files that were used to build the XArray
-            * key 'column': dict{column_name: set[filename]}
-                The set of files that were used to build each column
-        """
-        return self._impl.lineage_as_dict()
-
     def head(self, n=10):
         """
         The first n rows of the XFrame.
@@ -1660,7 +1646,7 @@ class XFrame(object):
 
             Hints are given as a dictionary of column_name: column_hint.  Any column without a hint
             is handled using the XFrame column type.
-            For simple types, hints are just type names (as strings): int, long float, 
+            For simple types, hints are just type names (as strings): int float,
             bool, datetime, or str.
             For lists, hints are "list[<type>]" where <type> is one of the simple types.
             For dictionaries, hints are "dict{<key_type>:<value_type>}" where key_type and 
@@ -3101,8 +3087,6 @@ class XFrame(object):
             return self.select_columns(key)
         if isinstance(key, str):
             return self.select_column(key)
-        if isinstance(key, unicode):
-            return self.select_column(str(key))
         if isinstance(key, int):
             if key < 0:
                 key += len(self)

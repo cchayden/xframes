@@ -14,7 +14,6 @@ import datetime
 from dateutil import parser as date_parser
 import logging
 
-from xframes.lineage import Lineage
 import xframes
 from xframes.traced_object import TracedObject
 from xframes.spark_context import CommonSparkContext
@@ -68,10 +67,10 @@ class XArrayImpl(TracedObject):
     # text processing functions
     # array.array and numpy.array values
 
-    def __init__(self, rdd=None, elem_type=None, lineage=None):
+    def __init__(self, rdd=None, elem_type=None):
         # The RDD holds all the data for the XArray.
         # The rows must be of a single type.
-        # Types permitted include int, long, float, string, list, and dict.
+        # Types permitted include int, float, string, list, and dict.
         # We record the element type here.
         self._entry(elem_type=elem_type)
         if rdd is None:
@@ -80,7 +79,6 @@ class XArrayImpl(TracedObject):
         super(XArrayImpl, self).__init__()
         self._rdd = wrap_rdd(rdd)
         self.elem_type = elem_type
-        self.lineage = lineage or Lineage.init_array_lineage(Lineage.EMPTY)
         self.materialized = False
         self.iter_pos = 0
 
@@ -90,21 +88,20 @@ class XArrayImpl(TracedObject):
     def dump_debug_info(self):
         return self._rdd.toDebugString()
 
-    def _rv(self, rdd, typ=None, lineage=None):
+    def _rv(self, rdd, typ=None):
         """
-        Return a new XArrayImpl containing the rdd,element type, and lineage.
+        Return a new XArrayImpl containing the rdd and element type.
         """
-        return XArrayImpl(rdd, typ or self.elem_type, lineage or self.lineage)
+        return XArrayImpl(rdd, typ or self.elem_type)
 
     # noinspection PyUnresolvedReferences
     @staticmethod
-    def _rv_frame(rdd, col_names=None, col_types=None, lineage=None):
+    def _rv_frame(rdd, col_names=None, col_types=None):
         """
         Return a new XFrameImpl containing the rdd, column names, and element types
         """
         # noinspection PyUnresolvedReferences
-        lineage = lineage or Lineage.init_frame_lineage(Lineage.RDD, col_names)
-        return xframes.xframe_impl.XFrameImpl(rdd, col_names, col_types, lineage)
+        return xframes.xframe_impl.XFrameImpl(rdd, col_names, col_types)
 
     def _count(self):
         count = self._rdd.count()
@@ -127,7 +124,7 @@ class XArrayImpl(TracedObject):
             step = -1
         sc = CommonSparkContext.spark_context()
         rdd = XRdd(sc.parallelize(range(start, stop, step)))
-        return XArrayImpl(rdd, int, Lineage.init_array_lineage(Lineage.RANGE))
+        return XArrayImpl(rdd, int)
 
     # Load
     @classmethod
@@ -183,7 +180,7 @@ class XArrayImpl(TracedObject):
             if errs:
                 raise ValueError
 
-        return cls(rdd, dtype, Lineage.init_array_lineage(Lineage.PROGRAM))
+        return cls(rdd, dtype)
 
     @classmethod
     def load_from_const(cls, value, size):
@@ -193,7 +190,7 @@ class XArrayImpl(TracedObject):
         cls._entry(value=value, size=size)
         values = [value for _ in range(0, size)]
         sc = CommonSparkContext.spark_context()
-        return cls(XRdd(sc.parallelize(values)), type(value), Lineage.init_array_lineage(Lineage.CONST))
+        return cls(XRdd(sc.parallelize(values)), type(value))
 
     @classmethod
     def load_autodetect(cls, path, dtype):
@@ -210,16 +207,12 @@ class XArrayImpl(TracedObject):
         # If the path is a file, look for that file
         # Use type inference to determine the element type.
         # Passed-in dtype is always str and is ignored.
-        lineage = Lineage.init_array_lineage(path)
         sc = CommonSparkContext.spark_context()
         if os.path.isdir(path):
             res = XRdd(sc.pickleFile(path))
             metadata_path = os.path.join(path, '_metadata')
             with fileio.open_file(metadata_path) as f:
                 dtype = pickle.load(f)
-            lineage_path = os.path.join(path, '_lineage')
-            if fileio.exists(lineage_path):
-                lineage = Lineage.load(lineage_path)
         else:
             res = XRdd(sc.textFile(path, use_unicode=True))
             dtype = infer_type(res)
@@ -231,7 +224,7 @@ class XArrayImpl(TracedObject):
                 res = res.map(lambda x: date_parser.parse(x))
             else:
                 res = res.map(lambda x: dtype(x))
-        return cls(res, dtype, lineage)
+        return cls(res, dtype)
 
     # noinspection PyUnusedLocal
     @classmethod
@@ -243,8 +236,7 @@ class XArrayImpl(TracedObject):
         cls._entry(path=path, delimiter=delimiter, nrows=nrows)
         sc = CommonSparkContext.spark_context()
         if delimiter is None:
-            rdd = sc.textFile(path)
-            res = rdd.map(lambda line: line.encode('utf-8'))
+            res = sc.textFile(path)
         else:
             conf = {'textinputformat.record.delimiter': delimiter}
             rdd = sc.newAPIHadoopFile(path,
@@ -256,8 +248,7 @@ class XArrayImpl(TracedObject):
             def fixup_line(line):
                 return str(line).replace('\n', ' ').strip()
             res = rdd.values().map(lambda line: fixup_line(line))
-        lineage = Lineage.init_array_lineage(path)
-        return XArrayImpl(res, str, lineage)
+        return XArrayImpl(res, str)
 
     def get_content_identifier(self):
         """
@@ -281,12 +272,9 @@ class XArrayImpl(TracedObject):
             raise TypeError('The XArray save failed.')
         metadata = self.elem_type
         metadata_path = os.path.join(path, '_metadata')
-        with fileio.open_file(metadata_path, 'w') as f:
+        with fileio.open_file(metadata_path, 'wb') as f:
             # TODO detect filesystem errors
             pickle.dump(metadata, f)
-
-        lineage_path = os.path.join(path, '_lineage')
-        self.lineage.save(lineage_path)
 
     def save_as_text(self, path):
         """
@@ -301,12 +289,9 @@ class XArrayImpl(TracedObject):
             raise TypeError('The XArray save failed.')
         metadata = self.elem_type
         metadata_path = os.path.join(path, '_metadata')
-        with fileio.open_file(metadata_path, 'w') as f:
+        with fileio.open_file(metadata_path, 'wb') as f:
             # TODO detect filesystem errors
             pickle.dump(metadata, f)
-
-        lineage_path = os.path.join(path, '_lineage')
-        self.lineage.save(lineage_path)
 
     def save_as_csv(self, path, **params):
         """
@@ -316,7 +301,7 @@ class XArrayImpl(TracedObject):
 
         # noinspection PyShadowingNames
         def to_csv(row, **params):
-            sio = StringIO.StringIO()
+            sio = StringIO()
             writer = csv.writer(sio, **params)
             try:
                 writer.writerow([row], **params)
@@ -350,10 +335,8 @@ class XArrayImpl(TracedObject):
         return res
 
     @classmethod
-    def from_rdd(cls, rdd, dtype, lineage=None):
-        if lineage:
-            cls(rdd, dtype, lineage=Lineage.from_dict(lineage))
-        return cls(rdd, dtype, Lineage.init_array_lineage(Lineage.RDD))
+    def from_rdd(cls, rdd, dtype):
+        return cls(rdd, dtype)
 
     # Array Information
     def size(self):
@@ -370,13 +353,6 @@ class XArrayImpl(TracedObject):
         """
         self._entry()
         return self.elem_type
-
-    def lineage_as_dict(self):
-        """
-        Returns the lineage as a dictionary
-        """
-        self._entry()
-        return self.lineage.as_dict()
 
     # Get Data
     def head(self, n):
@@ -508,8 +484,7 @@ class XArrayImpl(TracedObject):
             res_type = int
         else:
             raise NotImplementedError(op)
-        lineage = self.lineage.merge(other.lineage)
-        return self._rv(res, res_type, lineage)
+        return self._rv(res, res_type)
 
     def left_scalar_operator(self, other, op):
         """
@@ -523,6 +498,8 @@ class XArrayImpl(TracedObject):
             res = self._rdd.map(lambda x: x - other)
         elif op == '*':
             res = self._rdd.map(lambda x: x * other)
+        elif op == '//':
+            res = self._rdd.map(lambda x: x // other)
         elif op == '/':
             res = self._rdd.map(lambda x: x / other)
         elif op == '**':
@@ -559,6 +536,8 @@ class XArrayImpl(TracedObject):
             res = self._rdd.map(lambda x: other - x)
         elif op == '*':
             res = self._rdd.map(lambda x: other * x)
+        elif op == '//':
+            res = self._rdd.map(lambda x: other // x if x != 0 else None)
         elif op == '/':
             res = self._rdd.map(lambda x: other / x if x != 0 else None)
         else:
@@ -616,8 +595,7 @@ class XArrayImpl(TracedObject):
             return (x - start) % step == 0
         pairs = self._rdd.zipWithIndex()
         res = pairs.filter(lambda x: select_row(x[1], start, step, stop)).map(lambda x: x[0])
-        lineage = Lineage.init_array_lineage(Lineage.RANGE)
-        return self._rv(res, lineage=lineage)
+        return self._rv(res)
 
     def vector_slice(self, start, end):
         """
@@ -703,8 +681,7 @@ class XArrayImpl(TracedObject):
         if self.elem_type != other.elem_type:
             raise TypeError('Types must match in append: {} {}'.format(self.elem_type, other.elem_type))
         res = self._rdd.union(other.rdd())
-        lineage = self.lineage.merge(other.lineage)
-        return self._rv(res, lineage=lineage)
+        return self._rv(res)
 
     # Data Transformation
     def transform(self, fn, dtype, skip_undefined, seed):
@@ -811,7 +788,7 @@ class XArrayImpl(TracedObject):
         # noinspection PyShadowingNames
         def convert_type(x, dtype):
             try:
-                if dtype in (int, long, float):
+                if dtype in (int, float):
                     x = 0 if x == '' else x
                     return dtype(x)
                 if dtype is str:
@@ -830,7 +807,7 @@ class XArrayImpl(TracedObject):
                     res = ast.literal_eval(x)
                     if isinstance(res, list) and len(res) > 0:
                         dtype = type(res[0])
-                        if dtype in (int, long):
+                        if dtype is int:
                             # TODO this could be too long and if so it will fail
                             return array.array('i', res)
                         if dtype is float:
@@ -964,8 +941,7 @@ class XArrayImpl(TracedObject):
         res = res.map(lambda row: narrow(row, n_cols))
         res = res.map(lambda row: cast_row(row, column_types))
         res = res.map(tuple)
-        lineage = self.lineage.unpack_array(column_names)
-        return self._rv_frame(res, column_names, column_types, lineage)
+        return self._rv_frame(res, column_names, column_types)
 
     def sort(self, ascending):
         """

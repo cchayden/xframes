@@ -7,7 +7,6 @@ import copy
 from xframes.traced_object import TracedObject
 from xframes.xframe import XFrame
 from xframes.spark_context import CommonSparkContext
-from xframes.lineage import Lineage
 from xframes.type_utils import safe_cast_val
 from xframes.utils import merge_dicts
 from xframes.object_utils import wrap_rdd
@@ -25,7 +24,7 @@ def build_row(names, row, use_columns=None, use_columns_index=None):
 class XStreamImpl(TracedObject):
     """ Implementation for XStream. """
 
-    def __init__(self, dstream=None, column_names=None, column_types=None, lineage=None):
+    def __init__(self, dstream=None, column_names=None, column_types=None):
         """
         Instantiate a XStream implementation.
         """
@@ -36,7 +35,6 @@ class XStreamImpl(TracedObject):
         column_types = column_types or []
         self.col_names = list(column_names)
         self.column_types = list(column_types)
-        self.lineage = lineage or Lineage.init_frame_lineage(Lineage.EMPTY, self.col_names)
 
     def _replace_dstream(self, dstream):
         self._dstream = wrap_rdd(dstream)
@@ -44,9 +42,9 @@ class XStreamImpl(TracedObject):
     def dump_debug_info(self):
         return self._dstream.toDebugString()
 
-    def _rv(self, dstream, column_names=None, column_types=None, lineage=None):
+    def _rv(self, dstream, column_names=None, column_types=None):
         """
-        Return a new XFrameImpl containing the RDD, column names, column types, and lineage.
+        Return a new XFrameImpl containing the RDD, column names and column types.
 
         Column names and types default to the existing ones.
         This is typically used when a function returns a new XFrame.
@@ -54,14 +52,13 @@ class XStreamImpl(TracedObject):
         # only use defaults if values are None, not []
         column_names = self.col_names if column_names is None else column_names
         column_types = self.column_types if column_types is None else column_types
-        lineage = lineage or self.lineage
-        return XStreamImpl(dstream, column_names, column_types, lineage)
+        return XStreamImpl(dstream, column_names, column_types)
 
-    def _replace(self, dstream, column_names=None, column_types=None, lineage=None):
+    def _replace(self, dstream, column_names=None, column_types=None):
         """
-        Replaces the existing DStream, column names, column types, and lineage with new values.
+        Replaces the existing DStream, column names and column types with new values.
 
-        Column names, types, and lineage default to the existing ones.
+        Column names and types default to the existing ones.
         This is typically used when a function modifies the current XFrame.
         """
         self._dstream = dstream
@@ -69,8 +66,6 @@ class XStreamImpl(TracedObject):
             self.col_names = column_names
         if column_types is not None:
             self.column_types = column_types
-        if lineage is not None:
-            self.lineage = lineage
 
         self._num_rows = None
         self.materialized = False
@@ -142,11 +137,6 @@ class XStreamImpl(TracedObject):
         self._entry()
         return self.column_types
 
-    def lineage_as_dict(self):
-        self._entry()
-        return {'table': self.lineage.table_lineage,
-                'column': self.lineage.column_lineage}
-
     def to_dstream(self, number_of_partitions=None):
         """
         Returns the underlying DStream.
@@ -189,8 +179,7 @@ class XStreamImpl(TracedObject):
 
         res = self._dstream.flatMap(lambda row: fn(build_row(names, row)))
         res = res.map(tuple)
-        lineage = self.lineage.flat_map(column_names, names)
-        return self._rv(res, column_names, column_types, lineage)
+        return self._rv(res, column_names, column_types)
 
     def logical_filter(self, other):
         self._entry()
@@ -211,9 +200,8 @@ class XStreamImpl(TracedObject):
                 return safe_cast_val(result, dtype)
             return (result,)
         res = self._dstream.map(transformer)
-        lineage = self.lineage.apply(names)
         # TODO: this is not right -- we need to distinguish between tuples and simple values
-        return self._rv(res, ['value'], [dtype], lineage)
+        return self._rv(res, ['value'], [dtype])
 
     def transform_col(self, col, fn, dtype):
         self._entry(col=col)
@@ -316,8 +304,7 @@ class XStreamImpl(TracedObject):
             return tuple([row[col] for col in cols])
         types = [self.column_types[col] for col in cols]
         res = self._dstream.map(get_columns)
-        lineage = self.lineage.select_columns(names)
-        return self._rv(res, names, types, lineage)
+        return self._rv(res, names, types)
 
     def copy(self):
         """
@@ -368,8 +355,7 @@ class XStreamImpl(TracedObject):
             lst.pop(col)
             return tuple(lst)
         res = self._dstream.map(pop_col)
-        lineage = self.lineage.remove_columns([name])
-        return self._replace(res, lineage=lineage)
+        return self._replace(res)
 
     def remove_columns(self, column_names):
         """
@@ -393,8 +379,7 @@ class XStreamImpl(TracedObject):
                 lst.pop(col)
             return tuple(lst)
         res = self._dstream.map(pop_cols)
-        lineage = self.lineage.remove_columns(column_names)
-        return self._rv(res, remaining_col_names, remaining_col_types, lineage)
+        return self._rv(res, remaining_col_names, remaining_col_types)
 
     def swap_columns(self, column_1, column_2):
         """
@@ -451,8 +436,7 @@ class XStreamImpl(TracedObject):
         """
         self._entry(new_names=new_names)
         name_map = {k: v for k, v in zip(self.col_names, new_names)}
-        lineage = self.lineage.replace_column_names(name_map)
-        return self._rv(self._dstream, new_names, lineage=lineage)
+        return self._rv(self._dstream, new_names)
 
     def add_column_const_in_place(self, name, value):
         """
@@ -471,8 +455,7 @@ class XStreamImpl(TracedObject):
         self.col_names.append(name)
         col_type = type(value)
         self.column_types.append(col_type)
-        lineage = self.lineage.add_column_const(name)
-        return self._replace(res, lineage=lineage)
+        return self._replace(res)
 
     def replace_column_const_in_place(self, name, value):
         """
@@ -491,8 +474,7 @@ class XStreamImpl(TracedObject):
 
         column_type = type(value)
         self.column_types[index] = column_type
-        lineage = self.lineage.add_column_const(name)
-        return self._replace(res, lineage=lineage)
+        return self._replace(res)
 
     def replace_single_column_in_place(self, column_name, col, column_type):
         """
@@ -503,8 +485,7 @@ class XStreamImpl(TracedObject):
         self._entry()
         res = col.rdd().map(lambda item: (item, ))
         self.column_types[0] = column_type
-        lineage = self.lineage.replace_column(col, column_name)
-        return self._replace(res, lineage=lineage)
+        return self._replace(res)
 
     def replace_selected_column(self, column_name, col, column_type):
         """
@@ -526,8 +507,7 @@ class XStreamImpl(TracedObject):
         names[index] = column_name
         column_types = copy.copy(self.column_types)
         column_types[index] = column_type
-        lineage = self.lineage.replace_column(col, column_name)
-        return self._rv(res, names, column_types, lineage)
+        return self._rv(res, names, column_types)
 
     def replace_selected_column_in_place(self, column_name, column_type, col):
         """
@@ -546,8 +526,7 @@ class XStreamImpl(TracedObject):
             return tuple(row)
         res = rdd.map(replace_col)
         self.column_types[index] = column_type
-        lineage = self.lineage.replace_column(col, column_name)
-        return self._replace(res, lineage=lineage)
+        return self._replace(res)
 
     # noinspection PyMethodMayBeStatic
     def groupby_aggregate(self, key_columns_array, group_columns, group_output_columns, group_properties):

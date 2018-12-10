@@ -306,26 +306,6 @@ class XStream(object):
         """
         return self.column_types()
 
-    def lineage(self):
-        """
-        The table lineage: the files that went into building this table.
-
-        Returns
-        -------
-        dict
-            * key 'table': set[filename]
-                The files that were used to build the XArray
-            * key 'column': dict{col_name: set[filename]}
-                The set of files that were used to build each column
-
-        See Also
-        --------
-        xframes.XFrame.lineage
-            Corresponding function on individual frame.
-
-        """
-        return self._impl.lineage_as_dict()
-
     def num_rows(self):
         """
         Counts the rows in each XFrame in the stream.

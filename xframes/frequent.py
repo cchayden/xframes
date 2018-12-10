@@ -186,7 +186,7 @@ class FreqSketch(object):
         1
 
         """
-        value = sys.maxint
+        value = sys.maxsize
         for row, hash_function_params in enumerate(self.hash_function_params):
             column = self._hash_function(abs(hash(key)), hash_function_params)
             value = min(self.count[self.hash_index(row, column)], value)

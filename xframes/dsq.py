@@ -102,8 +102,8 @@ class CMSketch(object):
     def generate_hash_state(num_hashes, seed=1729):
         """Generate some random ints suitable to be a hash_state."""
         random.seed(seed)
-        return tuple([random.randint(0, sys.maxint)
-                      for _ in xrange(num_hashes)])
+        return tuple([random.randint(0, sys.maxsize)
+                      for _ in range(num_hashes)])
 
     @staticmethod
     def generate_mask(state):
