@@ -47,87 +47,87 @@ class TestXArrayConstructorLocal:
 
     def test_construct_list_int_infer(self):
         t = XArray([1, 2, 3])
-        assert len(t) == 3
-        assert t[0] == 1
-        assert t.dtype() is int
+        assert 3 == len(t)
+        assert 1 == t[0]
+        assert int is t.dtype()
 
     def test_construct_list_int(self):
         t = XArray([1, 2, 3], dtype=int)
-        assert len(t) == 3
-        assert t[0] == 1
-        assert t.dtype() is int
+        assert 3 == len(t)
+        assert 1 == t[0]
+        assert int is t.dtype()
 
     def test_construct_list_str_infer(self):
         t = XArray(['a', 'b', 'c'])
-        assert len(t) == 3
-        assert t[0] == 'a'
-        assert t.dtype() is str
+        assert 3 == len(t)
+        assert 'a' == t[0]
+        assert str is t.dtype()
 
     def test_construct_list_str(self):
         t = XArray([1, 2, 3], dtype=str)
-        assert len(t) == 3
-        assert t[0] == '1'
-        assert t.dtype() is str
+        assert 3 == len(t)
+        assert '1' == t[0]
+        assert str is t.dtype()
 
     def test_construct_list_float_infer(self):
         t = XArray([1.0, 2.0, 3.0])
-        assert len(t) == 3
-        assert t[0] == 1.0
-        assert t.dtype() is float
+        assert 3 == len(t)
+        assert 1.0 == t[0]
+        assert float is t.dtype()
 
     def test_construct_list_float(self):
         t = XArray([1, 2, 3], dtype=float)
-        assert len(t) == 3
-        assert t[0] == 1.0
-        assert t.dtype() is float
+        assert 3 == len(t)
+        assert 1.0 == t[0]
+        assert float is t.dtype()
 
     def test_construct_list_bool_infer(self):
         t = XArray([True, False])
-        assert len(t) == 2
-        assert t[0] is True
-        assert t.dtype() is bool
+        assert 2 == len(t)
+        assert True is t[0]
+        assert bool is t.dtype()
 
     def test_construct_list_bool(self):
         t = XArray([True, False], dtype=bool)
-        assert len(t) == 2
-        assert t[0] is True
-        assert t.dtype() is bool
+        assert 2 == len(t)
+        assert True is t[0]
+        assert bool is t.dtype()
 
     def test_construct_list_list_infer(self):
         t = XArray([[1, 2, 3], [10]])
-        assert len(t) == 2
-        assert t[0] == [1, 2, 3]
-        assert t[1] == [10]
-        assert t.dtype() is list
+        assert 2 == len(t)
+        assert [1, 2, 3] == t[0]
+        assert [10] == t[1]
+        assert list is t.dtype()
 
     def test_construct_list_list(self):
         t = XArray([[1, 2, 3], [10]], dtype=list)
-        assert len(t) == 2
-        assert t[0] == [1, 2, 3]
-        assert t[1] == [10]
-        assert t.dtype() is list
+        assert 2 == len(t)
+        assert [1, 2, 3] == t[0]
+        assert [10] == t[1]
+        assert list is t.dtype()
 
     def test_construct_list_dict_infer(self):
         t = XArray([{'a': 1, 'b': 2}, {'x': 10}])
-        assert len(t) == 2
-        assert t[0] == {'a': 1, 'b': 2}
-        assert t.dtype() is dict
+        assert 2 == len(t)
+        assert {'a': 1, 'b': 2} == t[0]
+        assert dict is t.dtype()
 
     def test_construct_list_dict(self):
         t = XArray([{'a': 1, 'b': 2}, {'x': 10}], dtype=dict)
-        assert len(t) == 2
-        assert t[0] == {'a': 1, 'b': 2}
-        assert t.dtype() is dict
+        assert 2 == len(t)
+        assert {'a': 1, 'b': 2} == t[0]
+        assert dict is t.dtype()
 
     def test_construct_empty_list_infer(self):
         t = XArray([])
-        assert len(t) == 0
-        assert t.dtype() is None
+        assert 0 == len(t)
+        assert None is t.dtype()
     
     def test_construct_empty_list(self):
         t = XArray([], dtype=int)
-        assert len(t) == 0
-        assert t.dtype() is int
+        assert 0 == len(t)
+        assert int is t.dtype()
 
     def test_construct_list_int_cast_fail(self):
         with pytest.raises(ValueError):
@@ -136,10 +136,10 @@ class TestXArrayConstructorLocal:
 
     def test_construct_list_int_cast_ignore(self):
         t = XArray(['1', '2', 'c'], dtype=int, ignore_cast_failure=True)
-        assert len(t) == 3
-        assert t[0] == 1
-        assert t[2] is None
-        assert t.dtype() is int
+        assert 2 == len(t)
+        assert 1 == [0]
+        assert None is t[2]
+        assert int is t.dtype()
 
 
 # noinspection PyClassHasNoInit
@@ -165,15 +165,15 @@ class TestXArrayConstructorRange:
 
     def test_construct_stop(self):
         t = XArray.from_sequence(100, 200)
-        assert len(t) == 100
-        assert t[0] == 100
-        assert t.dtype() is int
+        assert 100 == len(t)
+        assert 100 == t[0]
+        assert int is t.dtype()
 
     def test_construct_start(self):
         t = XArray.from_sequence(100)
-        assert len(t) == 100
-        assert t[0] == 0
-        assert t.dtype() is int
+        assert 100 == len(t)
+        assert 0 == t[0]
+        assert int is t.dtype()
 
 
 # noinspection PyClassHasNoInit
@@ -195,41 +195,41 @@ class TestXArrayConstructorLoad:
 
     def test_construct_local_file_int(self):
         t = XArray('files/test-array-int')
-        assert len(t) == 4
-        assert t.dtype() is int
-        assert t[0] == 1
+        assert 4 == len(t)
+        assert int is t.dtype()
+        assert 1 == t[0]
 
     def test_construct_local_file_float(self):
         t = XArray('files/test-array-float')
-        assert len(t) == 4
-        assert t.dtype() is float
-        assert t[0] == 1.0
+        assert 4 == len(t)
+        assert float is t.dtype()
+        assert 1.0 == t[0]
 
     def test_construct_local_file_str(self):
         t = XArray('files/test-array-str')
-        assert len(t) == 4
-        assert t.dtype() is str
-        assert t[0] == 'a'
+        assert 4 == len(t)
+        assert str is t.dtype()
+        assert 'a' == t[0]
 
     def test_construct_local_file_list(self):
         t = XArray('files/test-array-list')
-        assert len(t) == 4
-        assert t.dtype() is list
-        assert t[0] == [1, 2]
+        assert 4 == len(t)
+        assert list is t.dtype()
+        assert [1, 2] == t[0]
 
     def test_construct_local_file_dict(self):
         t = XArray('files/test-array-dict')
-        assert len(t) == 4
-        assert t.dtype() is dict
-        assert t[0] == {1: 'a', 2: 'b'}
+        assert 4 == len(t)
+        assert dict is t.dtype()
+        assert {1: 'a', 2: 'b'} == t[0]
 
     def test_construct_local_file_datetime(self):
         t = XArray('files/test-array-datetime')
-        assert len(t) == 3
-        assert t.dtype() is datetime.datetime
-        assert t[0] == datetime.datetime(2015, 8, 15)
-        assert t[1] == datetime.datetime(2016, 9, 16)
-        assert t[2] == datetime.datetime(2017, 10, 17)
+        assert 3 == len(t)
+        assert datetime.datetime is t.dtype()
+        assert datetime.datetime(2015, 8, 15) == t[0]
+        assert datetime.datetime(2016, 9, 16) == t[1]
+        assert datetime.datetime(2017, 10, 17) == t[2]
 
     def test_construct_local_file_not_exist(self):
         with pytest.raises(ValueError):
@@ -244,8 +244,8 @@ class TestXArrayReadText:
 
     def test_read_text(self):
         t = XArray.read_text('files/test-array-int')
-        assert len(t) == 4
-        assert list(t) == ['1', '2', '3', '4']
+        assert 4 == len(t)
+        assert ['1', '2', '3', '4'] == list(t)
 
 
 # noinspection PyClassHasNoInit
