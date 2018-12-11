@@ -136,8 +136,9 @@ class TestXArrayConstructorLocal:
 
     def test_construct_list_int_cast_ignore(self):
         t = XArray(['1', '2', 'c'], dtype=int, ignore_cast_failure=True)
-        assert 2 == len(t)
-        assert 1 == [0]
+        assert 3 == len(t)
+        assert 1 == t[0]
+        assert 2 == t[1]
         assert None is t[2]
         assert int is t.dtype()
 
@@ -256,39 +257,39 @@ class TestXArrayFromConst:
 
     def test_from_const_int(self):
         t = XArray.from_const(1, 10)
-        assert len(t) == 10
-        assert t[0] == 1
-        assert t.dtype() is int
+        assert 10 == len(t)
+        assert 1 == t[0]
+        assert int is t.dtype()
 
     def test_from_const_float(self):
         t = XArray.from_const(1.0, 10)
-        assert len(t) == 10
-        assert t[0] == 1.0
-        assert t.dtype() is float
+        assert 10 == len(t)
+        assert 1.0 == t[0]
+        assert float is t.dtype()
 
     def test_from_const_str(self):
         t = XArray.from_const('a', 10)
-        assert len(t) == 10
-        assert t[0] == 'a'
-        assert t.dtype() is str
+        assert 10 == len(t)
+        assert 'a' == t[0]
+        assert str is t.dtype()
 
     def test_from_const_datetime(self):
         t = XArray.from_const(datetime.datetime(2015, 10, 11), 10)
-        assert len(t) == 10
-        assert t[0] == datetime.datetime(2015, 10, 11)
-        assert t.dtype() is datetime.datetime
+        assert 10 == len(t)
+        assert datetime.datetime(2015, 10, 11) == t[0]
+        assert datetime.datetime is t.dtype()
 
     def test_from_const_list(self):
         t = XArray.from_const([1, 2], 10)
-        assert len(t) == 10
-        assert t[0] == [1, 2]
-        assert t.dtype() is list
+        assert 10 == len(t)
+        assert [1, 2] == t[0]
+        assert list is t.dtype()
 
     def test_from_const_dict(self):
         t = XArray.from_const({1: 'a'}, 10)
-        assert len(t) == 10
-        assert t[0] == {1: 'a'}
-        assert t.dtype() is dict
+        assert 10 == len(t)
+        assert {1: 'a'} == t[0]
+        assert dict is t.dtype()
 
     def test_from_const_negint(self):
         with pytest.raises(ValueError):
@@ -360,18 +361,18 @@ class TestXArraySaveCsv:
         path = os.path.join(str(tmpdir), 'array-csv.csv')
         t.save(path)
         with open(path) as f:
-            assert f.readline().strip() == '1'
-            assert f.readline().strip() == '2'
-            assert f.readline().strip() == '3'
+            assert '1' == f.readline().strip()
+            assert '2' == f.readline().strip()
+            assert '3' == f.readline().strip()
 
     def test_save_format(self, tmpdir):
         t = XArray([1, 2, 3])
         path = os.path.join(str(tmpdir), 'array-csv.csv')
         t.save(path, format='csv')
         with open(path) as f:
-            assert f.readline().strip() == '1'
-            assert f.readline().strip() == '2'
-            assert f.readline().strip() == '3'
+            assert '1' == f.readline().strip()
+            assert '2' == f.readline().strip()
+            assert '3' == f.readline().strip()
 
 
 # noinspection PyClassHasNoInit
@@ -382,9 +383,9 @@ class TestXArrayRepr:
     def test_repr(self):
         t = XArray([1, 2, 3])
         s = t.__repr__()
-        assert s == """dtype: int
+        assert """dtype: int
 Rows: 3
-[1, 2, 3]"""
+[1, 2, 3]""" == s
 
 
 # noinspection PyClassHasNoInit
@@ -395,13 +396,13 @@ class TestXArrayStr:
     def test_str(self):
         t = XArray(range(200))
         s = t.__repr__()
-        assert s == "dtype: int\nRows: 200\n[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11," + \
-                    " 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25," + \
-                    " 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41," + \
-                    " 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57," + \
-                    " 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73," + \
-                    " 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90," + \
-                    " 91, 92, 93, 94, 95, 96, 97, 98, 99, ... ]"
+        assert "dtype: int\nRows: 200\n[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11," + \
+               " 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25," + \
+               " 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41," + \
+               " 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57," + \
+               " 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73," + \
+               " 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90," + \
+               " 91, 92, 93, 94, 95, 96, 97, 98, 99, ... ]" == s
 
 
 # noinspection PyClassHasNoInit
@@ -411,11 +412,11 @@ class TestXArrayNonzero:
     """
     def test_nonzero_nonzero(self):
         t = XArray([0])
-        assert bool(t) is True
+        assert True is bool(t)
 
     def test_nonzero_zero(self):
         t = XArray([])
-        assert bool(t) is False
+        assert False is bool(t)
 
 
 # noinspection PyClassHasNoInit
@@ -425,11 +426,11 @@ class TestXArrayLen:
     """
     def test_len_nonzero(self):
         t = XArray([0])
-        assert len(t) == 1
+        assert 1 == len(t)
 
     def test_len_zero(self):
         t = XArray([])
-        assert len(t) == 0
+        assert 0 == len(t)
 
 
 # noinspection PyClassHasNoInit
@@ -445,12 +446,12 @@ class TestXArrayIterator:
     def test_iter_1(self):
         t = XArray([0])
         for elem in t:
-            assert elem == 0
+            assert 0 == elem
 
     def test_iter_3(self):
         t = XArray([0, 1, 2])
         for elem, expect in zip(t, [0, 1, 2]):
-            assert elem == expect
+            assert expect == elem
 
 
 # noinspection PyClassHasNoInit
@@ -461,13 +462,13 @@ class TestXArrayAddScalar:
     # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_add_scalar(self):
         t = XArray([1, 2, 3])
-        assert len(t) == 3
-        assert t[0] == 1
-        assert t.dtype() is int
+        assert 3 == len(t)
+        assert 1 == t[0]
+        assert int is t.dtype()
         t = t + 2
-        assert t[0] == 3
-        assert t[1] == 4
-        assert t[2] == 5
+        assert 3 == t[0]
+        assert 4 == t[1]
+        assert 5 == t[2]
 
 
 # noinspection PyClassHasNoInit
@@ -479,20 +480,20 @@ class TestXArrayAddVector:
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 5, 6])
         t = t1 + t2
-        assert len(t) == 3
-        assert t.dtype() is int
-        assert t[0] == 5
-        assert t[1] == 7
-        assert t[2] == 9
+        assert 3 == len(t)
+        assert int is t.dtype()
+        assert 5 == t[0]
+        assert 7 == t[1]
+        assert 9 == t[2]
 
     def test_add_vector_safe(self):
         t1 = XArray([1, 2, 3])
         t = t1 + t1
-        assert len(t) == 3
-        assert t.dtype() is int
-        assert t[0] == 2
-        assert t[1] == 4
-        assert t[2] == 6
+        assert 3 == len(t)
+        assert int is t.dtype()
+        assert 2 == t[0]
+        assert 4 == t[1]
+        assert 6 == t[2]
 
         
 # noinspection PyClassHasNoInit
@@ -504,81 +505,82 @@ class TestXArrayOpScalar:
     def test_sub_scalar(self):
         t = XArray([1, 2, 3])
         res = t - 1
-        assert res[0] == 0
-        assert res[1] == 1
-        assert res[2] == 2
+        assert 0 == res[0]
+        assert 1 == res[1]
+        assert 2 == res[2]
 
     # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_mul_scalar(self):
         t = XArray([1, 2, 3])
         res = t * 2
-        assert res[0] == 2
-        assert res[1] == 4
-        assert res[2] == 6
+        assert 2 == res[0]
+        assert 4 == res[1]
+        assert 6 == res[2]
 
     # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_floordiv_scalar(self):
         t = XArray([1, 2, 3])
         res = t // 2
-        assert res[0] == 0
-        assert res[1] == 1
-        assert res[2] == 1
+        assert 0 == res[0]
+        assert 1 == res[1]
+        assert 1 == res[2]
 
     # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_truediv_scalar(self):
         t = XArray([1, 2, 3])
         res = t / 2
-        assert res[0] == 0.5
-        assert res[1] == 1.0
-        assert res[2] == 1.5
+        assert 0.5 == res[0]
+        assert 1.0 == res[1]
+        assert 1.5 == res[2]
 
+    # todo fix assert
     # noinspection PyTypeChecker
     def test_pow_scalar(self):
         t = XArray([1, 2, 3])
         res = t ** 2
-        assert res[0] == 1
-        assert res[1] == 4
-        assert res[2] == 9
+        assert 1 == res[0]
+        assert 4 == res[1]
+        assert 9 == res[2]
 
     # noinspection PyUnresolvedReferences
     def test_lt_scalar(self):
         t = XArray([1, 2, 3])
         res = t < 3
-        assert res[0] is True
-        assert res[1] is True
-        assert res[2] is False
+        assert True is res[0]
+        assert True is res[1]
+        assert False is res[2]
 
     # noinspection PyUnresolvedReferences
     def test_le_scalar(self):
         t = XArray([1, 2, 3])
         res = t <= 2
-        assert res[0] is True
-        assert res[1] is True
-        assert res[2] is False
+        assert True is res[0]
+        assert True is res[1]
+        assert False is res[2]
 
     # noinspection PyUnresolvedReferences
     def test_gt_scalar(self):
         t = XArray([1, 2, 3])
         res = t > 2
-        assert res[0] is False
-        assert res[1] is False
-        assert res[2] is True
+        assert False is res[0]
+        assert False is res[1]
+        assert True is res[2]
 
     # noinspection PyUnresolvedReferences
     def test_ge_scalar(self):
         t = XArray([1, 2, 3])
         res = t >= 3
-        assert res[0] is False
-        assert res[1] is False
-        assert res[2] is True
+        assert False is res[0]
+        assert False is res[1]
+        assert True is res[2]
 
     # noinspection PyTypeChecker,PyUnresolvedReferences
     def test_radd_scalar(self):
         t = XArray([1, 2, 3])
         res = 1 + t
-        assert res[0] == 2
-        assert res[1] == 3
-        assert res[2] == 4
+        assert 2 == res[0]
+        assert 3 == res[1]
+        assert 4 == res[2]
 
     # noinspection PyUnresolvedReferences
     def test_rsub_scalar(self):
@@ -608,17 +610,17 @@ class TestXArrayOpScalar:
     def test_eq_scalar(self):
         t = XArray([1, 2, 3])
         res = t == 2
-        assert res[0] is False
-        assert res[1] is True
-        assert res[2] is False
+        assert False is res[0]
+        assert True is res[1]
+        assert False is res[2]
 
     # noinspection PyUnresolvedReferences
     def test_ne_scalar(self):
         t = XArray([1, 2, 3])
         res = t != 2
-        assert res[0] is True
-        assert res[1] is False
-        assert res[2] is True
+        assert True is res[0]
+        assert False is res[1]
+        assert True is res[2]
 
     def test_and_scalar(self):
         t = XArray([1, 2, 3])
@@ -665,67 +667,67 @@ class TestXArrayOpVector:
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 < t2
-        assert res[0] is True
-        assert res[1] is False
-        assert res[2] is False
+        assert True is res[0]
+        assert False is res[1]
+        assert False is res[2]
 
     def test_le_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 <= t2
-        assert res[0] is True
-        assert res[1] is True
-        assert res[2] is False
+        assert True is res[0]
+        assert True is res[1]
+        assert False is res[2]
 
     def test_gt_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 > t2
-        assert res[0] is False
-        assert res[1] is False
-        assert res[2] is True
+        assert False is res[0]
+        assert False is res[1]
+        assert True is res[2]
 
     def test_ge_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 >= t2
-        assert res[0] is False
-        assert res[1] is True
-        assert res[2] is True
+        assert False is res[0]
+        assert True is res[1]
+        assert True is res[2]
 
     def test_eq_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 == t2
-        assert res[0] is False
-        assert res[1] is True
-        assert res[2] is False
+        assert False is res[0]
+        assert True is res[1]
+        assert False is res[2]
 
     def test_ne_vector(self):
         t1 = XArray([1, 2, 3])
         t2 = XArray([4, 2, 2])
         res = t1 != t2
-        assert res[0] is True
-        assert res[1] is False
-        assert res[2] is True
+        assert True is res[0]
+        assert False is res[1]
+        assert True is res[2]
 
     def test_and_vector(self):
         t1 = XArray([False, False, True, True])
         t2 = XArray([False, True, False, True])
         res = t1 & t2
-        assert res[0] is False
-        assert res[1] is False
-        assert res[2] is False
-        assert res[3] is True
+        assert False is res[0]
+        assert False is res[1]
+        assert False is res[2]
+        assert True is res[3]
 
     def test_or_vector(self):
         t1 = XArray([False, False, True, True])
         t2 = XArray([False, True, False, True])
         res = t1 | t2
-        assert res[0] is False
-        assert res[1] is True
-        assert res[2] is True
-        assert res[3] is True
+        assert False is res[0]
+        assert True is res[1]
+        assert True is res[2]
+        assert True is res[3]
 
 
 # noinspection PyClassHasNoInit
@@ -790,11 +792,11 @@ class TestXArrayCopyRange:
     """
     def test_copy_range_pos(self):
         t = XArray([1, 2, 3])
-        assert t[0] == 1
+        assert 1 == t[0]
 
     def test_copy_range_neg(self):
         t = XArray([1, 2, 3])
-        assert t[-1] == 3
+        assert 3 == t[-1]
 
     def test_copy_range_index_err(self):
         t = XArray([1, 2, 3])
@@ -804,30 +806,30 @@ class TestXArrayCopyRange:
     def test_copy_range_slice(self):
         t = XArray([1, 2, 3])
         res = t[0:2]
-        assert len(res) == 2
-        assert res[0] == 1
-        assert res[1] == 2
+        assert 2 == len(res)
+        assert 1 == res[0]
+        assert 2 == res[1]
 
     def test_copy_range_slice_neg_start(self):
         t = XArray([1, 2, 3, 4, 5])
         res = t[-3:4]
-        assert len(res) == 2
-        assert res[0] == 3
-        assert res[1] == 4
+        assert 2 == len(res)
+        assert 3 == res[0]
+        assert 4 == res[1]
 
     def test_copy_range_slice_neg_stop(self):
         t = XArray([1, 2, 3, 4, 5])
         res = t[1:-2]
-        assert len(res) == 2
-        assert res[0] == 2
-        assert res[1] == 3
+        assert 2 == len(res)
+        assert 2 == res[0]
+        assert 3 == res[1]
 
     def test_copy_range_slice_stride(self):
         t = XArray([1, 2, 3, 4, 5])
         res = t[0:4:2]
-        assert len(res) == 2
-        assert res[0] == 1
-        assert res[1] == 3
+        assert 2 == len(res)
+        assert 1 == res[0]
+        assert 3 == res[1]
 
     def test_copy_range_bad_type(self):
         t = XArray([1, 2, 3])
@@ -842,7 +844,7 @@ class TestXArraySize:
     """
     def test_size(self):
         t = XArray([1, 2, 3])
-        assert t.size() == 3
+        assert 3 == t.size()
 
 
 # noinspection PyClassHasNoInit
@@ -852,7 +854,7 @@ class TestXArrayDtype:
     """
     def test_dtype(self):
         t = XArray([1, 2, 3])
-        assert t.dtype() is int
+        assert int is t.dtype()
 
 
 # noinspection PyClassHasNoInit
@@ -862,15 +864,15 @@ class TestXArrayHead:
     """
     def test_head(self):
         t = XArray([1, 2, 3])
-        assert len(t.head()) == 3
+        assert 3 == len(t.head())
 
     def test_head_10(self):
         t = XArray(range(100))
-        assert len(t.head()) == 10
+        assert 10 == len(t.head())
 
     def test_head_5(self):
         t = XArray(range(100))
-        assert len(t.head(5)) == 5
+        assert 5 == len(t.head(5))
 
 
 # noinspection PyClassHasNoInit
@@ -881,39 +883,39 @@ class TestXArrayVectorSlice:
     def test_vector_slice_start_0(self):
         t = XArray([[1, 2, 3], [10, 11, 12]])
         res = t.vector_slice(0)
-        assert len(res) == 2
-        assert res[0] == 1
-        assert res[1] == 10
+        assert 2 == len(res)
+        assert 1 == res[0]
+        assert 10 == res[1]
 
     def test_vector_slice_start_1(self):
         t = XArray([[1, 2, 3], [10, 11, 12]])
         res = t.vector_slice(1)
-        assert len(res) == 2
-        assert res[0] == 2
-        assert res[1] == 11
+        assert 2 == len(res)
+        assert 2 == res[0]
+        assert 11 == res[1]
 
     def test_vector_slice_start_end(self):
         t = XArray([[1, 2, 3], [10, 11, 12]])
         res = t.vector_slice(0, 2)
-        assert len(res) == 2
-        assert res[0] == [1, 2]
-        assert res[1] == [10, 11]
+        assert 2 == len(res)
+        assert [1, 2] == res[0]
+        assert [10, 11] == res[1]
 
     def test_vector_slice_start_none(self):
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.vector_slice(2)
-        assert len(res) == 3
-        assert res[0] is None
-        assert res[1] is None
-        assert res[2] == 3
+        assert 3 == len(res)
+        assert None is res[0]
+        assert None is res[1]
+        assert 3 == res[2]
 
     def test_vector_slice_start_end_none(self):
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.vector_slice(0, 2)
-        assert len(res) == 3
-        assert res[0] is None
-        assert res[1] == [1, 2]
-        assert res[2] == [1, 2]
+        assert 3 == len(res)
+        assert None is res[0]
+        assert [1, 2] == res[1]
+        assert [1, 2] == res[2]
 
 
 # noinspection PyClassHasNoInit
@@ -942,30 +944,30 @@ class TestXArrayApply:
     def test_apply_int(self):
         t = XArray([1, 2, 3])
         res = t.apply(lambda x: x * 2)
-        assert len(res) == 3
-        assert res.dtype() is int
-        assert res[0] == 2
-        assert res[1] == 4
-        assert res[2] == 6
+        assert 3 == len(res)
+        assert int is res.dtype()
+        assert 2 == res[0]
+        assert 4 == res[1]
+        assert 6 == res[2]
 
     def test_apply_float_cast(self):
         t = XArray([1, 2, 3])
         res = t.apply(lambda x: x * 2, float)
-        assert len(res) == 3
-        assert res.dtype() is float
-        assert res[0] == 2.0
-        assert res[1] == 4.0
-        assert res[2] == 6.0
+        assert 3 == len(res)
+        assert float is res.dtype()
+        assert 2.0 == res[0]
+        assert 4.0 == res[1]
+        assert 6.0 == res[2]
 
     def test_apply_skip_undefined(self):
         t = XArray([1, 2, 3, None])
         res = t.apply(lambda x: x * 2)
-        assert len(res) == 4
-        assert res.dtype() is int
-        assert res[0] == 2
-        assert res[1] == 4
-        assert res[2] == 6
-        assert res[3] is None
+        assert 4 == len(res)
+        assert int is res.dtype()
+        assert 2 == res[0]
+        assert 4 == res[1]
+        assert 6 == res[2]
+        assert None is res[3]
 
     def test_apply_type_err(self):
         t = XArray([1, 2, 3, None])
@@ -987,74 +989,74 @@ class TestXArrayFlatMap:
     def test_flat_map(self):
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.flat_map(lambda x: x)
-        assert len(res) == 6
-        assert res.dtype() is int
-        assert res[0] == 1
-        assert res[1] == 1
-        assert res[2] == 2
-        assert res[3] == 1
-        assert res[4] == 2
-        assert res[5] == 3
+        assert 6 == len(res)
+        assert int is res.dtype()
+        assert 1 == res[0]
+        assert 1 == res[1]
+        assert 2 == res[2]
+        assert 1 == res[3]
+        assert 2 == res[4]
+        assert 3 == res[5]
 
     def test_flat_map_int(self):
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.flat_map(lambda x: [v * 2 for v in x])
-        assert len(res) == 6
-        assert res.dtype() is int
-        assert res[0] == 2
-        assert res[1] == 2
-        assert res[2] == 4
-        assert res[3] == 2
-        assert res[4] == 4
-        assert res[5] == 6
+        assert 6 == len(res)
+        assert int is res.dtype()
+        assert 2 == res[0]
+        assert 2 == res[1]
+        assert 4 == res[2]
+        assert 2 == res[3]
+        assert 4 == res[4]
+        assert 6 == res[5]
 
     def test_flat_map_str(self):
         t = XArray([['a'], ['a', 'b'], ['a', 'b', 'c']])
         res = t.flat_map(lambda x: x)
-        assert len(res) == 6
-        assert res.dtype() is str
-        assert res[0] == 'a'
-        assert res[1] == 'a'
-        assert res[2] == 'b'
-        assert res[3] == 'a'
-        assert res[4] == 'b'
-        assert res[5] == 'c'
+        assert 6 == len(res)
+        assert str is res.dtype()
+        assert 'a' == res[0]
+        assert 'a' == res[1]
+        assert 'b' == res[2]
+        assert 'a' == res[3]
+        assert 'b' == res[4]
+        assert 'c' == res[5]
 
     def test_flat_map_float_cast(self):
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.flat_map(lambda x: x, dtype=float)
-        assert len(res) == 6
-        assert res.dtype() is float
-        assert res[0] == 1.0
-        assert res[1] == 1.0
-        assert res[2] == 2.0
-        assert res[3] == 1.0
-        assert res[4] == 2.0
-        assert res[5] == 3.0
+        assert 6 == len(res)
+        assert float is res.dtype()
+        assert 1.0 == res[0]
+        assert 1.0 == res[1]
+        assert 2.0 == res[2]
+        assert 1.0 == res[3]
+        assert 2.0 == res[4]
+        assert 3.0 == res[5]
 
     def test_flat_map_skip_undefined(self):
         t = XArray([[1], [1, 2], [1, 2, 3], None, [None]])
         res = t.flat_map(lambda x: x)
-        assert len(res) == 6
-        assert res.dtype() is int
-        assert res[0] == 1
-        assert res[1] == 1
-        assert res[2] == 2
-        assert res[3] == 1
-        assert res[4] == 2
-        assert res[5] == 3
+        assert 6 == len(res)
+        assert int is res.dtype()
+        assert 1 == res[0]
+        assert 1 == res[1]
+        assert 2 == res[2]
+        assert 1 == res[3]
+        assert 2 == res[4]
+        assert 3 == res[5]
 
     def test_flat_map_no_fun(self):
         t = XArray([[1], [1, 2], [1, 2, 3]])
         res = t.flat_map()
-        assert len(res) == 6
-        assert res.dtype() is int
-        assert res[0] == 1
-        assert res[1] == 1
-        assert res[2] == 2
-        assert res[3] == 1
-        assert res[4] == 2
-        assert res[5] == 3
+        assert 6 == len(res)
+        assert int is res.dtype()
+        assert 1 == res[0]
+        assert 1 == res[1]
+        assert 2 == res[2]
+        assert 1 == res[3]
+        assert 2 == res[4]
+        assert 3 == res[5]
 
     def test_flat_map_type_err(self):
         t = XArray([[1], [1, 2], [1, 2, 3], [None]])
@@ -1070,12 +1072,12 @@ class TestXArrayFilter:
     def test_filter(self):
         t = XArray([1, 2, 3])
         res = t.filter(lambda x: x == 2)
-        assert len(res) == 1
+        assert 1 == len(res)
 
     def test_filter_empty(self):
         t = XArray([1, 2, 3])
         res = t.filter(lambda x: x == 10)
-        assert len(res) == 0
+        assert 0 == len(res)
 
 
 # noinspection PyClassHasNoInit
@@ -1086,21 +1088,21 @@ class TestXArraySample:
     def test_sample_no_seed(self):
         t = XArray(range(10))
         res = t.sample(0.3)
-        assert len(res) < 10
+        assert 10 > len(res)
 
     @pytest.mark.skip(reason='depends on number of partitions')
     def test_sample_seed(self):
         t = XArray(range(10))
         res = t.sample(0.3, seed=1)
         # get 3, 6, 9 with this seed
-        assert len(res) == 3
-        assert res[0] == 3
-        assert res[1] == 6
+        assert 3 == len(res)
+        assert 3 == res[0]
+        assert 6 == res[1]
 
     def test_sample_zero(self):
         t = XArray(range(10))
         res = t.sample(0.0)
-        assert len(res) == 0
+        assert 0 == len(res)
 
     def test_sample_err_gt(self):
         t = XArray(range(10))
@@ -1113,6 +1115,7 @@ class TestXArraySample:
             t.sample(-0.5, seed=1)
 
 
+# todo assert
 # noinspection PyClassHasNoInit
 class TestXArrayAll:
     """
@@ -1121,76 +1124,76 @@ class TestXArrayAll:
     # int
     def test_all_int_none(self):
         t = XArray([1, None])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_int_zero(self):
         t = XArray([1, 0])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_int_true(self):
         t = XArray([1, 2])
-        assert t.all() is True
+        assert True == t.all()
 
     # float
     def test_all_float_nan(self):
         t = XArray([1.0, float('nan')])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_float_none(self):
         t = XArray([1.0, None])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_float_zero(self):
         t = XArray([1.0, 0.0])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_float_true(self):
         t = XArray([1.0, 2.0])
-        assert t.all() is True
+        assert True is t.all()
 
     # str
     def test_all_str_empty(self):
         t = XArray(['hello', ''])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_str_none(self):
         t = XArray(['hello', None])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_str_true(self):
         t = XArray(['hello', 'world'])
-        assert t.all() is True
+        assert True is t.all()
 
     # list
     def test_all_list_empty(self):
         t = XArray([[1, 2], []])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_list_none(self):
         t = XArray([[1, 2], None])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_list_true(self):
         t = XArray([[1, 2], [2, 3]])
-        assert t.all() is True
+        assert True is t.all()
 
     # dict
     def test_all_dict_empty(self):
         t = XArray([{1: 'a'}, {}])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_dict_none(self):
         t = XArray([{1: 'a'}, None])
-        assert t.all() is False
+        assert False is t.all()
 
     def test_all_dict_true(self):
         t = XArray([{1: 'a'}, {2: 'b'}])
-        assert t.all() is True
+        assert True is t.all()
 
     # empty
     def test_all_empty(self):
         t = XArray([])
-        assert t.all() is True
+        assert True is t.all()
 
 
 # noinspection PyClassHasNoInit
