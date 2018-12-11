@@ -243,9 +243,9 @@ class TestXFrameConstructor:
         assert {'id': 2, 'val': 'b'} == res[1]
         assert {'id': 3, 'val': 'c'} == res[2]
 
-#    def test_save_test_frame(self):
-#        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-#        t.save('files/test-frame-1', format='binary')
+    def test_save_test_frame(self):
+        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
+        t.save('files/test-frame-1', format='binary')
 
     def test_construct_str_xframe(self):
         # construct and XFrame given a saved xframe

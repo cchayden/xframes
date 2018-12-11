@@ -10,9 +10,9 @@ class TestFileioLength:
     def test_length_file(self):
         path = 'files/test-frame-auto.csv'
         length = fileio.length(path)
-        assert length == 166
+        assert 166 == length
 
     def test_length_fdir(self):
         path = 'files/test-frame'
         length = fileio.length(path)
-        assert length == 575
+        assert 1182 == length
