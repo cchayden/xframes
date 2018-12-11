@@ -5,7 +5,6 @@ import math
 import os
 import array
 import datetime
-import pickle
 
 # pytest testxarray.py
 # pytest testxarray.py::TestXArrayVersion

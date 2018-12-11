@@ -448,10 +448,10 @@ class XFrame(object):
     @staticmethod
     def _infer_column_types_from_lines(first_rows, na_values):
         if len(first_rows.column_names()) < 1:
-            logging.warn('Insufficient number of columns to perform type inference.')
+            logging.warning('Insufficient number of columns to perform type inference.')
             raise RuntimeError('Insufficient columns.')
         if len(first_rows) < 1:
-            logging.warn('Insufficient number of rows to perform type inference.')
+            logging.warning('Insufficient number of rows to perform type inference.')
             raise RuntimeError('Insufficient rows.')
 
         column_names = first_rows.column_names()

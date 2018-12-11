@@ -231,7 +231,7 @@ class SketchImpl(TracedObject):
             k = 0.5   # regularization factor
             max_count = float(counts.most_common(1)[0][1])
             return {word: k + (((1.0 - k) * count) / max_count)
-                    for word, count in counts.iteritems()}
+                    for word, count in counts.items()}
         tf = docs.map(build_tf)
 
         # get all terms
@@ -248,7 +248,7 @@ class SketchImpl(TracedObject):
 
         def comb_op(count1, count2):
             counts = copy.copy(count1)
-            for term, count in count2.iteritems():
+            for term, count in count2.items():
                 counts[term] += count
             return counts
 
@@ -258,10 +258,10 @@ class SketchImpl(TracedObject):
         doc_count = float(docs.count())
         # add 1.0 to denominator, as suggested by wiki article cited above
         idf = {term: math.log((doc_count + 1.0) / (count + 1.0))
-               for term, count in counts.iteritems()}
+               for term, count in counts.items()}
 
         def build_tfidf(tf):
-            return {term: tf_count * idf[term] for term, tf_count in tf.iteritems()}
+            return {term: tf_count * idf[term] for term, tf_count in tf.items()}
         tfidf = tf.map(build_tfidf)
         return xarray_impl.XArrayImpl(tfidf, dict)
 

@@ -82,8 +82,8 @@ class CMSketch(object):
         The width, depth, and hash_state must be identical.
         """
         self._check_compatibility(other)
-        for i in xrange(self.depth):
-            for j in xrange(self.width):
+        for i in range(self.depth):
+            for j in range(self.width):
                 ix = self.hash_index(i, j)
                 self._counts[ix] += other.counts()[ix]
         return self
@@ -182,7 +182,7 @@ class QuantileAccumulator(object):
         self._depth = int(ceil(log(1. / delta)))
         self._hash_state = CMSketch.generate_hash_state(self._depth, seed)
         self._sketches = [CMSketch(self._width, self._depth, self._hash_state)
-                          for _ in xrange(self._num_levels)]
+                          for _ in range(self._num_levels)]
     
     def sketches(self):
         return self._sketches

@@ -118,7 +118,6 @@ class TestXFrameConstructor:
         assert {'id': 2, 'val': 'b'} == res[1]
         assert {'id': 3, 'val': 'c'} == res[2]
 
-    # TODO fix
     def test_construct_auto_str_noext(self):
         # construct and XFrame given a text file
         # interpret as csv
@@ -142,7 +141,6 @@ class TestXFrameConstructor:
         assert {'id': 2, 'val': 20.0} == res[1]
         assert {'id': 3, 'val': 30.0} == res[2]
 
-    # TODO fix
     def test_construct_auto_str_xframe(self):
         # construct an XFrame given a file with unrecognized file extension
         path = 'files/test-frame'
@@ -245,7 +243,10 @@ class TestXFrameConstructor:
         assert {'id': 2, 'val': 'b'} == res[1]
         assert {'id': 3, 'val': 'c'} == res[2]
 
-    # TODO fix
+#    def test_save_test_frame(self):
+#        t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
+#        t.save('files/test-frame-1', format='binary')
+
     def test_construct_str_xframe(self):
         # construct and XFrame given a saved xframe
         path = 'files/test-frame'
@@ -466,123 +467,123 @@ class TestXFrameReadCsv:
     def test_read_csv_verbose(self):
         path = 'files/test-frame.csv'
         res = XFrame.read_csv(path)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_read_csv_delim(self):
         path = 'files/test-frame.psv'
         res = XFrame.read_csv(path, delimiter='|')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_read_csv_no_header(self):
         path = 'files/test-frame-no-header.csv'
         res = XFrame.read_csv(path, header=False)
-        assert len(res) == 3
-        assert res.column_names() == ['X.0', 'X.1']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'X.0': 1, 'X.1': 'a'}
-        assert res[1] == {'X.0': 2, 'X.1': 'b'}
-        assert res[2] == {'X.0': 3, 'X.1': 'c'}
+        assert 3 == len(res)
+        assert ['X.0', 'X.1'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'X.0': 1, 'X.1': 'a'} == res[0]
+        assert {'X.0': 2, 'X.1': 'b'} == res[1]
+        assert {'X.0': 3, 'X.1': 'c'} == res[2]
 
     def test_read_csv_comment(self):
         path = 'files/test-frame-comment.csv'
         res = XFrame.read_csv(path, comment_char='#')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_read_csv_escape(self):
         path = 'files/test-frame-escape.csv'
         res = XFrame.read_csv(path)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a,a'}
-        assert res[1] == {'id': 2, 'val': 'b,b'}
-        assert res[2] == {'id': 3, 'val': 'c,c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a,a'} == res[0]
+        assert {'id': 2, 'val': 'b,b'} == res[1]
+        assert {'id': 3, 'val': 'c,c'} == res[2]
 
     def test_read_csv_escape_custom(self):
         path = 'files/test-frame-escape-custom.csv'
         res = XFrame.read_csv(path, escape_char='$')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a,a'}
-        assert res[1] == {'id': 2, 'val': 'b,b'}
-        assert res[2] == {'id': 3, 'val': 'c,c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a,a'} == res[0]
+        assert {'id': 2, 'val': 'b,b'} == res[1]
+        assert {'id': 3, 'val': 'c,c'} == res[2]
 
     def test_read_csv_initial_space(self):
         path = 'files/test-frame-initial_space.csv'
         res = XFrame.read_csv(path, skip_initial_space=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_read_csv_hints_type(self):
         path = 'files/test-frame.csv'
         res = XFrame.read_csv(path, column_type_hints=str)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [str, str]
-        assert res[0] == {'id': '1', 'val': 'a'}
-        assert res[1] == {'id': '2', 'val': 'b'}
-        assert res[2] == {'id': '3', 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [str, str] == res.column_types()
+        assert {'id': '1', 'val': 'a'} == res[0]
+        assert {'id': '2', 'val': 'b'} == res[1]
+        assert {'id': '3', 'val': 'c'} == res[2]
 
     def test_read_csv_hints_list(self):
         path = 'files/test-frame-extra.csv'
         res = XFrame.read_csv(path, column_type_hints=[str, str, int])
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val1', 'val2']
-        assert res.column_types() == [str, str, int]
-        assert res[0] == {'id': '1', 'val1': 'a', 'val2': 10}
-        assert res[1] == {'id': '2', 'val1': 'b', 'val2': 20}
-        assert res[2] == {'id': '3', 'val1': 'c', 'val2': 30}
+        assert 3 == len(res)
+        assert ['id', 'val1', 'val2'] == res.column_names()
+        assert [str, str, int] == res.column_types()
+        assert {'id': '1', 'val1': 'a', 'val2': 10} == res[0]
+        assert {'id': '2', 'val1': 'b', 'val2': 20} == res[1]
+        assert {'id': '3', 'val1': 'c', 'val2': 30} == res[2]
 
     # noinspection PyTypeChecker
     def test_read_csv_hints_dict(self):
         path = 'files/test-frame-extra.csv'
         res = XFrame.read_csv(path, column_type_hints={'val2': int})
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val1', 'val2']
-        assert res.column_types() == [str, str, int]
-        assert res[0] == {'id': '1', 'val1': 'a', 'val2': 10}
-        assert res[1] == {'id': '2', 'val1': 'b', 'val2': 20}
-        assert res[2] == {'id': '3', 'val1': 'c', 'val2': 30}
+        assert 3 == len(res)
+        assert ['id', 'val1', 'val2'] == res.column_names()
+        assert [str, str, int] == res.column_types()
+        assert {'id': '1', 'val1': 'a', 'val2': 10} == res[0]
+        assert {'id': '2', 'val1': 'b', 'val2': 20} == res[1]
+        assert {'id': '3', 'val1': 'c', 'val2': 30} == res[2]
 
     def test_read_csv_na(self):
         path = 'files/test-frame-na.csv'
         res = XFrame.read_csv(path, na_values='None')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'NA'}
-        assert res[1] == {'id': None, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'NA'} == res[0]
+        assert {'id': None, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_read_csv_na_mult(self):
         path = 'files/test-frame-na.csv'
         res = XFrame.read_csv(path, na_values=['NA', 'None'])
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': None}
-        assert res[1] == {'id': None, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': None} == res[0]
+        assert {'id': None, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_read_csv_file_not_exist(self):
         path = 'files/does-not-exist.csv'
@@ -640,12 +641,12 @@ class TestXFrameReadParquet:
         res = XFrame('tmp/frame-parquet.parquet')
         # results may not come back in the same order
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_read_parquet_bool(self):
         t = XFrame({'id': [1, 2, 3], 'val': [True, False, True]})
@@ -654,12 +655,12 @@ class TestXFrameReadParquet:
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, bool]
-        assert res[0] == {'id': 1, 'val': True}
-        assert res[1] == {'id': 2, 'val': False}
-        assert res[2] == {'id': 3, 'val': True}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, bool] == res.column_types()
+        assert {'id': 1, 'val': True} == res[0]
+        assert {'id': 2, 'val': False} == res[1]
+        assert {'id': 3, 'val': True} == res[2]
 
     def test_read_parquet_int(self):
         t = XFrame({'id': [1, 2, 3], 'val': [10, 20, 30]})
@@ -668,12 +669,12 @@ class TestXFrameReadParquet:
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, int]
-        assert res[0] == {'id': 1, 'val': 10}
-        assert res[1] == {'id': 2, 'val': 20}
-        assert res[2] == {'id': 3, 'val': 30}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, int] == res.column_types()
+        assert {'id': 1, 'val': 10} == res[0]
+        assert {'id': 2, 'val': 20} == res[1]
+        assert {'id': 3, 'val': 30} == res[2]
 
     def test_read_parquet_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
@@ -682,12 +683,12 @@ class TestXFrameReadParquet:
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, float]
-        assert res[0] == {'id': 1, 'val': 1.0}
-        assert res[1] == {'id': 2, 'val': 2.0}
-        assert res[2] == {'id': 3, 'val': 3.0}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, float] == res.column_types()
+        assert {'id': 1, 'val': 1.0} == res[0]
+        assert {'id': 2, 'val': 2.0} == res[1]
+        assert {'id': 3, 'val': 3.0} == res[2]
 
     def test_read_parquet_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[1, 1], [2, 2], [3, 3]]})
@@ -696,12 +697,12 @@ class TestXFrameReadParquet:
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, list]
-        assert res[0] == {'id': 1, 'val': [1, 1]}
-        assert res[1] == {'id': 2, 'val': [2, 2]}
-        assert res[2] == {'id': 3, 'val': [3, 3]}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, list] == res.column_types()
+        assert {'id': 1, 'val': [1, 1]} == res[0]
+        assert {'id': 2, 'val': [2, 2]} == res[1]
+        assert {'id': 3, 'val': [3, 3]} == res[2]
 
     def test_read_parquet_dict(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{1: 1}, {2: 2}, {3: 3}]})
@@ -710,12 +711,12 @@ class TestXFrameReadParquet:
 
         res = XFrame('tmp/frame-parquet.parquet')
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, dict]
-        assert res[0] == {'id': 1, 'val': {1: 1}}
-        assert res[1] == {'id': 2, 'val': {2: 2}}
-        assert res[2] == {'id': 3, 'val': {3: 3}}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, dict] == res.column_types()
+        assert {'id': 1, 'val': {1: 1}} == res[0]
+        assert {'id': 2, 'val': {2: 2}} == res[1]
+        assert {'id': 3, 'val': {3: 3}} == res[2]
 
     def test_read_parquet_not_exist(self):
         path = 'files/does-not-exist.parquet'
@@ -735,12 +736,12 @@ class TestXFrameFromXArray:
     def test_from_xarray(self):
         a = XArray([1, 2, 3])
         res = XFrame.from_xarray(a, 'id')
-        assert len(res) == 3
-        assert res.column_names() == ['id']
-        assert res.column_types() == [int]
-        assert res[0] == {'id': 1}
-        assert res[1] == {'id': 2}
-        assert res[2] == {'id': 3}
+        assert 3 == len(res)
+        assert ['id'] == res.column_names()
+        assert [int] == res.column_types()
+        assert {'id': 1} == res[0]
+        assert {'id': 2} == res[1]
+        assert {'id': 3} == res[2]
 
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
@@ -755,19 +756,19 @@ class TestXFrameToSparkDataFrame:
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[0]
-        assert row.id == 1
-        assert row.val == 'a'
+        assert 1 == row.id
+        assert 'a' == row.val
 
     def test_to_spark_dataframe_bool(self):
         t = XFrame({'id': [1, 2, 3], 'val': [True, False, True]})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[0]
-        assert row.id == 1
+        assert 1 == row.id
         assert row.val is True
 
     def test_to_spark_dataframe_float(self):
@@ -775,64 +776,64 @@ class TestXFrameToSparkDataFrame:
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[0]
-        assert row.id == 1
-        assert row.val == 1.0
+        assert 1 == row.id
+        assert 1.0 == row.val
 
     def test_to_spark_dataframe_int(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1, 2, 3]})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[0]
-        assert row.id == 1
-        assert row.val == 1
+        assert 1 == row.id
+        assert 1 == row.val
 
     def test_to_spark_dataframe_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[1, 1], [2, 2], [3, 3]]})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[0]
-        assert row.id == 1
-        assert row.val == [1, 1]
+        assert 1 == row.id
+        assert [1, 1] == row.val
 
     def test_to_spark_dataframe_list_hint(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[None, 1], [2, 2], [3, 3]]})
         t.to_spark_dataframe('tmp_tbl', column_type_hints={'val': 'list[int]'})
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[1]
-        assert row.id == 2
-        assert row.val == [2, 2]
+        assert 2 == row.id
+        assert [2, 2] == row.val
 
     def test_to_spark_dataframe_list_bad(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[None, 1], [2, 2], [3, 3]]})
         with pytest.raises(TypeError) as exception_info:
             t.to_spark_dataframe('tmp_tbl')
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Element type cannot be determined.'
+        assert 'Element type cannot be determined.' == exception_message
 
     def test_to_spark_dataframe_map(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'x': 1}, {'y': 2}, {'z': 3}]})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[0]
-        assert row.id == 1
-        assert row.val == {'x': 1}
+        assert 1 == row.id
+        assert {'x': 1} == row.val
 
     def test_to_spark_dataframe_map_bad(self):
         t = XFrame({'id': [1, 2, 3], 'val': [None, {'y': 2}, {'z': 3}]})
         with pytest.raises(ValueError) as exception_info:
             t.to_spark_dataframe('tmp_tbl')
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Schema type cannot be determined.'
+        assert 'Schema type cannot be determined.' == exception_message
 
     @pytest.mark.skip(reason='files in spark 2')
     def test_to_spark_dataframe_map_hint(self):
@@ -840,30 +841,30 @@ class TestXFrameToSparkDataFrame:
         t.to_spark_dataframe('tmp_tbl', column_type_hints={'val': 'dict{str: int}'})
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[1]
-        assert row.id == 1
-        assert row.val == {'y': 2}
+        assert 1 == row.id
+        assert {'y': 2} == row.val
 
     def test_to_spark_dataframe_str_rewrite(self):
         t = XFrame({'id': [1, 2, 3], 'val;1': ['a', 'b', 'c']})
         t.to_spark_dataframe('tmp_tbl')
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[0]
-        assert row.id == 1
-        assert row.val_1 == 'a'
+        assert 1 == row.id
+        assert 'a' == row.val_1
 
     def test_to_spark_dataframe_str_rename(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t.to_spark_dataframe('tmp_tbl', column_names=['id1', 'val1'])
         sqlc = CommonSparkContext.spark_sql_context()
         results = sqlc.sql('SELECT * FROM tmp_tbl ORDER BY id1')
-        assert results.count() == 3
+        assert 3 == results.count()
         row = results.collect()[0]
-        assert row.id1 == 1
-        assert row.val1 == 'a'
+        assert 1 == row.id1
+        assert 'a' == row.val1
 
     def test_to_spark_dataframe_str_rename_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -875,7 +876,7 @@ class TestXFrameToSparkDataFrame:
         with pytest.raises(ValueError) as exception_info:
             t.to_spark_dataframe('tmp_tbl', column_names=['id1'])
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column names list must match number of columns: actual: 1, expected: 2'
+        assert 'Column names list must match number of columns: actual: 1, expected: 2' == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -887,9 +888,9 @@ class TestXFrameToRdd:
     def test_to_rdd(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         rdd_val = t.to_rdd().collect()
-        assert rdd_val[0] == (1, 'a')
-        assert rdd_val[1] == (2, 'b')
-        assert rdd_val[2] == (3, 'c')
+        assert (1, 'a') == rdd_val[0]
+        assert (2, 'b') == rdd_val[1]
+        assert (3, 'c') == rdd_val[2]
 
 
 # noinspection PyClassHasNoInit
@@ -902,35 +903,35 @@ class TestXFrameFromRdd:
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd)
-        assert len(res) == 3
-        assert res[0] == {'X.0': 1, 'X.1': 'a'}
-        assert res[1] == {'X.0': 2, 'X.1': 'b'}
+        assert 3 == len(res)
+        assert {'X.0': 1, 'X.1': 'a'} == res[0]
+        assert {'X.0': 2, 'X.1': 'b'} == res[1]
 
     def test_from_rdd_names(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_names=['id', 'val'])
-        assert len(res) == 3
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 3 == len(res)
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
     def test_from_rdd_types(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(None, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_types=[int, str])
-        assert len(res) == 3
-        assert res.column_types() == [int, str]
-        assert res[0] == {'X.0': None, 'X.1': 'a'}
-        assert res[1] == {'X.0': 2, 'X.1': 'b'}
+        assert 3 == len(res)
+        assert [int, str] == res.column_types()
+        assert {'X.0': None, 'X.1': 'a'} == res[0]
+        assert {'X.0': 2, 'X.1': 'b'} == res[1]
 
     def test_from_rdd_names_types(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(None, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame.from_rdd(rdd, column_names=['id', 'val'], column_types=[int, str])
-        assert len(res) == 3
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': None, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 3 == len(res)
+        assert [int, str] == res.column_types()
+        assert {'id': None, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
     def test_from_rdd_names_bad(self):
         sc = CommonSparkContext.spark_context()
@@ -938,7 +939,7 @@ class TestXFrameFromRdd:
         with pytest.raises(ValueError) as exception_info:
             XFrame.from_rdd(rdd, column_names=('id',))
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Length of names does not match RDD: ('id',) (1, 'a')."
+        assert "Length of names does not match RDD: ('id',) (1, 'a')." == exception_message
 
     def test_from_rdd_types_bad(self):
         sc = CommonSparkContext.spark_context()
@@ -946,7 +947,7 @@ class TestXFrameFromRdd:
         with pytest.raises(ValueError) as exception_info:
             XFrame.from_rdd(rdd, column_types=(int,))
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Length of types does not match RDD.'
+        assert 'Length of types does not match RDD.' == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -964,10 +965,10 @@ class TestXFrameFromSparkDataFrame:
         s_rdd = sqlc.createDataFrame(rdd, schema)
 
         res = XFrame.from_rdd(s_rdd)
-        assert len(res) == 3
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 3 == len(res)
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
 
 # noinspection PyClassHasNoInit
@@ -989,13 +990,13 @@ class TestXFrameToStr:
     def test_to_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         s = str(t).split('\n')
-        assert s[0] == '+----+-----+'
-        assert s[1] == '| id | val |'
-        assert s[2] == '+----+-----+'
-        assert s[3] == '| 1  |  a  |'
-        assert s[4] == '| 2  |  b  |'
-        assert s[5] == '| 3  |  c  |'
-        assert s[6] == '+----+-----+'
+        assert '+----+-----+' == s[0]
+        assert '| id | val |' == s[1]
+        assert '+----+-----+' == s[2]
+        assert '| 1  |  a  |' == s[3]
+        assert '| 2  |  b  |' == s[4]
+        assert '| 3  |  c  |' == s[5]
+        assert '+----+-----+' == s[6]
 
 
 # noinspection PyClassHasNoInit
@@ -1029,11 +1030,11 @@ class TestXFrameLen:
 
     def test_len_nonzero(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        assert len(t) == 3
+        assert 3 == len(t)
 
     def test_len_zero(self):
         t = XFrame()
-        assert len(t) == 0
+        assert 0 == len(t)
 
         # TODO make an XFrame and then somehow delete all its rows, so the RDD
         # exists but is empty
@@ -1048,10 +1049,10 @@ class TestXFrameCopy:
     def test_copy(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         x = copy.copy(t)
-        assert len(x) == 3
-        assert list(x['id']) == [1, 2, 3]
-        assert x.column_names() == ['id', 'val']
-        assert x.column_types() == [int, str]
+        assert 3 == len(x)
+        assert [1, 2, 3] == list(x['id'])
+        assert ['id', 'val'] == x.column_names()
+        assert [int, str] == x.column_types()
 
 
 # noinspection PyClassHasNoInit
@@ -1075,7 +1076,7 @@ class TestXFrameNumRows:
 
     def test_num_rows(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        assert t.num_rows() == 3
+        assert 3 == t.num_rows()
 
 
 # noinspection PyClassHasNoInit
@@ -1086,7 +1087,7 @@ class TestXFrameNumColumns:
 
     def test_num_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        assert t.num_columns() == 2
+        assert 2 == t.num_columns()
 
 
 # noinspection PyClassHasNoInit
@@ -1098,7 +1099,7 @@ class TestXFrameColumnNames:
     def test_column_names(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         names = t.column_names()
-        assert names == ['id', 'val']
+        assert ['id', 'val'] == names
 
 
 # noinspection PyClassHasNoInit
@@ -1110,7 +1111,7 @@ class TestXFrameColumnTypes:
     def test_column_types(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         types = t.column_types()
-        assert types == [int, str]
+        assert [int, str] == types
 
 
 # noinspection PyClassHasNoInit
@@ -1123,9 +1124,9 @@ class TestXFrameSelectRows:
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         a = XArray([1, 0, 1])
         res = t.select_rows(a)
-        assert len(res) == 2
-        assert list(res['id']) == [1, 3]
-        assert list(res['val']) == ['a', 'c']
+        assert 2 == len(res)
+        assert [1, 3] == list(res['id'])
+        assert ['a', 'c'] == list(res['val'])
 
 
 # noinspection PyClassHasNoInit
@@ -1137,9 +1138,9 @@ class TestXFrameHead:
     def test_head(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         hd = t.head(2)
-        assert len(hd) == 2
-        assert list(hd['id']) == [1, 2]
-        assert list(hd['val']) == ['a', 'b']
+        assert 2 == len(hd)
+        assert [1, 2] == list(hd['id'])
+        assert ['a', 'b'] == list(hd['val'])
 
 
 # noinspection PyClassHasNoInit
@@ -1151,9 +1152,9 @@ class TestXFrameTail:
     def test_tail(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         tl = t.tail(2)
-        assert len(tl) == 2
-        assert list(tl['id']) == [2, 3]
-        assert list(tl['val']) == ['b', 'c']
+        assert 2 == len(tl)
+        assert [2, 3] == list(tl['id'])
+        assert ['b', 'c'] == list(tl['val'])
 
 
 # noinspection PyClassHasNoInit
@@ -1168,55 +1169,55 @@ class TestXFrameToPandasDataframe:
     def test_to_pandas_dataframe_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         df = t.to_pandas_dataframe()
-        assert len(df) == 3
-        assert df['id'][0] == 1
-        assert df['id'][1] == 2
-        assert df['val'][0] == 'a'
+        assert 3 == len(df)
+        assert 1 == df['id'][0]
+        assert 2 == df['id'][1]
+        assert 'a' == df['val'][0]
 
     def test_to_pandas_dataframe_bool(self):
         t = XFrame({'id': [1, 2, 3], 'val': [True, False, True]})
         df = t.to_pandas_dataframe()
-        assert len(df) == 3
-        assert df['id'][0] == 1
-        assert df['id'][1] == 2
-        assert df['val'][0] == True
-        assert df['val'][1] == False
+        assert 3 == len(df)
+        assert 1 == df['id'][0]
+        assert 2 == df['id'][1]
+        assert True == df['val'][0]
+        assert False == df['val'][1]
 
     def test_to_pandas_dataframe_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
         df = t.to_pandas_dataframe()
-        assert len(df) == 3
-        assert df['id'][0] == 1
-        assert df['id'][1] == 2
-        assert df['val'][0] == 1.0
-        assert df['val'][1] == 2.0
+        assert 3 == len(df)
+        assert 1 == df['id'][0]
+        assert 2 == df['id'][1]
+        assert 1.0 == df['val'][0]
+        assert 2.0 == df['val'][1]
 
     def test_to_pandas_dataframe_int(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1, 2, 3]})
         df = t.to_pandas_dataframe()
-        assert len(df) == 3
-        assert df['id'][0] == 1
-        assert df['id'][1] == 2
-        assert df['val'][0] == 1
-        assert df['val'][1] == 2
+        assert 3 == len(df)
+        assert 1 == df['id'][0]
+        assert 2 == df['id'][1]
+        assert 1 == df['val'][0]
+        assert 2 == df['val'][1]
 
     def test_to_pandas_dataframe_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': [[1, 1], [2, 2], [3, 3]]})
         df = t.to_pandas_dataframe()
-        assert len(df) == 3
-        assert df['id'][0] == 1
-        assert df['id'][1] == 2
-        assert df['val'][0] == [1, 1]
-        assert df['val'][1] == [2, 2]
+        assert 3 == len(df)
+        assert 1 == df['id'][0]
+        assert 2 == df['id'][1]
+        assert [1, 1] == df['val'][0]
+        assert [2, 2] == df['val'][1]
 
     def test_to_pandas_dataframe_map(self):
         t = XFrame({'id': [1, 2, 3], 'val': [{'x': 1}, {'y': 2}, {'z': 3}]})
         df = t.to_pandas_dataframe()
-        assert len(df) == 3
-        assert df['id'][0] == 1
-        assert df['id'][1] == 2
-        assert df['val'][0] == {'x': 1}
-        assert df['val'][1] == {'y': 2}
+        assert 3 == len(df)
+        assert 1 == df['id'][0]
+        assert 2 == df['id'][1]
+        assert {'x': 1} == df['val'][0]
+        assert {'y': 2} == df['val'][1]
 
 
 # noinspection PyClassHasNoInit
@@ -1240,10 +1241,10 @@ class TestXFrameForeach:
         # Read back as an XFrame
         res = XFrame.read_csv(path, header=False)
         res = res.rename(['id', 'val']).sort('id')
-        assert len(res) == 3
-        assert res.dtype() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 3 == len(res)
+        assert [int, str] == res.dtype()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
     def test_foreach_init(self):
         path = 'tmp/foreach.csv'
@@ -1264,10 +1265,10 @@ class TestXFrameForeach:
         res = XFrame.read_csv(path, header=False)
         res = res.rename(['id', 'val', 'ini']).sort('id')
         res = res.filterby([1, 2, 3], 'id')
-        assert len(res) == 3
-        assert res.dtype() == [int, str, int]
-        assert res[0] == {'id': 1, 'val': 'a', 'ini': 99}
-        assert res[1] == {'id': 2, 'val': 'b', 'ini': 99}
+        assert 3 == len(res)
+        assert [int, str, int] == res.dtype()
+        assert {'id': 1, 'val': 'a', 'ini': 99} == res[0]
+        assert {'id': 2, 'val': 'b', 'ini': 99} == res[1]
 
 
 # noinspection PyClassHasNoInit
@@ -1279,23 +1280,23 @@ class TestXFrameApply:
     def test_apply(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.apply(lambda row: row['id'] * 2)
-        assert len(res) == 3
+        assert 3 == len(res)
         assert res.dtype() is int
-        assert list(res) == [2, 4, 6]
+        assert [2, 4, 6] == list(res)
 
     def test_apply_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.apply(lambda row: row['id'] * 2, dtype=float)
-        assert len(res) == 3
+        assert 3 == len(res)
         assert res.dtype() is float
-        assert list(res) == [2.0, 4.0, 6.0]
+        assert [2.0, 4.0, 6.0] == list(res)
 
     def test_apply_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.apply(lambda row: row['id'] * 2, dtype=str)
-        assert len(res) == 3
+        assert 3 == len(res)
         assert res.dtype() is str
-        assert list(res) == ['2', '4', '6']
+        assert ['2', '4', '6'] == list(res)
 
 
 # noinspection PyClassHasNoInit
@@ -1307,34 +1308,34 @@ class TestXFrameTransformCol:
     def test_transform_col_identity(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id')
-        assert len(res) == 3
-        assert res.dtype() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 3 == len(res)
+        assert [int, str] == res.dtype()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
     def test_transform_col_lambda(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id', lambda row: row['id'] * 2)
-        assert len(res) == 3
-        assert res.dtype() == [int, str]
-        assert res[0] == {'id': 2, 'val': 'a'}
-        assert res[1] == {'id': 4, 'val': 'b'}
+        assert 3 == len(res)
+        assert [int, str] == res.dtype()
+        assert {'id': 2, 'val': 'a'} == res[0]
+        assert {'id': 4, 'val': 'b'} == res[1]
 
     def test_transform_col_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id', lambda row: 'x' * row['id'])
-        assert len(res) == 3
-        assert res.dtype() == [str, str]
-        assert res[0] == {'id': 'x', 'val': 'a'}
-        assert res[1] == {'id': 'xx', 'val': 'b'}
+        assert 3 == len(res)
+        assert [str, str] == res.dtype()
+        assert {'id': 'x', 'val': 'a'} == res[0]
+        assert {'id': 'xx', 'val': 'b'} == res[1]
 
     def test_transform_col_cast(self):
         t = XFrame({'id': ['1', '2', '3'], 'val': ['a', 'b', 'c']})
         res = t.transform_col('id', dtype=int)
-        assert len(res) == 3
-        assert res.dtype() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 3 == len(res)
+        assert [int, str] == res.dtype()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
 
 # noinspection PyClassHasNoInit
@@ -1346,34 +1347,34 @@ class TestXFrameTransformCols:
     def test_transform_cols_identity(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_cols(['id', 'val'])
-        assert len(res) == 3
-        assert res.dtype() == [int, str, str]
-        assert res[0] == {'other': 'x', 'id': 1, 'val': 'a'}
-        assert res[1] == {'other': 'y', 'id': 2, 'val': 'b'}
+        assert 3 == len(res)
+        assert [int, str, str] == res.dtype()
+        assert {'other': 'x', 'id': 1, 'val': 'a'} == res[0]
+        assert {'other': 'y', 'id': 2, 'val': 'b'} == res[1]
 
     def test_transform_cols_lambda(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_cols(['id', 'val'], lambda row: [row['id'] * 2, row['val'] + 'x'])
-        assert len(res) == 3
-        assert res.dtype() == [int, str, str]
-        assert res[0] == {'other': 'x', 'id': 2, 'val': 'ax'}
-        assert res[1] == {'other': 'y', 'id': 4, 'val': 'bx'}
+        assert 3 == len(res)
+        assert [int, str, str] == res.dtype()
+        assert {'other': 'x', 'id': 2, 'val': 'ax'} == res[0]
+        assert {'other': 'y', 'id': 4, 'val': 'bx'} == res[1]
 
     def test_transform_cols_type(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.transform_cols(['id', 'val'], lambda row: ['x' * row['id'], ord(row['val'][0])])
-        assert len(res) == 3
-        assert res.dtype() == [str, str, int]
-        assert res[0] == {'other': 'x', 'id': 'x', 'val': 97}
-        assert res[1] == {'other': 'y', 'id': 'xx', 'val': 98}
+        assert 3 == len(res)
+        assert [str, str, int] == res.dtype()
+        assert {'other': 'x', 'id': 'x', 'val': 97} == res[0]
+        assert {'other': 'y', 'id': 'xx', 'val': 98} == res[1]
 
     def test_transform_cols_cast(self):
         t = XFrame({'other': ['x', 'y', 'z'], 'id': ['1', '2', '3'], 'val': [10, 20, 30]})
         res = t.transform_cols(['id', 'val'], dtypes=[int, str])
-        assert len(res) == 3
-        assert res.dtype() == [int, str, str]
-        assert res[0] == {'other': 'x', 'id': 1, 'val': '10'}
-        assert res[1] == {'other': 'y', 'id': 2, 'val': '20'}
+        assert 3 == len(res)
+        assert [int, str, str] == res.dtype()
+        assert {'other': 'x', 'id': 1, 'val': '10'} == res[0]
+        assert {'other': 'y', 'id': 2, 'val': '20'} == res[1]
 
 
 # noinspection PyClassHasNoInit
@@ -1387,46 +1388,49 @@ class TestXFrameFlatMap:
         res = t.flat_map(['number', 'letter'],
                          lambda row: [list(six.itervalues(row)) for _ in range(0, row['id'])],
                          column_types=[int, str])
-        assert res.column_names() == ['number', 'letter']
-        assert res.dtype() == [int, str]
-        assert res[0] == {'number': 1, 'letter': 'a'}
-        assert res[1] == {'number': 2, 'letter': 'b'}
-        assert res[2] == {'number': 2, 'letter': 'b'}
-        assert res[3] == {'number': 3, 'letter': 'c'}
-        assert res[4] == {'number': 3, 'letter': 'c'}
-        assert res[5] == {'number': 3, 'letter': 'c'}
+        assert ['number', 'letter'] == res.column_names()
+        assert [int, str] == res.dtype()
+        assert {'number': 1, 'letter': 'a'} == res[0]
+        assert {'number': 2, 'letter': 'b'} == res[1]
+        assert {'number': 2, 'letter': 'b'} == res[2]
+        assert {'number': 3, 'letter': 'c'} == res[3]
+        assert {'number': 3, 'letter': 'c'} == res[4]
+        assert {'number': 3, 'letter': 'c'} == res[5]
 
     def test_flat_map_identity(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.flat_map(['number', 'letter'],
                          lambda row: [[row['id'], row['val']]],
                          column_types=[int, str])
-        assert res.column_names() == ['number', 'letter']
-        assert res.dtype() == [int, str]
-        assert res[0] == {'number': 1, 'letter': 'a'}
-        assert res[1] == {'number': 2, 'letter': 'b'}
-        assert res[2] == {'number': 3, 'letter': 'c'}
+        assert 3 == len(res)
+        assert ['number', 'letter'] == res.column_names()
+        assert [int, str] == res.dtype()
+        assert {'number': 1, 'letter': 'a'} == res[0]
+        assert {'number': 2, 'letter': 'b'} == res[1]
+        assert {'number': 3, 'letter': 'c'} == res[2]
 
     def test_flat_map_mapped(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.flat_map(['number', 'letter'],
                          lambda row: [[row['id'] * 2, row['val'] + 'x']],
                          column_types=[int, str])
-        assert res.column_names() == ['number', 'letter']
-        assert res.dtype() == [int, str]
-        assert res[0] == {'number': 2, 'letter': 'ax'}
-        assert res[1] == {'number': 4, 'letter': 'bx'}
-        assert res[2] == {'number': 6, 'letter': 'cx'}
+        assert 3 == len(res)
+        assert ['number', 'letter'] == res.column_names()
+        assert [int, str] == res.dtype()
+        assert {'number': 2, 'letter': 'ax'} == res[0]
+        assert {'number': 4, 'letter': 'bx'} == res[1]
+        assert {'number': 6, 'letter': 'cx'} == res[2]
 
     def test_flat_map_auto(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.flat_map(['number', 'letter'],
                          lambda row: [[row['id'] * 2, row['val'] + 'x']])
-        assert res.column_names() == ['number', 'letter']
-        assert res.dtype() == [int, str]
-        assert res[0] == {'number': 2, 'letter': 'ax'}
-        assert res[1] == {'number': 4, 'letter': 'bx'}
-        assert res[2] == {'number': 6, 'letter': 'cx'}
+        assert 3 == len(res)
+        assert ['number', 'letter'] == res.column_names()
+        assert [int, str] == res.dtype()
+        assert {'number': 2, 'letter': 'ax'} == res[0]
+        assert {'number': 4, 'letter': 'bx'} == res[1]
+        assert {'number': 6, 'letter': 'cx'} == res[2]
 
         # TODO: test auto error cases
 
@@ -1441,17 +1445,17 @@ class TestXFrameSample:
     def test_sample_02(self):
         t = XFrame({'id': [1, 2, 3, 4, 5], 'val': ['a', 'b', 'c', 'd', 'e']})
         res = t.sample(0.2, 2)
-        assert len(res) == 1
-        assert res[0] == {'id': 2, 'val': 'b'}
+        assert 1 == len(res)
+        assert {'id': 2, 'val': 'b'} == res[0]
 
     @pytest.mark.skip(reason='depends on number of partitions')
     def test_sample_08(self):
         t = XFrame({'id': [1, 2, 3, 4, 5], 'val': ['a', 'b', 'c', 'd', 'e']})
         res = t.sample(0.8, 3)
-        assert len(res) == 3
-        assert res[0] == {'id': 2, 'val': 'b'}
-        assert res[1] == {'id': 4, 'val': 'd'}
-        assert res[2] == {'id': 5, 'val': 'e'}
+        assert 3 == len(res)
+        assert {'id': 2, 'val': 'b'} == res[0]
+        assert {'id': 4, 'val': 'd'} == res[1]
+        assert {'id': 5, 'val': 'e'} == res[2]
 
 
 # noinspection PyClassHasNoInit
@@ -1464,13 +1468,13 @@ class TestXFrameRandomSplit:
     def test_random_split(self):
         t = XFrame({'id': [1, 2, 3, 4, 5], 'val': ['a', 'b', 'c', 'd', 'e']})
         res1, res2 = t.random_split(0.5, 1)
-        assert len(res1) == 3
-        assert res1[0] == {'id': 1, 'val': 'a'}
-        assert res1[1] == {'id': 4, 'val': 'd'}
-        assert res1[2] == {'id': 5, 'val': 'e'}
-        assert len(res2) == 2
-        assert res2[0] == {'id': 2, 'val': 'b'}
-        assert res2[1] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res1)
+        assert {'id': 1, 'val': 'a'} ==res1[0]
+        assert {'id': 4, 'val': 'd'} == res1[1]
+        assert {'id': 5, 'val': 'e'} == res1[2]
+        assert 2 == len(res2)
+        assert {'id': 2, 'val': 'b'} ==res2[0]
+        assert {'id': 3, 'val': 'c'} == res2[1]
 
 
 # noinspection PyClassHasNoInit
@@ -1482,52 +1486,51 @@ class TestXFrameTopk:
     def test_topk_int(self):
         t = XFrame({'id': [10, 20, 30], 'val': ['a', 'b', 'c']})
         res = t.topk('id', 2)
-        assert len(res) == 2
+        assert 2 == len(res)
         # noinspection PyUnresolvedReferences
-        assert (XArray([30, 20]) == res['id']).all()
-        assert list(res['val']) == ['c', 'b']
-        assert res.column_types() == [int, str]
-        assert res.column_names() == ['id', 'val']
+        assert XArray([30, 20]) == res['id'].all()
+        assert ['c', 'b'] == list(res['val'])
+        assert [int, str] == res.column_types()
+        assert ['id', 'val'] == res.column_names()
 
     def test_topk_int_reverse(self):
         t = XFrame({'id': [30, 20, 10], 'val': ['c', 'b', 'a']})
         res = t.topk('id', 2, reverse=True)
-        assert len(res) == 2
-        assert list(res['id']) == [10, 20]
-        assert list(res['val']) == ['a', 'b']
+        assert 2 == len(res)
+        assert [10, 20] == list(res['id'])
+        assert ['a', 'b'] == list(res['val'])
 
-    # noinspection PyUnresolvedReferences
     def test_topk_float(self):
         t = XFrame({'id': [10.0, 20.0, 30.0], 'val': ['a', 'b', 'c']})
         res = t.topk('id', 2)
-        assert len(res) == 2
-        assert (XArray([30.0, 20.0]) == res['id']).all()
-        assert list(res['val']) == ['c', 'b']
-        assert res.column_types() == [float, str]
-        assert res.column_names() == ['id', 'val']
+        assert 2 == len(res)
+        assert XArray([30.0, 20.0]) == res['id'].all()
+        assert ['c', 'b'] == list(res['val'])
+        assert [float, str] == res.column_types()
+        assert ['id', 'val'] == res.column_names()
 
     def test_topk_float_reverse(self):
         t = XFrame({'id': [30.0, 20.0, 10.0], 'val': ['c', 'b', 'a']})
         res = t.topk('id', 2, reverse=True)
-        assert len(res) == 2
-        assert list(res['id']) == [10.0, 20.0]
-        assert list(res['val']) == ['a', 'b']
+        assert 2 == len(res)
+        assert [10.0, 20.0] == list(res['id'])
+        assert ['a', 'b'] == list(res['val'])
 
     def test_topk_str(self):
         t = XFrame({'id': [30, 20, 10], 'val': ['a', 'b', 'c']})
         res = t.topk('val', 2)
-        assert len(res) == 2
-        assert list(res['id']) == [10, 20]
-        assert list(res['val']) == ['c', 'b']
-        assert res.column_types() == [int, str]
-        assert res.column_names() == ['id', 'val']
+        assert 2 == len(res)
+        assert [10, 20] == list(res['id'])
+        assert ['c', 'b'] == list(res['val'])
+        assert [int, str] == res.column_types()
+        assert ['id', 'val'] == res.column_names()
 
     def test_topk_str_reverse(self):
         t = XFrame({'id': [10, 20, 30], 'val': ['c', 'b', 'a']})
         res = t.topk('val', 2, reverse=True)
-        assert len(res) == 2
-        assert list(res['id']) == [30, 20]
-        assert list(res['val']) == ['a', 'b']
+        assert 2 == len(res)
+        assert [30, 20] == list(res['id'])
+        assert ['a', 'b'] == list(res['val'])
 
 
 # noinspection PyClassHasNoInit
@@ -1542,7 +1545,7 @@ class TestXFrameSaveBinary:
         t.save(path, format='binary')
         with open(os.path.join(path, '_metadata'), 'rb') as f:
             metadata = pickle.load(f)
-            assert metadata == [['id', 'val'], [int, str]]
+            assert [['id', 'val'], [int, str]] == metadata
         # TODO find some way to check the data
 
     def test_save_not_exist(self, tmpdir):
@@ -1565,10 +1568,10 @@ class TestXFrameSaveCsv:
 
         with open(path + '.csv') as f:
             heading = f.readline().rstrip()
-            assert heading == 'id,val'
-            assert f.readline().rstrip() == '30,a'
-            assert f.readline().rstrip() == '20,b'
-            assert f.readline().rstrip() == '10,c'
+            assert 'id,val' == heading
+            assert '30,a' == f.readline().rstrip()
+            assert '20,b' == f.readline().rstrip()
+            assert '10,c' == f.readline().rstrip()
 
     def test_save_not_exist(self, tmpdir):
         path = os.path.join(str(tmpdir), 'frame')
@@ -1647,19 +1650,19 @@ class TestXFrameSelectColumn:
     def test_select_column_id(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.select_column('id')
-        assert list(res) == [1, 2, 3]
+        assert [1, 2, 3] == list(res)
 
     def test_select_column_val(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.select_column('val')
-        assert list(res) == ['a', 'b', 'c']
+        assert ['a', 'b', 'c'] == list(res)
 
     def test_select_column_bad_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(ValueError) as exception_info:
             t.select_column('xx')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Column name does not exist: 'xx'."
+        assert "Column name does not exist: 'xx'." == exception_message
 
     # noinspection PyTypeChecker
     def test_select_column_bad_type(self):
@@ -1667,7 +1670,7 @@ class TestXFrameSelectColumn:
         with pytest.raises(TypeError) as exception_info:
             t.select_column(1)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Invalid column_name type must be str.'
+        assert 'Invalid column_name type must be str.' == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -1679,12 +1682,12 @@ class TestXFrameSelectColumns:
     def test_select_columns_id_val(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         res = t.select_columns(['id', 'val'])
-        assert res[0] == {'id': 1, 'val': 'a'}
+        assert {'id': 1, 'val': 'a'} == res[0]
 
     def test_select_columns_id(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         res = t.select_columns(['id'])
-        assert res[0] == {'id': 1}
+        assert {'id': 1} == res[0]
 
     # noinspection PyTypeChecker
     def test_select_columns_not_iterable(self):
@@ -1692,21 +1695,21 @@ class TestXFrameSelectColumns:
         with pytest.raises(TypeError) as exception_info:
             t.select_columns(1)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Keylist must be an iterable.'
+        assert 'Keylist must be an iterable.' == exception_message
 
     def test_select_columns_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(TypeError) as exception_info:
             t.select_columns(['id', 2])
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Invalid key type: must be str.'
+        assert 'Invalid key type: must be str.' == exception_message
 
     def test_select_columns_bad_dup(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(ValueError) as exception_info:
             t.select_columns(['id', 'id'])
         exception_message = exception_info.value.args[0]
-        assert exception_message == "There are duplicate keys in key list: 'id'."
+        assert "There are duplicate keys in key list: 'id'." == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -1719,22 +1722,22 @@ class TestXFrameAddColumn:
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_column(ta, name='another')
-        assert res.column_names() == ['id', 'val', 'another']
-        assert res[0] == {'id': 1, 'val': 'a', 'another': 3.0}
+        assert ['id', 'val', 'another'] == res.column_names()
+        assert {'id': 1, 'val': 'a', 'another': 3.0} == res[0]
 
     def test_add_column_name_default(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_column(ta)
-        assert res.column_names() == ['id', 'val', 'X.2']
-        assert res[0] == {'id': 1, 'val': 'a', 'X.2': 3.0}
+        assert ['id', 'val', 'X.2'] == res.column_names()
+        assert {'id': 1, 'val': 'a', 'X.2': 3.0} == res[0]
 
     def test_add_column_name_dup(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_column(ta, name='id')
-        assert res.column_names() == ['id', 'val', 'id.2']
-        assert res[0] == {'id': 1, 'val': 'a', 'id.2': 3.0}
+        assert ['id', 'val', 'id.2'] == res.column_names()
+        assert {'id': 1, 'val': 'a', 'id.2': 3.0} == res[0]
 
 
 # noinspection PyClassHasNoInit
@@ -1747,18 +1750,18 @@ class TestXFrameAddColumnsArray:
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta = XArray([3.0, 2.0, 1.0])
         res = tf.add_columns([ta], names=['new1'])
-        assert res.column_names() == ['id', 'val', 'new1']
-        assert res.column_types() == [int, str, float]
-        assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0}
+        assert ['id', 'val', 'new1'] == res.column_names()
+        assert [int, str, float] == res.column_types()
+        assert {'id': 1, 'val': 'a', 'new1': 3.0} == res[0]
 
     def test_add_columns_two(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         ta1 = XArray([3.0, 2.0, 1.0])
         ta2 = XArray([30.0, 20.0, 10.0])
         res = tf.add_columns([ta1, ta2], names=['new1', 'new2'])
-        assert res.column_names() == ['id', 'val', 'new1', 'new2']
-        assert res.column_types() == [int, str, float, float]
-        assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}
+        assert ['id', 'val', 'new1', 'new2'] == res.column_names()
+        assert [int, str, float, float] == res.column_types()
+        assert {'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0} == res[0]
 
     def test_add_columns_namelist_missing(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -1767,7 +1770,7 @@ class TestXFrameAddColumnsArray:
         with pytest.raises(TypeError) as exception_info:
             tf.add_columns([ta1, ta2])
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Namelist must be an iterable.'
+        assert 'Namelist must be an iterable.' == exception_message
 
     # noinspection PyTypeChecker
     def test_add_columns_data_not_iterable(self):
@@ -1775,7 +1778,7 @@ class TestXFrameAddColumnsArray:
         with pytest.raises(TypeError) as exception_info:
             tf.add_columns(1, names=[])
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column list must be an iterable.'
+        assert 'Column list must be an iterable.' == exception_message
 
     # noinspection PyTypeChecker
     def test_add_columns_namelist_not_iterable(self):
@@ -1785,7 +1788,7 @@ class TestXFrameAddColumnsArray:
         with pytest.raises(TypeError) as exception_info:
             tf.add_columns([ta1, ta2], names=1)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Namelist must be an iterable.'
+        assert 'Namelist must be an iterable.' == exception_message
 
     def test_add_columns_not_xarray(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -1794,7 +1797,7 @@ class TestXFrameAddColumnsArray:
         with pytest.raises(TypeError) as exception_info:
             tf.add_columns([ta1, ta2], names=['new1', 'new2'])
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Must give column as XArray.'
+        assert 'Must give column as XArray.' == exception_message
 
     def test_add_columns_name_not_str(self):
         tf = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -1803,7 +1806,7 @@ class TestXFrameAddColumnsArray:
         with pytest.raises(TypeError) as exception_info:
             tf.add_columns([ta1, ta2], names=['new1', 1])
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Invalid column name in list : must all be str."
+        assert "Invalid column name in list : must all be str." == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -1816,17 +1819,17 @@ class TestXFrameAddColumnsFrame:
         tf1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         tf2 = XFrame({'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
         res = tf1.add_columns(tf2)
-        assert res.column_names() == ['id', 'val', 'new1', 'new2']
-        assert res.column_types() == [int, str, float, float]
-        assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0}
+        assert ['id', 'val', 'new1', 'new2'] == res.column_names()
+        assert [int, str, float, float] == res.column_types()
+        assert {'id': 1, 'val': 'a', 'new1': 3.0, 'new2': 30.0} == res[0]
 
     def test_add_columns_dup_names(self):
         tf1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         tf2 = XFrame({'new1': [3.0, 2.0, 1.0], 'val': [30.0, 20.0, 10.0]})
         res = tf1.add_columns(tf2)
-        assert res.column_names() == ['id', 'val', 'new1', 'val.1']
-        assert res.column_types() == [int, str, float, float]
-        assert res[0] == {'id': 1, 'val': 'a', 'new1': 3.0, 'val.1': 30.0}
+        assert ['id', 'val', 'new1', 'val.1'] == res.column_names()
+        assert [int, str, float, float] == res.column_types()
+        assert {'id': 1, 'val': 'a', 'new1': 3.0, 'val.1': 30.0} == res[0]
 
 
 # noinspection PyClassHasNoInit
@@ -1839,8 +1842,8 @@ class TestXFrameReplaceColumn:
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         a = XArray(['x', 'y', 'z'])
         res = t.replace_column('val', a)
-        assert res.column_names() == ['id', 'val']
-        assert res[0] == {'id': 1, 'val': 'x'}
+        assert ['id', 'val'] == res.column_names()
+        assert {'id': 1, 'val': 'x'} == res[0]
 
     # noinspection PyTypeChecker
     def test_replace_column_bad_col_type(self):
@@ -1848,7 +1851,7 @@ class TestXFrameReplaceColumn:
         with pytest.raises(TypeError) as exception_info:
             t.replace_column('val', ['x', 'y', 'z'])
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Must give column as XArray.'
+        assert 'Must give column as XArray.' == exception_message
 
     def test_replace_column_bad_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -1856,7 +1859,7 @@ class TestXFrameReplaceColumn:
         with pytest.raises(ValueError) as exception_info:
             t.replace_column('xx', a)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column name must be in XFrame.'
+        assert 'Column name must be in XFrame.' ==exception_message
 
     # noinspection PyTypeChecker
     def test_replace_column_bad_name_type(self):
@@ -1865,7 +1868,7 @@ class TestXFrameReplaceColumn:
         with pytest.raises(TypeError) as exception_info:
             t.replace_column(2, a)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Invalid column name: must be str.'
+        assert 'Invalid column name: must be str.' == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -1878,29 +1881,29 @@ class TestXFrameRemoveColumn:
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         res = t.remove_column('another')
         assert res[0] == {'id': 1, 'val': 'a'}
-        assert len(t.column_names()) == 3
-        assert len(res.column_names()) == 2
+        assert 3 == len(t.column_names())
+        assert 2 == len(res.column_names())
 
     def test_remove_column_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(KeyError) as exception_info:
             t.remove_column('xx')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Cannot find column 'xx'."
+        assert "Cannot find column 'xx'." == exception_message
 
     def test_remove_column_many(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
         res = t.remove_column(['new1', 'new2'])
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert len(t.column_names()) == 4
-        assert len(res.column_names()) == 2
+        assert {'id': 1, 'val': 'a'} ==res[0]
+        assert 4 == len(t.column_names())
+        assert 2 == len(res.column_names())
 
     def test_remove_column_many_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(TypeError) as exception_info:
             t.remove_columns(10)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column_names must be an iterable.'
+        assert 'Column_names must be an iterable.' == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -1940,23 +1943,23 @@ class TestXFrameSwapColumns:
     def test_swap_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         res = t.swap_columns('val', 'x')
-        assert res.column_names() == ['id', 'x', 'val']
-        assert t.column_names() == ['id', 'val', 'x']
-        assert res[0] == {'id': 1, 'x': 3.0, 'val': 'a'}
+        assert ['id', 'x', 'val'] == res.column_names()
+        assert ['id', 'val', 'x'] == t.column_names()
+        assert {'id': 1, 'x': 3.0, 'val': 'a'} == res[0]
 
     def test_swap_columns_bad_col_1(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(KeyError) as exception_info:
             t.swap_columns('xx', 'another')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Cannot find column 'xx'."
+        assert "Cannot find column 'xx'." == exception_message
 
     def test_swap_columns_bad_col_2(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(KeyError) as exception_info:
             t.swap_columns('val', 'xx')
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Cannot find column 'xx'."
+        assert "Cannot find column 'xx'." == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -1968,9 +1971,9 @@ class TestXFrameReorderColumns:
     def test_reorder_columns(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [3.0, 2.0, 1.0]})
         res = t.reorder_columns(['val', 'x', 'id'])
-        assert res.column_names() == ['val', 'x', 'id']
-        assert t.column_names() == ['id', 'val', 'x']
-        assert res[0] == {'id': 1, 'x': 3.0, 'val': 'a'}
+        assert ['val', 'x', 'id'] == res.column_names()
+        assert ['id', 'val', 'x'] == t.column_names()
+        assert {'id': 1, 'x': 3.0, 'val': 'a'} == res[0]
 
     # noinspection PyTypeChecker
     def test_reorder_columns_list_not_iterable(self):
@@ -2004,9 +2007,9 @@ class TestXFrameRename:
     def test_rename(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.rename({'id': 'new_id'})
-        assert res.column_names() == ['new_id', 'val']
-        assert t.column_names() == ['id', 'val']
-        assert res[0] == {'new_id': 1, 'val': 'a'}
+        assert ['new_id', 'val'] == res.column_names()
+        assert ['id', 'val'] == t.column_names()
+        assert {'new_id': 1, 'val': 'a'} == res[0]
 
     # noinspection PyTypeChecker
     def test_rename_arg_not_dict(self):
@@ -2014,28 +2017,28 @@ class TestXFrameRename:
         with pytest.raises(TypeError) as exception_info:
             t.rename('id')
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Names must be a dictionary: oldname -> newname or a list of newname (str).'
+        assert 'Names must be a dictionary: oldname -> newname or a list of newname (str).' == exception_message
 
     def test_rename_col_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(ValueError) as exception_info:
             t.rename({'xx': 'new_id'})
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Cannot find column 'xx' in the XFrame."
+        assert "Cannot find column 'xx' in the XFrame." == exception_message
 
     def test_rename_bad_length(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(ValueError) as exception_info:
             t.rename(['id'])
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Names must be the same length as the number of columns (names: 1 columns: 2).'
+        assert 'Names must be the same length as the number of columns (names: 1 columns: 2).' == exception_message
 
     def test_rename_list(self):
         t = XFrame({'X.0': [1, 2, 3], 'X.1': ['a', 'b', 'c']})
         res = t.rename(['id', 'val'])
-        assert res.column_names() == ['id', 'val']
-        assert t.column_names() == ['X.0', 'X.1']
-        assert res[0] == {'id': 1, 'val': 'a'}
+        assert ['id', 'val'] == res.column_names()
+        assert ['X.0', 'X.1'] == t.column_names()
+        assert {'id': 1, 'val': 'a'} == res[0]
 
 
 # noinspection PyClassHasNoInit
@@ -2047,51 +2050,51 @@ class TestXFrameGetitem:
     def test_getitem_str(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t['id']
-        assert list(res) == [1, 2, 3]
+        assert [1, 2, 3] == list(res)
 
     def test_getitem_int_pos(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t[1]
-        assert res == {'id': 2, 'val': 'b'}
+        assert {'id': 2, 'val': 'b'} == res
 
     def test_getitem_int_neg(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t[-2]
-        assert res == {'id': 2, 'val': 'b'}
+        assert {'id': 2, 'val': 'b'} == res
 
     def test_getitem_int_too_low(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(IndexError) as exception_info:
             _ = t[-100]
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'XFrame index out of range (too low).'
+        assert 'XFrame index out of range (too low).' == exception_message
 
     def test_getitem_int_too_high(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(IndexError) as exception_info:
             _ = t[100]
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'XFrame index out of range (too high).'
+        assert 'XFrame index out of range (too high).' == exception_message
 
     def test_getitem_slice(self):
         # TODO we could test more variations of slice
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t[:2]
-        assert len(res) == 2
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 2 == len(res)
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
     def test_getitem_list(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'x': [1.0, 2.0, 3.0]})
         res = t[['id', 'x']]
-        assert res[1] == {'id': 2, 'x': 2.0}
+        assert {'id': 2, 'x': 2.0} == res[1]
 
     def test_getitem_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(TypeError) as exception_info:
             _ = t[{'a': 1}]
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Invalid index type: must be XArray, 'int', 'list', slice, or 'str': (dict)."
+        assert "Invalid index type: must be XArray, 'int', 'list', slice, or 'str': (dict)." == exception_message
 
     # TODO: need to implement
     def test_getitem_xarray(self):
@@ -2173,14 +2176,14 @@ class TestXFrameDelitem:
     def test_delitem(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         del t['another']
-        assert t[0] == {'id': 1, 'val': 'a'}
+        assert {'id': 1, 'val': 'a'} == t[0]
 
     def test_delitem_not_found(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'another': [3.0, 2.0, 1.0]})
         with pytest.raises(KeyError) as exception_info:
             del t['xx']
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Cannot find column 'xx'."
+        assert "Cannot find column 'xx'." == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -2191,12 +2194,12 @@ class TestXFrameIsMaterialized:
 
     def test_is_materialized_false(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        assert t._is_materialized() is False
+        assert False is t._is_materialized()
 
     def test_is_materialized(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         len(t)
-        assert t._is_materialized() is True
+        assert True is t._is_materialized()
 
 
 # noinspection PyClassHasNoInit
@@ -2223,33 +2226,33 @@ class TestXFrameRange:
     def test_range_int_pos(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.range(1)
-        assert res == {'id': 2, 'val': 'b'}
+        assert {'id': 2, 'val': 'b'} == res
 
     def test_range_int_neg(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.range(-2)
-        assert res == {'id': 2, 'val': 'b'}
+        assert {'id': 2, 'val': 'b'} == res
 
     def test_range_int_too_low(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(IndexError) as exception_info:
             _ = t.range(-100)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'XFrame index out of range (too low).'
+        assert 'XFrame index out of range (too low).' == exception_message
 
     def test_range_int_too_high(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         with pytest.raises(IndexError) as exception_info:
             _ = t.range(100)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'XFrame index out of range (too high).'
+        assert 'XFrame index out of range (too high).' == exception_message
 
     def test_range_slice(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.range(slice(0, 2))
-        assert len(res) == 2
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 2 == len(res)
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
     # noinspection PyTypeChecker
     def test_range_bad_type(self):
@@ -2257,7 +2260,7 @@ class TestXFrameRange:
         with pytest.raises(TypeError) as exception_info:
             _ = t.range({'a': 1})
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Invalid argument type: must be int or slice (dict).'
+        assert 'Invalid argument type: must be int or slice (dict).' == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -2270,9 +2273,9 @@ class TestXFrameAppend:
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame({'id': [10, 20, 30], 'val': ['aa', 'bb', 'cc']})
         res = t1.append(t2)
-        assert len(res) == 6
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[3] == {'id': 10, 'val': 'aa'}
+        assert 6 == len(res)
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 10, 'val': 'aa'} == res[3]
 
     # noinspection PyTypeChecker
     def test_append_bad_type(self):
@@ -2280,27 +2283,27 @@ class TestXFrameAppend:
         with pytest.raises(RuntimeError) as exception_info:
             t1.append(1)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'XFrame append can only work with XFrame.'
+        assert 'XFrame append can only work with XFrame.' == exception_message
 
     def test_append_both_empty(self):
         t1 = XFrame()
         t2 = XFrame()
         res = t1.append(t2)
-        assert len(res) == 0
+        assert 0 == len(res)
 
     def test_append_first_empty(self):
         t1 = XFrame()
         t2 = XFrame({'id': [10, 20, 30], 'val': ['aa', 'bb', 'cc']})
         res = t1.append(t2)
-        assert len(res) == 3
-        assert res[0] == {'id': 10, 'val': 'aa'}
+        assert 3 == len(res)
+        assert {'id': 10, 'val': 'aa'} == res[0]
 
     def test_append_second_empty(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         t2 = XFrame()
         res = t1.append(t2)
-        assert len(res) == 3
-        assert res[0] == {'id': 1, 'val': 'a'}
+        assert 3 == len(res)
+        assert {'id': 1, 'val': 'a'} ==res[0]
 
     def test_append_unequal_col_length(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2308,7 +2311,7 @@ class TestXFrameAppend:
         with pytest.raises(RuntimeError) as exception_info:
             t1.append(t2)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Two XFrames must have the same number of columns.'
+        assert 'Two XFrames must have the same number of columns.' == exception_message
 
     def test_append_col_name_mismatch(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2316,7 +2319,7 @@ class TestXFrameAppend:
         with pytest.raises(RuntimeError) as exception_info:
             t1.append(t2)
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column val name is not the same in two XFrames, one is val the other is xx.'
+        assert 'Column val name is not the same in two XFrames, one is val the other is xx.' == exception_message
 
     def test_append_col_type_mismatch(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2340,12 +2343,12 @@ class TestXFrameGroupby:
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {})
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id']
-        assert res.column_types() == [int]
-        assert res[0] == {'id': 1}
-        assert res[1] == {'id': 2}
-        assert res[2] == {'id': 3}
+        assert 3 == len(res)
+        assert ['id'] == res.column_names()
+        assert [int] == res.column_types()
+        assert {'id': 1} == res[0]
+        assert {'id': 2} == res[1]
+        assert {'id': 3} == res[2]
 
     def test_groupby_nooperation(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2353,12 +2356,12 @@ class TestXFrameGroupby:
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id')
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id']
-        assert res.column_types() == [int]
-        assert res[0] == {'id': 1}
-        assert res[1] == {'id': 2}
-        assert res[2] == {'id': 3}
+        assert 3 == len(res)
+        assert ['id'] == res.column_names()
+        assert [int] == res.column_types()
+        assert {'id': 1} == res[0]
+        assert {'id': 2} == res[1]
+        assert {'id': 3} == res[2]
 
     # noinspection PyTypeChecker
     def test_groupby_bad_col_name_type(self):
@@ -2368,7 +2371,7 @@ class TestXFrameGroupby:
         with pytest.raises(TypeError) as exception_info:
             t.groupby(1, {})
         exception_message = exception_info.value.args[0]
-        assert exception_message == "'int' object is not iterable"
+        assert "'int' object is not iterable" == exception_message
 
     # noinspection PyTypeChecker
     def test_groupby_bad_col_name_list_type(self):
@@ -2378,7 +2381,7 @@ class TestXFrameGroupby:
         with pytest.raises(TypeError) as exception_info:
             t.groupby([1], {})
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column name must be a string.'
+        assert 'Column name must be a string.' == exception_message
 
     def test_groupby_bad_col_group_name(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2387,7 +2390,7 @@ class TestXFrameGroupby:
         with pytest.raises(KeyError) as exception_info:
             t.groupby('xx', {})
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Column 'xx' does not exist in XFrame."
+        assert "Column 'xx' does not exist in XFrame." ==exception_message
 
     def test_groupby_bad_group_type(self):
         t = XFrame({'id': [{1: 'a', 2: 'b'}, {3: 'c'}],
@@ -2395,7 +2398,7 @@ class TestXFrameGroupby:
         with pytest.raises(TypeError) as exception_info:
             t.groupby('id', {})
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Cannot group on a dictionary column.'
+        assert 'Cannot group on a dictionary column.' == exception_message
 
     def test_groupby_bad_agg_group_name(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2404,7 +2407,7 @@ class TestXFrameGroupby:
         with pytest.raises(KeyError) as exception_info:
             t.groupby('id', SUM('xx'))
         exception_message = exception_info.value.args[0]
-        assert exception_message == "Column 'xx' does not exist in XFrame."
+        assert "Column 'xx' does not exist in XFrame." == exception_message
 
     def test_groupby_bad_agg_group_type(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2413,7 +2416,7 @@ class TestXFrameGroupby:
         with pytest.raises(TypeError) as exception_info:
             t.groupby('id', SUM(1))
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Column name must be a string.'
+        assert 'Column name must be a string.' == exception_message
 
 
 # noinspection PyClassHasNoInit
@@ -2513,7 +2516,6 @@ class TestXFrameGroupbyAggregators:
         assert res[1] == {'sum': 2, 'sum.1': 70}
         assert res[2] == {'sum': 3, 'sum.1': 30}
 
-    # TODO fix
     def test_groupby_count_sum(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f'],
