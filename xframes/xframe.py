@@ -3150,22 +3150,22 @@ class XFrame(object):
         elif isinstance(key, str):
             if isinstance(value, XArray):
                 sa_value = value
-            elif hasattr(value, '__iter__'):  # wrap list, array... to xarray
-                sa_value = XArray(value)
-            else:
+            elif isinstance(value, (int, float, str, array.array, dict)):
                 # Special case of adding a const column.
                 # It is very inefficient to create a column and then zip it in
                 # a) num_rows() is inefficient
                 # b) parallelize is inefficient
                 # c) partitions differ, so zip --> zipWithIndex, sortByKey, etc
                 # Map it in instead
-                if not isinstance(value, (int, float, str, array.array, list, dict)):
-                    raise TypeError("Cannot create xarray of value type '{}'.".format(type(value).__name__))
                 if key not in self.column_names():
                     self._impl.add_column_const_in_place(key, value)
                 else:
                     self._impl.replace_column_const_in_place(key, value)
                 return
+            elif hasattr(value, '__iter__'):  # wrap list, array... to xarray
+                sa_value = XArray(value)
+            else:
+                raise TypeError("Cannot create xarray of value type '{}'.".format(type(value).__name__))
 
             # set new column
             if key not in self.column_names():

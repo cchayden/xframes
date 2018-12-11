@@ -1874,12 +1874,14 @@ class XFrameImpl(TracedObject):
                     raise ValueError("Key '{}' is not a column name.".format(right_key))
                 right_index = right.col_names.index(right_key)
                 right_key_indexes.append(right_index)
-                right_key_indexes.sort(reverse=True)
+                # if this move things, then the keys will be wrong
+                # if we do not do it. then pops will be wrong
+#                right_key_indexes.sort(reverse=True)
 
             # make a list of the right column names and types
             right_column_names = list(right.col_names)
             right_column_types = list(right.column_types)
-            for i in right_key_indexes:
+            for i in sorted(right_key_indexes, reverse=True):
                 right_column_names.pop(i)
                 right_column_types.pop(i)
 
@@ -1924,14 +1926,14 @@ class XFrameImpl(TracedObject):
                 return left_row, right_row
 
             # remove redundant key fields from the right
-            # take into account any missing any missing rows
+            # take into account any missing rows
             def fixup(left_row, right_row, left_count, right_count, left_key_indexes, right_key_indexes):
                 left_list = list([None] * left_count) if left_row is None else list(left_row)
                 right_list = list([None] * right_count) if right_row is None else list(right_row)
                 for left_index, right_index in zip(left_key_indexes, right_key_indexes):
                     if left_list[left_index] is None:
                         left_list[left_index] = right_list[right_index]
-                for index in right_key_indexes:
+                for index in sorted(right_key_indexes, reverse=True):
                     right_list.pop(index)
                 return tuple(tuple(left_list) + tuple(right_list))
 
