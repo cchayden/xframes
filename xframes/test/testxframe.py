@@ -79,44 +79,44 @@ class TestXFrameConstructor:
     def test_construct_auto_str_csv(self):
         path = 'files/test-frame.csv'
         res = XFrame(path)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_construct_auto_str_tsv(self):
         path = 'files/test-frame.tsv'
         res = XFrame(path)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_construct_auto_str_psv(self):
         path = 'files/test-frame.psv'
         res = XFrame(path)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_construct_auto_str_txt(self):
         # construct and XFrame given a text file
         # interpret as csv
         path = 'files/test-frame.txt'
         res = XFrame(path)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     # TODO fix
     def test_construct_auto_str_noext(self):
@@ -125,12 +125,12 @@ class TestXFrameConstructor:
         path = 'files/test-frame'
         res = XFrame(path)
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_construct_auto_pandas_dataframe(self):
         df = pandas.DataFrame({'id': [1, 2, 3], 'val': [10.0, 20.0, 30.0]})
@@ -159,22 +159,22 @@ class TestXFrameConstructor:
         # construct and XFrame given an XArray
         xa = XArray([1, 2, 3])
         t = XFrame(xa)
-        assert len(t) == 3
-        assert t.column_names() == ['X.0']
-        assert t.column_types() == [int]
-        assert t[0] == {'X.0': 1}
-        assert t[1] == {'X.0': 2}
-        assert t[2] == {'X.0': 3}
+        assert 3 == len(t)
+        assert ['X.0'] == t.column_names()
+        assert [int] == t.column_types()
+        assert {'X.0': 1} == t[0]
+        assert {'X.0': 2} == t[1]
+        assert {'X.0': 3} == t[2]
 
     def test_construct_xframe(self):
         # construct an XFrame given another XFrame
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = XFrame(t)
-        assert len(res) == 3
+        assert 3 == len(res)
         res = res.sort('id')
-        assert list(res['id']) == [1, 2, 3]
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
+        assert [1, 2, 3] == list(res['id'])
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
 
     def test_construct_iteritems(self):
         # construct an XFrame from an object that has iteritems
@@ -210,12 +210,12 @@ class TestXFrameConstructor:
                 return iter([1, 2, 3])
 
         t = XFrame(MyIter())
-        assert len(t) == 3
-        assert t.column_names() == ['X.0']
-        assert t.column_types() == [int]
-        assert t[0] == {'X.0': 1}
-        assert t[1] == {'X.0': 2}
-        assert t[2] == {'X.0': 3}
+        assert 3 == len(t)
+        assert ['X.0'] == t.column_names()
+        assert [int] == t.column_types()
+        assert {'X.0': 1} == t[0]
+        assert {'X.0': 2} == t[1]
+        assert {'X.0': 3} == t[2]
 
     def test_construct_iter_bad(self):
         # construct an XFrame from an object that has __iter__
@@ -226,24 +226,24 @@ class TestXFrameConstructor:
         with pytest.raises(TypeError) as exception_info:
             _ = XFrame(MyIter())
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Cannot determine types.'
+        assert 'Cannot determine types.' == exception_message
 
     def test_construct_empty(self):
         # construct an empty XFrame
         t = XFrame()
-        assert len(t) == 0
+        assert 0 == len(t)
 
     def test_construct_str_csv(self):
         # construct and XFrame given a text file
         # interpret as csv
         path = 'files/test-frame.txt'
         res = XFrame(path, format='csv')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     # TODO fix
     def test_construct_str_xframe(self):
@@ -251,18 +251,18 @@ class TestXFrameConstructor:
         path = 'files/test-frame'
         res = XFrame(path, format='xframe')
         res = res.sort('id')
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_construct_array(self):
         # construct an XFrame from an array
         t = XFrame([1, 2, 3], format='array')
-        assert len(t) == 3
-        assert list(t['X.0']) == [1, 2, 3]
+        assert 3 == len(t)
+        assert [1, 2, 3] == list(t['X.0'])
 
     def test_construct_array_mixed_xarray(self):
         # construct an XFrame from an xarray and values
@@ -308,50 +308,50 @@ class TestXFrameConstructor:
         # construct an XFrame from a dict of int
         t = XFrame({'id': [1, 2, 3], 'val': [10, 20, 30]}, format='dict')
         res = XFrame(t)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, int]
-        assert res[0] == {'id': 1, 'val': 10}
-        assert res[1] == {'id': 2, 'val': 20}
-        assert res[2] == {'id': 3, 'val': 30}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, int] == res.column_types()
+        assert {'id': 1, 'val': 10} == res[0]
+        assert {'id': 2, 'val': 20} == res[1]
+        assert {'id': 3, 'val': 30} == res[2]
 
     def test_construct_dict_float(self):
         # construct an XFrame from a dict of float
         t = XFrame({'id': [1.0, 2.0, 3.0], 'val': [10.0, 20.0, 30.0]}, format='dict')
         res = XFrame(t)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [float, float]
-        assert res[0] == {'id': 1.0, 'val': 10.0}
-        assert res[1] == {'id': 2.0, 'val': 20.0}
-        assert res[2] == {'id': 3.0, 'val': 30.0}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [float, float] == res.column_types()
+        assert {'id': 1.0, 'val': 10.0} == res[0]
+        assert {'id': 2.0, 'val': 20.0} == res[1]
+        assert {'id': 3.0, 'val': 30.0} == res[2]
 
     def test_construct_dict_str(self):
         # construct an XFrame from a dict of str
         t = XFrame({'id': ['a', 'b', 'c'], 'val': ['A', 'B', 'C']}, format='dict')
         res = XFrame(t)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [str, str]
-        assert res[0] == {'id': 'a', 'val': 'A'}
-        assert res[1] == {'id': 'b', 'val': 'B'}
-        assert res[2] == {'id': 'c', 'val': 'C'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [str, str] == res.column_types()
+        assert {'id': 'a', 'val': 'A'} == res[0]
+        assert {'id': 'b', 'val': 'B'} == res[1]
+        assert {'id': 'c', 'val': 'C'} == res[2]
 
     def test_construct_dict_int_str(self):
         # construct an XFrame from a dict of int and str
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']}, format='dict')
-        assert len(t) == 3
+        assert 3 == len(t)
         t = t.sort('id')
-        assert list(t['id']) == [1, 2, 3]
-        assert t.column_names() == ['id', 'val']
-        assert t.column_types() == [int, str]
+        assert [1, 2, 3] == list(t['id'])
+        assert ['id', 'val'] == t.column_names()
+        assert [int, str] == t.column_types()
 
     def test_construct_dict_int_str_bad_len(self):
         # construct an XFrame from a dict of int and str with different lengths
         with pytest.raises(ValueError) as exception_info:
             XFrame({'id': [1, 2, 3], 'val': ['a', 'b']})
         exception_message = exception_info.value.args[0]
-        assert exception_message == 'Cannot create XFrame from dict of lists of different lengths.'
+        assert 'Cannot create XFrame from dict of lists of different lengths.' == exception_message
 
     def test_construct_binary(self):
         # make binary file
@@ -359,18 +359,18 @@ class TestXFrameConstructor:
         path = 'tmp/frame'
         t.save(path, format='binary')  # File does not necessarily save in order
         res = XFrame(path).sort('id')  # so let's sort after we read it back
-        assert len(res) == 3
-        assert t.column_names() == ['id', 'val']
-        assert t.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == t.column_names()
+        assert [int, str] == t.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
 
     def test_construct_rdd(self):
         sc = CommonSparkContext.spark_context()
         rdd = sc.parallelize([(1, 'a'), (2, 'b'), (3, 'c')])
         res = XFrame(rdd)
-        assert len(res) == 3
-        assert res[0] == {'X.0': 1, 'X.1': 'a'}
-        assert res[1] == {'X.0': 2, 'X.1': 'b'}
+        assert 3 == len(res)
+        assert {'X.0': 1, 'X.1': 'a'} == res[0]
+        assert {'X.0': 2, 'X.1': 'b'} == res[1]
 
     def test_construct_spark_dataframe(self):
         sc = CommonSparkContext.spark_context()
@@ -380,10 +380,10 @@ class TestXFrameConstructor:
         sqlc = CommonSparkContext.spark_sql_context()
         s_rdd = sqlc.createDataFrame(rdd, schema)
         res = XFrame(s_rdd)
-        assert len(res) == 3
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
+        assert 3 == len(res)
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
 
     def test_construct_binary_not_exist(self):
         path = 'does-not-exist'
@@ -402,7 +402,7 @@ class TestXFrameReadCsvWithErrors:
     def test_read_csv_no_errors(self):
         path = 'files/test-frame.csv'
         res, errs = XFrame.read_csv_with_errors(path)
-        assert len(res) == 3
+        assert 3 == len(res)
         assert errs == {}
 
     def test_read_csv_width_error(self):
@@ -411,10 +411,10 @@ class TestXFrameReadCsvWithErrors:
         assert 'width' in errs
         width_errs = errs['width']
         assert isinstance(width_errs, XArray)
-        assert len(width_errs) == 2
-        assert width_errs[0] == '1'
-        assert width_errs[1] == '2,x,y'
-        assert len(res) == 2
+        assert 2 == len(width_errs)
+        assert '1' == width_errs[0]
+        assert '2,x,y' == width_errs[1]
+        assert 2 == len(res)
 
     def test_read_csv_null_error(self):
         path = 'files/test-frame-null.csv'
@@ -422,9 +422,9 @@ class TestXFrameReadCsvWithErrors:
         assert 'csv' in errs
         csv_errs = errs['csv']
         assert isinstance(csv_errs, XArray)
-        assert len(csv_errs) == 1
-        assert csv_errs[0] == '2,\x00b'
-        assert len(res) == 1
+        assert 1 == len(csv_errs)
+        assert '2,\x00b' == csv_errs[0]
+        assert 1 == len(res)
 
     def test_read_csv_null_header_error(self):
         path = 'files/test-frame-null-header.csv'
@@ -432,9 +432,9 @@ class TestXFrameReadCsvWithErrors:
         assert 'header' in errs
         csv_errs = errs['header']
         assert isinstance(csv_errs, XArray)
-        assert len(csv_errs) == 1
-        assert csv_errs[0] == 'id,\x00val'
-        assert len(res) == 0
+        assert 1 == len(csv_errs)
+        assert 'id,\x00val' == csv_errs[0]
+        assert 0 == len(res)
 
     def test_read_csv_file_not_exist(self):
         path = 'files/does-not-exist.csv'
@@ -456,12 +456,12 @@ class TestXFrameReadCsv:
     def test_read_csv(self):
         path = 'files/test-frame.csv'
         res = XFrame.read_csv(path)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'val': 'a'}
-        assert res[1] == {'id': 2, 'val': 'b'}
-        assert res[2] == {'id': 3, 'val': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'val': 'a'} == res[0]
+        assert {'id': 2, 'val': 'b'} == res[1]
+        assert {'id': 3, 'val': 'c'} == res[2]
 
     def test_read_csv_verbose(self):
         path = 'files/test-frame.csv'
@@ -2513,18 +2513,19 @@ class TestXFrameGroupbyAggregators:
         assert res[1] == {'sum': 2, 'sum.1': 70}
         assert res[2] == {'sum': 3, 'sum.1': 30}
 
+    # TODO fix
     def test_groupby_count_sum(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
                     'val': ['a', 'b', 'c', 'd', 'e', 'f'],
                     'another': [10, 20, 30, 40, 50, 60]})
         res = t.groupby('id', {'count': COUNT, 'sum': SUM('another')})
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'count', 'sum']
-        assert res.column_types() == [int, int, int]
-        assert res[0] == {'id': 1, 'count': 3, 'sum': 110}
-        assert res[1] == {'id': 2, 'count': 2, 'sum': 70}
-        assert res[2] == {'id': 3, 'count': 1, 'sum': 30}
+        assert 3 == len(res)
+        assert ['count', 'id', 'sum'] == sorted(res.column_names())
+        assert [int, int, int] == res.column_types()
+        assert {'id': 1, 'count': 3, 'sum': 110} == res[0]
+        assert {'id': 2, 'count': 2, 'sum': 70} == res[1]
+        assert {'id': 3, 'count': 1, 'sum': 30} == res[2]
 
     def test_groupby_count_sum_def(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2715,10 +2716,10 @@ class TestXFrameGroupbyAggregators:
         res = t.groupby('id', SELECT_ONE('val'))
         res = res.topk('id', reverse=True)
         assert 3 == len(res)
-        assert ['id', 'select-one'] == res.column_names()
+        assert ['id', 'select-one'] == sorted(res.column_names())
         assert [int, str] == res.column_types()
-        assert {'id': 1, 'select-one': 'f'} == res[0]
-        assert {'id': 2, 'select-one': 'e'} == res[1]
+        assert {'id': 1, 'select-one': 'a'} == res[0]
+        assert {'id': 2, 'select-one': 'b'} == res[1]
         assert {'id': 3, 'select-one': 'c'} == res[2]
 
     def test_groupby_concat_list(self):
@@ -2753,12 +2754,12 @@ class TestXFrameGroupbyAggregators:
                     'another': [10, 20, 30, 40, 50, 60, 10]})
         res = t.groupby('id', VALUES('another'))
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'values']
-        assert res.column_types() == [int, list]
-        assert dict_keys_equal(res[0], {'id': 1, 'values': [10, 40, 60]})
-        assert dict_keys_equal(res[2], {'id': 2, 'values': [20, 50]})
-        assert res[2] == {'id': 3, 'values': [30]}
+        assert 3 == len(res)
+        assert ['id', 'values'] == res.column_names()
+        assert [int, list] == res.column_types()
+        assert dict_keys_equal({'id': 1, 'values': [10, 40, 60]}, res[0])
+        assert dict_keys_equal({'id': 2, 'values': [20, 50]}, res[2])
+        assert {'id': 3, 'values': [30]} == res[2]
 
     def test_groupby_values_count_list(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1, 1],
@@ -2766,12 +2767,12 @@ class TestXFrameGroupbyAggregators:
                     'another': [10, 20, 30, 40, 50, 60, 10]})
         res = t.groupby('id', VALUES_COUNT('another'))
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'values-count']
-        assert res.column_types() == [int, dict]
-        assert dict_keys_equal(res[0], {'id': 1, 'values-count': {10: 2, 40: 1, 60: 1}})
-        assert dict_keys_equal(res[2], {'id': 2, 'values-count': {20: 1, 50: 1}})
-        assert res[2] == {'id': 3, 'values-count': {30: 1}}
+        assert 3 == len(res)
+        assert ['id', 'values-count'] == res.column_names()
+        assert [int, dict] == res.column_types()
+        assert dict_keys_equal({'id': 1, 'values-count': {10: 2, 40: 1, 60: 1}}, res[0])
+        assert dict_keys_equal({'id': 2, 'values-count': {20: 1, 50: 1}}, res[2])
+        assert {'id': 3, 'values-count': {30: 1}} == res[2]
 
     def test_groupby_quantile(self):
         # not implemented
@@ -2811,12 +2812,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues:
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', SUM('another'))
 #        res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'sum']
-        assert res.column_types() == [int, int]
-        assert res[0] == {'id': 1, 'sum': 70}
-        assert res[1] == {'id': 2, 'sum': 20}
-        assert res[2] == {'id': 3, 'sum': 30}
+        assert 3 == len(res)
+        assert ['id', 'sum'] == res.column_names()
+        assert [int, int] == res.column_types()
+        assert {'id': 1, 'sum': 70} == res[0]
+        assert {'id': 2, 'sum': 20} == res[1]
+        assert {'id': 3, 'sum': 30} == res[2]
 
     def test_groupby_argmax(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2824,12 +2825,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues:
                     'another': [10, 20, 30, 40, None, None]})
         res = t.groupby('id', {'argmax': ARGMAX('another', 'val')})
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'argmax']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'argmax': 'd'}
-        assert res[1] == {'id': 2, 'argmax': 'b'}
-        assert res[2] == {'id': 3, 'argmax': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'argmax'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'argmax': 'd'} == res[0]
+        assert {'id': 2, 'argmax': 'b'} == res[1]
+        assert {'id': 3, 'argmax': 'c'} == res[2]
 
     def test_groupby_argmin(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2837,12 +2838,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues:
                     'another': [10, None, 30, 40, 50, 60]})
         res = t.groupby('id', {'argmin': ARGMIN('another', 'val')})
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'argmin']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 1, 'argmin': 'a'}
-        assert res[1] == {'id': 2, 'argmin': 'e'}
-        assert res[2] == {'id': 3, 'argmin': 'c'}
+        assert 3 == len(res)
+        assert ['id', 'argmin'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 1, 'argmin': 'a'} == res[0]
+        assert {'id': 2, 'argmin': 'e'} == res[1]
+        assert {'id': 3, 'argmin': 'c'} == res[2]
 
     def test_groupby_max(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2850,12 +2851,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues:
                     'another': [10, 20, 30, None, None, 60]})
         res = t.groupby('id', {'max': MAX('another')})
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'max']
-        assert res.column_types() == [int, int]
-        assert res[0] == {'id': 1, 'max': 60}
-        assert res[1] == {'id': 2, 'max': 20}
-        assert res[2] == {'id': 3, 'max': 30}
+        assert 3 == len(res)
+        assert ['id', 'max'] == res.column_names()
+        assert [int, int] == res.column_types()
+        assert {'id': 1, 'max': 60} == res[0]
+        assert {'id': 2, 'max': 20} == res[1]
+        assert {'id': 3, 'max': 30} == res[2]
 
     def test_groupby_max_float(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -2863,12 +2864,12 @@ class TestXFrameGroupbyAggregatorsWithMissingValues:
                     'another': [10.0, 20.0, 30.0, float('nan'), float('nan'), 60.0]})
         res = t.groupby('id', {'max': MAX('another')})
         res = res.topk('id', reverse=True)
-        assert len(res) == 3
-        assert res.column_names() == ['id', 'max']
-        assert res.column_types() == [int, float]
-        assert res[0] == {'id': 1, 'max': 60.0}
-        assert res[1] == {'id': 2, 'max': 20.0}
-        assert res[2] == {'id': 3, 'max': 30.0}
+        assert 3 == len(res)
+        assert ['id', 'max'] == res.column_names()
+        assert [int, float] == res.column_types()
+        assert {'id': 1, 'max': 60.0} == res[0]
+        assert {'id': 2, 'max': 20.0} == res[1]
+        assert {'id': 3, 'max': 30.0} == res[2]
 
     def test_groupby_max_str(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -4472,10 +4473,10 @@ class TestXFrameAddRowNumber:
     def test_add_row_number_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.add_row_number(column_name='row_number')
-        assert res.column_names() == ['row_number', 'id', 'val']
-        assert res[0] == {'row_number': 0, 'id': 1, 'val': 'a'}
-        assert res[1] == {'row_number': 1, 'id': 2, 'val': 'b'}
-        assert res[2] == {'row_number': 2, 'id': 3, 'val': 'c'}
+        assert ['row_number', 'id', 'val'] == res.column_names()
+        assert {'row_number': 0, 'id': 1, 'val': 'a'} == res[0]
+        assert {'row_number': 1, 'id': 2, 'val': 'b'} == res[1]
+        assert {'row_number': 2, 'id': 3, 'val': 'c'} == res[2]
 
 
 # noinspection PyClassHasNoInit
@@ -4486,11 +4487,11 @@ class TestXFrameShape:
 
     def test_shape(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        assert t.shape == (3, 2)
+        assert (3, 2) == t.shape
 
     def test_shape_empty(self):
         t = XFrame()
-        assert t.shape == (0, 0)
+        assert (0, 0) == t.shape
 
 
 # noinspection SqlNoDataSourceInspection,SqlDialectInspection
@@ -4504,15 +4505,15 @@ class TestXFrameSql:
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.sql("SELECT * FROM xframe WHERE id > 1 ORDER BY id")
 
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 2, 'val': 'b'}
-        assert res[1] == {'id': 3, 'val': 'c'}
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 2, 'val': 'b'} == res[0]
+        assert {'id': 3, 'val': 'c'} == res[1]
 
     def test_sql_name(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res = t.sql("SELECT * FROM tmp_tbl WHERE id > 1 ORDER BY id", table_name='tmp_tbl')
-        assert res.column_names() == ['id', 'val']
-        assert res.column_types() == [int, str]
-        assert res[0] == {'id': 2, 'val': 'b'}
-        assert res[1] == {'id': 3, 'val': 'c'}
+        assert ['id', 'val'] == res.column_names()
+        assert [int, str] == res.column_types()
+        assert {'id': 2, 'val': 'b'} == res[0]
+        assert {'id': 3, 'val': 'c'} == res[1]
