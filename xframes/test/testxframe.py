@@ -38,7 +38,6 @@ def almost_equal(a, b, places=None, delta=None):
     return False
 
 
-
 def dict_keys_equal(expected, actual):
     expected_keys = sorted(expected.keys())
     actual_keys = sorted(actual.keys())
@@ -134,7 +133,7 @@ class TestXFrameConstructor:
     def test_construct_auto_pandas_dataframe(self):
         df = pandas.DataFrame({'id': [1, 2, 3], 'val': [10.0, 20.0, 30.0]})
         res = XFrame(df)
-        assert 3 ==len(res)
+        assert 3 == len(res)
         assert ['id', 'val'] == res.column_names()
         assert [int, float] == res.column_types()
         assert {'id': 1, 'val': 10.0} == res[0]
@@ -868,7 +867,7 @@ class TestXFrameToSparkDataFrame:
 
     def test_to_spark_dataframe_str_rename_bad_type(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
-        with pytest.raises(TypeError) as exception_info:
+        with pytest.raises(TypeError):
             t.to_spark_dataframe('tmp_tbl', column_names='id1')
 
     def test_to_spark_dataframe_str_rename_bad_len(self):
@@ -1180,8 +1179,8 @@ class TestXFrameToPandasDataframe:
         assert 3 == len(df)
         assert 1 == df['id'][0]
         assert 2 == df['id'][1]
-        assert True == df['val'][0]
-        assert False == df['val'][1]
+        assert True is df['val'][0]
+        assert False is df['val'][1]
 
     def test_to_pandas_dataframe_float(self):
         t = XFrame({'id': [1, 2, 3], 'val': [1.0, 2.0, 3.0]})
@@ -1469,11 +1468,11 @@ class TestXFrameRandomSplit:
         t = XFrame({'id': [1, 2, 3, 4, 5], 'val': ['a', 'b', 'c', 'd', 'e']})
         res1, res2 = t.random_split(0.5, 1)
         assert 3 == len(res1)
-        assert {'id': 1, 'val': 'a'} ==res1[0]
+        assert {'id': 1, 'val': 'a'} == res1[0]
         assert {'id': 4, 'val': 'd'} == res1[1]
         assert {'id': 5, 'val': 'e'} == res1[2]
         assert 2 == len(res2)
-        assert {'id': 2, 'val': 'b'} ==res2[0]
+        assert {'id': 2, 'val': 'b'} == res2[0]
         assert {'id': 3, 'val': 'c'} == res2[1]
 
 
@@ -1859,7 +1858,7 @@ class TestXFrameReplaceColumn:
         with pytest.raises(ValueError) as exception_info:
             t.replace_column('xx', a)
         exception_message = exception_info.value.args[0]
-        assert 'Column name must be in XFrame.' ==exception_message
+        assert 'Column name must be in XFrame.' == exception_message
 
     # noinspection PyTypeChecker
     def test_replace_column_bad_name_type(self):
@@ -1894,7 +1893,7 @@ class TestXFrameRemoveColumn:
     def test_remove_column_many(self):
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c'], 'new1': [3.0, 2.0, 1.0], 'new2': [30.0, 20.0, 10.0]})
         res = t.remove_column(['new1', 'new2'])
-        assert {'id': 1, 'val': 'a'} ==res[0]
+        assert {'id': 1, 'val': 'a'} == res[0]
         assert 4 == len(t.column_names())
         assert 2 == len(res.column_names())
 
@@ -2162,7 +2161,7 @@ class TestXFrameSetitem:
     def test_setitem_str_iter_replace_one_col(self):
         t = XFrame({'val': ['a', 'b', 'c']})
         t['val'] = [1.0, 2.0, 3.0, 4.0]
-        assert ['val'] ==  t.column_names()
+        assert ['val'] == t.column_names()
         assert 4 == len(t)
         assert {'val': 2.0} == t[1]
 
@@ -2303,7 +2302,7 @@ class TestXFrameAppend:
         t2 = XFrame()
         res = t1.append(t2)
         assert 3 == len(res)
-        assert {'id': 1, 'val': 'a'} ==res[0]
+        assert {'id': 1, 'val': 'a'} == res[0]
 
     def test_append_unequal_col_length(self):
         t1 = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
@@ -2390,7 +2389,7 @@ class TestXFrameGroupby:
         with pytest.raises(KeyError) as exception_info:
             t.groupby('xx', {})
         exception_message = exception_info.value.args[0]
-        assert "Column 'xx' does not exist in XFrame." ==exception_message
+        assert "Column 'xx' does not exist in XFrame." == exception_message
 
     def test_groupby_bad_group_type(self):
         t = XFrame({'id': [{1: 'a', 2: 'b'}, {3: 'c'}],
@@ -2461,7 +2460,7 @@ class TestXFrameGroupbyAggregators:
         assert ['id', 'record-count'] == res.column_names()
         assert [int, int] == res.column_types()
         assert {'id': 1, 'record-count': 3} == res[0]
-        assert {'id': 2, 'record-count': 2} ==res[1]
+        assert {'id': 2, 'record-count': 2} == res[1]
         assert {'id': 3, 'record-count': 1} == res[2]
 
     def test_groupby_sum(self):
@@ -2553,7 +2552,7 @@ class TestXFrameGroupbyAggregators:
         assert [int, str] == res.column_types()
         assert {'id': 1, 'argmax': 'f'} == res[0]
         assert {'id': 2, 'argmax': 'e'} == res[1]
-        assert {'id': 3, 'argmax': 'c'} ==res[2]
+        assert {'id': 3, 'argmax': 'c'} == res[2]
 
     def test_groupby_argmin(self):
         t = XFrame({'id': [1, 2, 3, 1, 2, 1],
@@ -3298,7 +3297,7 @@ class TestXFrameJoin:
         t2 = XFrame({'id': [10, 20, 30], 'val': ['a', 'b', 'c']})
         res = t1.join(t2, on='val').sort('id').head()
         assert 3 == len(res)
-        assert ['id', 'val', 'id.1'] ==res.column_names()
+        assert ['id', 'val', 'id.1'] == res.column_names()
         assert [int, str, int] == res.column_types()
         assert {'id': 1, 'val': 'a', 'id.1': 10} == res[0]
         assert {'id': 2, 'val': 'b', 'id.1': 20} == res[1]
@@ -3344,7 +3343,7 @@ class TestXFrameJoin:
         assert ['id', 'val', 'doubled'] == res.column_names()
         assert [int, str, str] == res.column_types()
         assert {'id': 1, 'val': 'a', 'doubled': 'aa'} == res[0]
-        assert {'id': 2, 'val': 'b', 'doubled': 'bb'} ==res[1]
+        assert {'id': 2, 'val': 'b', 'doubled': 'bb'} == res[1]
         assert {'id': 3, 'val': 'c', 'doubled': None} == res[2]
         assert {'id': 4, 'val': None, 'doubled': 'dd'} == res[3]
 
@@ -3659,7 +3658,6 @@ class TestXFramePackColumnsList:
         assert {'another': 10, 'new': [1, 'a']} == res[0]
         assert {'another': 20, 'new': [2, 'b']} == res[1]
 
-    # TODO fix assert
     def test_pack_columns_na(self):
         t = XFrame({'id': [1, 2, None, 4], 'val': ['a', 'b', 'c', None]})
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new', fill_na='x')
@@ -3669,7 +3667,7 @@ class TestXFramePackColumnsList:
         assert [list] == res.column_types()
         assert {'new': [1, 'a']} == res[0] == res[0]
         assert {'new': [2, 'b']} == res[1]
-        assert {'new': ['x', 'c']} ==res[2]
+        assert {'new': ['x', 'c']} == res[2]
         assert {'new': [4, 'x']} == res[3]
 
     def test_pack_columns_fill_na(self):
@@ -3677,9 +3675,9 @@ class TestXFramePackColumnsList:
         res = t.pack_columns(columns=['id', 'val'], new_column_name='new', fill_na=99)
         assert 4 == len(res)
         assert 1 == res.num_columns()
-        assert  ['new'] == res.column_names()
+        assert ['new'] == res.column_names()
         assert [list] == res.column_types()
-        assert  {'new': [1, 'a']} == res[0]
+        assert {'new': [1, 'a']} == res[0]
         assert {'new': [2, 'b']} == res[1]
         assert {'new': [99, 'c']} == res[2]
         assert {'new': [4, 99]} == res[3]
@@ -3794,6 +3792,7 @@ class TestXFramePackColumnsTuple:
         assert {'new': (1, 'a')} == res[0]
         assert {'new': (2, 'b')} == res[1]
 
+
 # noinspection PyClassHasNoInit
 class TestXFramePackColumnsDict:
     """
@@ -3828,7 +3827,7 @@ class TestXFramePackColumnsDict:
         assert [int, dict] == res.dtype()
         assert ['another', 'new'] == res.column_names()
         assert {'another': 10, 'new': {'id': 1, 'val': 'a'}} == res[0]
-        assert {'another': 20, 'new': {'id': 2, 'val': 'b'}} ==res[1]
+        assert {'another': 20, 'new': {'id': 2, 'val': 'b'}} == res[1]
 
     def test_pack_columns_prefix_no_remove(self):
         t = XFrame({'x.id': [1, 2, 3, 4], 'x.val': ['a', 'b', 'c', 'd'], 'another': [10, 20, 30, 40]})
@@ -4352,7 +4351,7 @@ class TestXFrameDropna:
         t = XFrame({'id': [1, None, None], 'val': ['a', None, 'c']})
         res = t.dropna(columns='val')
         assert 2 == len(res)
-        assert {'id': 1, 'val': 'a'} ==res[0]
+        assert {'id': 1, 'val': 'a'} == res[0]
         assert {'id': None, 'val': 'c'} == res[1]
 
     def test_dropna_col_id(self):
@@ -4397,7 +4396,7 @@ class TestXFrameDropnaSplit:
         t = XFrame({'id': [1, 2, 3], 'val': ['a', 'b', 'c']})
         res1, res2 = t.dropna_split()
         assert 3 == len(res1)
-        assert {'id': 1, 'val': 'a'} ==res1[0]
+        assert {'id': 1, 'val': 'a'} == res1[0]
         assert {'id': 2, 'val': 'b'} == res1[1]
         assert {'id': 3, 'val': 'c'} == res1[2]
         assert 0 == len(res2)
@@ -4406,7 +4405,7 @@ class TestXFrameDropnaSplit:
         t = XFrame({'id': [1, None, 3], 'val': ['a', 'b', 'c']})
         res1, res2 = t.dropna_split()
         assert 2 == len(res1)
-        assert {'id': 1, 'val': 'a'} ==res1[0]
+        assert {'id': 1, 'val': 'a'} == res1[0]
         assert {'id': 3, 'val': 'c'} == res1[1]
         assert 1 == len(res2)
         assert {'id': None, 'val': 'b'} == res2[0]

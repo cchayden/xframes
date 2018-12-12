@@ -394,6 +394,7 @@ class TestXArrayStr:
     Tests XArray __str__ function.
     """
     def test_str(self):
+        # noinspection PyTypeChecker
         t = XArray(range(200))
         s = t.__repr__()
         assert "dtype: int\nRows: 200\n[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11," + \
@@ -533,7 +534,6 @@ class TestXArrayOpScalar:
         assert 1.0 == res[1]
         assert 1.5 == res[2]
 
-    # todo fix assert
     # noinspection PyTypeChecker
     def test_pow_scalar(self):
         t = XArray([1, 2, 3])
@@ -867,10 +867,12 @@ class TestXArrayHead:
         assert 3 == len(t.head())
 
     def test_head_10(self):
+        # noinspection PyTypeChecker
         t = XArray(range(100))
         assert 10 == len(t.head())
 
     def test_head_5(self):
+        # noinspection PyTypeChecker
         t = XArray(range(100))
         assert 5 == len(t.head(5))
 
@@ -1086,12 +1088,14 @@ class TestXArraySample:
     Tests XArray sample
     """
     def test_sample_no_seed(self):
+        # noinspection PyTypeChecker
         t = XArray(range(10))
         res = t.sample(0.3)
         assert 10 > len(res)
 
     @pytest.mark.skip(reason='depends on number of partitions')
     def test_sample_seed(self):
+        # noinspection PyTypeChecker
         t = XArray(range(10))
         res = t.sample(0.3, seed=1)
         # get 3, 6, 9 with this seed
@@ -1100,22 +1104,24 @@ class TestXArraySample:
         assert 6 == res[1]
 
     def test_sample_zero(self):
+        # noinspection PyTypeChecker
         t = XArray(range(10))
         res = t.sample(0.0)
         assert 0 == len(res)
 
     def test_sample_err_gt(self):
+        # noinspection PyTypeChecker
         t = XArray(range(10))
         with pytest.raises(ValueError):
             t.sample(2, seed=1)
 
     def test_sample_err_lt(self):
+        # noinspection PyTypeChecker
         t = XArray(range(10))
         with pytest.raises(ValueError):
             t.sample(-0.5, seed=1)
 
 
-# todo assert
 # noinspection PyClassHasNoInit
 class TestXArrayAll:
     """
@@ -1132,7 +1138,7 @@ class TestXArrayAll:
 
     def test_all_int_true(self):
         t = XArray([1, 2])
-        assert True == t.all()
+        assert True is t.all()
 
     # float
     def test_all_float_nan(self):
@@ -1809,11 +1815,13 @@ class TestXArrayTail:
     Tests XArray tail
     """
     def test_tail(self):
+        # noinspection PyTypeChecker
         t = XArray(range(1, 100))
         res = t.tail(10)
         assert range(90, 100) == res
 
     def test_tail_all(self):
+        # noinspection PyTypeChecker
         t = XArray(range(1, 100))
         res = t.tail(100)
         assert range(1, 100) == res
@@ -2052,7 +2060,7 @@ class TestXArrayAppend:
         t = XArray([1, 2, 3])
         u = XArray([10, 20, 30])
         res = t.append(u)
-        assert 1, 2, 3, 10, 20, 30] == list(res)
+        assert [1, 2, 3, 10, 20, 30] == list(res)
 
     def test_append_empty_t(self):
         t = XArray([], dtype=int)
@@ -2064,7 +2072,7 @@ class TestXArrayAppend:
         t = XArray([1, 2, 3])
         u = XArray([], dtype=int)
         res = t.append(u)
-        assert [1, 2, 3] ==list(res)
+        assert [1, 2, 3] == list(res)
 
     def test_append_int_float_err(self):
         t = XArray([1, 2, 3])
@@ -2438,7 +2446,7 @@ class TestXArrayUnpack:
         res = t.unpack(limit=['word', 'count'], column_types=[str, int])
         assert ['X.count', 'X.word'] == sorted(res.column_names())
         assert {'X.count': 1, 'X.word': 'a'} == res[0]
-        assert {'X.count': 2, 'X.word': 'cat'}== res[1]
+        assert {'X.count': 2, 'X.word': 'cat'} == res[1]
         assert {'X.count': None, 'X.word': 'is'} == res[2]
         assert {'X.count': 4, 'X.word': 'coming'} == res[3]
 
