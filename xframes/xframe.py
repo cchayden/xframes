@@ -1316,11 +1316,11 @@ class XFrame(object):
         sep = '<br>' if html_flag else '\n'
         if self._is_materialized():
             footer = '[{} rows x {} columns]{}'.format(self.num_rows(), self.num_columns(), sep)
-            if self.num_rows() > max_rows_to_display:
-                footer += sep.join(object_utils.FOOTER_STRS)
+#            if self.num_rows() > max_rows_to_display:
+#                footer += sep.join(object_utils.FOOTER_STRS)
         else:
             footer = '[? rows x {} columns]\n'.format(self.num_columns(), sep)
-            footer += '\n'.join(object_utils.LAZY_FOOTER_STRS)
+#            footer += '\n'.join(object_utils.LAZY_FOOTER_STRS)
         return footer
 
     def print_rows(self, num_rows=10, num_columns=40,
@@ -2619,6 +2619,9 @@ class XFrame(object):
             `keylist` from the current XFrame.  The order of the columns
             is preserved.
 
+        Note:
+        This can also be expressed as a xframe indexed by a list of column names.
+
         See Also
         --------
         xframes.XFrame.select_column
@@ -2630,7 +2633,6 @@ class XFrame(object):
         ...                       'user_name': ['alice', 'bob', 'charlie'],
         ...                       'zipcode': [98101, 98102, 98103]
         ...                      })
-        >>> # This line is equivalent to `xf2 = xf[['user_id', 'zipcode']]`
         >>> xf2 = xf.select_columns(['user_id', 'zipcode'])
         >>> xf2
         +---------+---------+
@@ -2641,7 +2643,19 @@ class XFrame(object):
         |    3    |  98103  |
         +---------+---------+
         [3 rows x 2 columns]
-        """
+
+        >>> # This line is equivalent to `xf2 = xf[['user_id', 'zipcode']]`
+        >>> xf2 = xf[['user_id', 'zipcode']]
+        >>> xf2
+        +---------+---------+
+        | user_id | zipcode |
+        +---------+---------+
+        |    1    |  98101  |
+        |    2    |  98102  |
+        |    3    |  98103  |
+        +---------+---------+
+        [3 rows x 2 columns]
+"""
         if not hasattr(keylist, '__iter__'):
             raise TypeError('Keylist must be an iterable.')
         if not all([isinstance(x, str) for x in keylist]):
