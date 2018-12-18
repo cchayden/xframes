@@ -509,6 +509,7 @@ class XArrayImpl(TracedObject):
             res_type = int
         elif op == '>':
             res = self._rdd.map(lambda x: x > other)
+            res_type = int
         elif op == '<=':
             res = self._rdd.map(lambda x: x <= other)
             res_type = int
